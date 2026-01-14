@@ -2,7 +2,7 @@
 
 @section('title', 'Booking')
 @section('main-content')
-
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 <style>
     /* ============================= */
 /* Calendar Container */
@@ -157,17 +157,11 @@
 /* Selectable Cards (Branches, Dentists, Services) */
 /* ============================= */
 .card-selectable {
-    cursor: pointer;
-    border-width: 2px;
-    border-color: #e5e7eb;
-    border-radius: 0.75rem;
-    transition: all 0.25s ease;
-    background-color: #ffffff;
+    will-change: transform;
 }
 
 .card-selectable:hover {
-    border-color: #10b981;
-    box-shadow: 0 8px 20px rgba(16,185,129,0.15);
+    transform: translateY(-2px);
 }
 
 /* Selected card */
@@ -256,141 +250,187 @@
 let calendar;
 let openDays = [];
 
-// Helper: enable Step 2 Next button only if dentist and time selected
+// ===============================
+// HELPERS
+// ===============================
 function checkStep2NextButton() {
     const dentistSelected = $('#dentist_id').val();
     const timeSelected = $('#appointment_time').val();
     const btn = $('#step2btn');
 
-    if(dentistSelected && timeSelected) {
+    if (dentistSelected && timeSelected) {
         btn.prop('disabled', false)
-           .removeClass('bg-gray-500')
-           .addClass('bg-blue-600 cursor-pointer hover:bg-blue-700');
+            .removeClass('bg-gray-500')
+            .addClass('bg-blue-600 cursor-pointer hover:bg-blue-700');
     } else {
         btn.prop('disabled', true)
-           .removeClass('bg-blue-600 cursor-pointer hover:bg-blue-700')
-           .addClass('bg-gray-500');
+            .removeClass('bg-blue-600 cursor-pointer hover:bg-blue-700')
+            .addClass('bg-gray-500');
     }
 }
 
-// Helper: enable Step 3 Book button if at least one service selected
 function checkStep3BookButton() {
     const selected = $('#step3 .card-selected').length;
     const btn = $('#step3btn');
 
-    if(selected > 0) {
+    if (selected > 0) {
         btn.prop('disabled', false)
-           .removeClass('bg-gray-400')
-           .addClass('bg-green-600 cursor-pointer hover:bg-blue-700');
+            .removeClass('bg-gray-400')
+            .addClass('bg-green-600 cursor-pointer hover:bg-blue-700');
     } else {
         btn.prop('disabled', true)
-           .removeClass('bg-green-600 hover:bg-blue-700 cursor-pointer')
-           .addClass('bg-gray-400');
+            .removeClass('bg-green-600 hover:bg-blue-700 cursor-pointer')
+            .addClass('bg-gray-400');
     }
 }
 
-// Multi-step navigation
+// ===============================
+// STEP NAVIGATION
+// ===============================
 function goToStep(step) {
-    for (let i = 1; i <= 3; i++) { $('#step' + i).addClass('hidden'); }
+    for (let i = 1; i <= 3; i++) {
+        $('#step' + i).addClass('hidden');
+    }
     $('#step' + step).removeClass('hidden');
+
+    if (step === 2 && calendar) {
+        setTimeout(() => calendar.render(), 50);
+    }
 }
 
-// Step 1: Branch selection
-$(document).on('click', '#step1 .card-selectable', function() {
+// ===============================
+// STEP 1 – BRANCH
+// ===============================
+$(document).on('click', '#step1 .card-selectable', function () {
     $(this).siblings().removeClass('card-selected');
     $(this).addClass('card-selected');
+
     $('#store_id').val($(this).data('id')).trigger('change');
 
-    // Enable Step 1 Next button
     $('#step1btn').prop('disabled', false)
-                  .removeClass('bg-gray-400')
-                  .addClass('bg-blue-600 cursor-pointer hover:bg-blue-700');
+        .removeClass('bg-gray-400')
+        .addClass('bg-blue-600 cursor-pointer hover:bg-blue-700');
 });
 
-// Step 2: Dentist selection
-$(document).on('click', '#step2 .card-selectable', function() {
+// ===============================
+// STEP 2 – DENTIST CLICK
+// ===============================
+$(document).on('click', '#step2 .card-selectable', function () {
     $(this).siblings().removeClass('card-selected');
     $(this).addClass('card-selected');
+
     $('#dentist_id').val($(this).data('id')).trigger('change');
     checkStep2NextButton();
 });
 
-// Step 3: Service selection (multi)
-$(document).on('click', '#step3 .card-selectable', function() {
+// ===============================
+// STEP 3 – SERVICES
+// ===============================
+$(document).on('click', '#step3 .card-selectable', function () {
     $(this).toggleClass('card-selected');
-    const selectedIds = $('#step3 .card-selected').map(function(){ return $(this).data('id'); }).get();
+
+    const selectedIds = $('#step3 .card-selected')
+        .map(function () { return $(this).data('id'); })
+        .get();
+
     $('#service_ids').val(JSON.stringify(selectedIds));
     checkStep3BookButton();
 });
 
-// Load dentists & calendar after branch selected
-$('#store_id').on('change', function() {
-    const storeId = $(this).val();
+// ===============================
+// LOAD CALENDAR + DENTISTS
+// ===============================
+$('#store_id').on('change', function () {
+    const storeId = this.value;
     if (!storeId) return;
 
-    // Load branch schedule (open days)
-    $.get(`/store/${storeId}/schedule`, function(data) {
-        if (data.status === 'success') {
-            const dayMap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
-            openDays = (data.open_days || []).map(d => dayMap[d.toLowerCase()]);
+    $('#dentistCards').html('Loading...');
+    $('#calendar').html('');
+    $('#dentist_id').val('');
+    $('#appointment_date').val('');
+    $('#appointment_time').html('<option>-- Select Date First --</option>').prop('disabled', true);
 
-            // Initialize FullCalendar
-            if(calendar) calendar.destroy();
-            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                initialView: 'dayGridMonth',
-                selectable: true,
-                validRange: { start: new Date() },
-                dateClick: function(info) {
-                    const day = info.date.getDay();
-                    if (!openDays.includes(day)) return;
+    Promise.all([
+        $.get(`/store/${storeId}/schedule`),
+        $.get(`/branch/${storeId}/dentists`)
+    ]).then(([schedule, dentists]) => {
 
-                    // Remove previous selection
-                    document
-                        .querySelectorAll('.fc-day-selected')
-                        .forEach(el => el.classList.remove('fc-day-selected'));
+        // ===== CALENDAR =====
+        const dayMap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
+        openDays = schedule.open_days.map(d => dayMap[d]);
 
-                    // Add selected class (even if today)
-                    info.dayEl.classList.add('fc-day-selected');
+        if (calendar) calendar.destroy();
 
-                    $('#appointment_date').val(info.dateStr).trigger('change');
-                },
+        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            initialView: 'dayGridMonth',
+            height: 'auto',
+            validRange: { start: new Date() },
+            dateClick(info) {
+                if (!openDays.includes(info.date.getDay())) return;
 
-                dayCellClassNames: function(arg) {
-                    if(!openDays.includes(arg.date.getDay())) return ['fc-day-disabled'];
-                    return [];
-                }
+                $('.fc-day-selected').removeClass('fc-day-selected');
+                info.dayEl.classList.add('fc-day-selected');
+
+                $('#appointment_date').val(info.dateStr).trigger('change');
+            },
+            dayCellClassNames(arg) {
+                return openDays.includes(arg.date.getDay())
+                    ? []
+                    : ['fc-day-disabled'];
+            }
+        });
+
+        calendar.render();
+
+        // ===== DENTISTS =====
+        let html = '';
+        const defaultImg = "{{ asset('images/logo.png') }}";
+        const profileBase = "{{ asset('storage/profile_pictures') }}";
+
+        if (dentists.dentists.length > 0) {
+            dentists.dentists.forEach(d => {
+                const img = d.profile_image
+                    ? `${profileBase}/${d.profile_image}`
+                    : defaultImg;
+
+                html += `
+                    <div class="card-selectable border rounded p-4 shadow bg-white" data-id="${d.id}">
+                        <div class="flex justify-center mb-2">
+                            <img
+                                src="${img}"
+                                class="w-[200px] h-[100px] object-cover rounded"
+                                loading="lazy"
+                            >
+                        </div>
+                        <h3 class="text-lg font-bold">${d.lastname}, ${d.name}</h3>
+                        <p class="text-sm text-gray-600">${d.contact_number ?? ''}</p>
+                    </div>
+                `;
             });
-            calendar.render();
+        } else {
+            html = `<p class="text-gray-500">No dentists available.</p>`;
+        }
 
-            $('#appointment_date').prop('readonly', true);
-            $('#appointment_time').html('<option>-- Select Date First --</option>').prop('disabled', true);
+        $('#dentistCards').html(html);
 
-            // Load dentists for the branch
-            $.get(`/branch/${storeId}/dentists`, function(response) {
-                let cards = '';
-                let defaultImg = "{{ asset('images/logo.png') }}";
-                let profileBase = "{{ asset('storage/profile_pictures') }}";
-                if(response.dentists.length > 0){
-                    response.dentists.forEach(d => {
-                        let img = d.profile_image ? `${profileBase}/${d.profile_image}` : defaultImg;
-                        cards += `
-                        <div class="card-selectable border rounded p-4 shadow hover:shadow-lg bg-white" data-id="${d.id}">
-                            <div class="flex justify-center mb-2"><img class="w-[200px] h-[100px]" src="${img}"/></div>
-                            <h3 class="text-lg font-bold">${d.lastname}, ${d.name}</h3>
-                            <p>${d.contact_number}</p>
-                        </div>`;
-                    });
-                } else {
-                    cards = '<p>No dentists available.</p>';
-                }
-                $('#dentistCards').html(cards);
-            });
+        // ✅ AUTO-SELECT IF ONLY ONE DENTIST
+        if (dentists.dentists.length === 1) {
+            const onlyDentist = dentists.dentists[0];
+
+            const $card = $('#dentistCards .card-selectable').first();
+            $card.addClass('card-selected');
+
+            $('#dentist_id').val(onlyDentist.id).trigger('change');
+
+            document.getElementById('calendar')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 });
 
-// Load available slots after date selected
-// Helper: convert 24-hour time to AM/PM
+// ===============================
+// TIME SLOTS
+// ===============================
 function formatTimeToAMPM(time24) {
     let [hour, minute] = time24.split(':').map(Number);
     const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -398,7 +438,6 @@ function formatTimeToAMPM(time24) {
     return `${hour}:${minute.toString().padStart(2, '0')} ${ampm}`;
 }
 
-// Load available slots after date selected
 $('#appointment_date').on('change', function () {
     const date = $(this).val();
     const storeId = $('#store_id').val();
@@ -408,74 +447,59 @@ $('#appointment_date').on('change', function () {
 
     $('#appointment_time')
         .prop('disabled', false)
-        .html('<option value="">Loading...</option>');
+        .html('<option>Loading...</option>');
 
     $.get(`/branch/${storeId}/dentist/${dentistId}/slots`, { date }, function (resp) {
 
         if (resp.status === 'success') {
-
             let options = '<option value="">-- Select Time --</option>';
 
             const booked = resp.booked_slots || [];
             const allTimes = [...new Set([...resp.slots, ...booked])].sort();
 
             allTimes.forEach(time => {
-                const formattedTime = formatTimeToAMPM(time);
-
-                if (booked.includes(time)) {
-                    options += `
-                        <option value="${time}" disabled>
-                            ${formattedTime} (Booked)
-                        </option>
-                    `;
-                } else {
-                    options += `
-                        <option value="${time}">
-                            ${formattedTime}
-                        </option>
-                    `;
-                }
+                const label = formatTimeToAMPM(time);
+                options += booked.includes(time)
+                    ? `<option disabled>${label} (Booked)</option>`
+                    : `<option value="${time}">${label}</option>`;
             });
 
             $('#appointment_time').html(options);
             checkStep2NextButton();
-
         } else {
             $('#appointment_time')
-                .html('<option value="">No slots available</option>')
+                .html('<option>No slots available</option>')
                 .prop('disabled', true);
         }
     });
 });
 
-// Enable Step2 Next button when time selected
-$('#appointment_time').on('change', function() {
-    checkStep2NextButton();
-});
+$('#appointment_time').on('change', checkStep2NextButton);
 
-// Submit booking form
-$('#bookingForm').on('submit', function(e){
+// ===============================
+// SUBMIT
+// ===============================
+$('#bookingForm').on('submit', function (e) {
     e.preventDefault();
+
     const formData = {
         _token: '{{ csrf_token() }}',
         store_id: $('#store_id').val(),
-        service_ids: JSON.parse($('#service_ids').val()),
         dentist_id: $('#dentist_id').val(),
         appointment_date: $('#appointment_date').val(),
         appointment_time: $('#appointment_time').val(),
+        service_ids: JSON.parse($('#service_ids').val() || '[]'),
         desc: $('#desc').val()
     };
 
-    $.post('{{ route('appointments.store') }}', formData, function(resp){
-        if(resp.status === 'success'){
+    $.post('{{ route('appointments.store') }}', formData, function (resp) {
+        if (resp.status === 'success') {
             Swal.fire('Success!', resp.message, 'success');
             $('#bookingForm')[0].reset();
             goToStep(1);
         } else {
             Swal.fire('Error!', resp.message, 'error');
         }
-    }).fail(xhr => {
-        Swal.fire('Error!', xhr.responseJSON?.message || 'Something went wrong', 'error');
     });
 });
 </script>
