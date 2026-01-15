@@ -102,7 +102,7 @@
             </div>
 
             {{-- RECEIPT --}}
-            <div class="mt-4">
+            <div class="mt-4" hidden>
                 <label class="block font-semibold">Upload Payment Receipt</label>
                 <input type="file"
                        name="payment_receipt"
@@ -387,7 +387,7 @@ window.printReceipt = function () {
                             );
                         }
                     }
-                });
+                }); 
             });
         });
 
