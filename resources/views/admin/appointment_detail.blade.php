@@ -24,7 +24,7 @@
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
     <div class="w-full mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">Finalize Appointment </h2>
+        <h2 class="text-2xl font-bold mb-4">Finalize Appointment</h2>
 
         <p>
             <strong>Client:</strong>
@@ -72,7 +72,7 @@
                     @foreach ($serviceNames as $index => $service)
                         <li>
                             {{ $service }}
-                            – ₱{{ number_format($servicePrices[$index], 2) }}
+                            <!-- – ₱{{ number_format($servicePrices[$index], 2) }} -->
                         </li>
                     @endforeach
                 </ul>
@@ -95,11 +95,10 @@
                 <label class="block font-semibold">Total Price (₱)</label>
                 <input type="number"
                        name="total_price"
-                       value="{{ $totalPrice }}"
+                       value=""
                        step="0.01"
                        min="0"
-                       class="w-full border rounded p-2 bg-gray-100"
-                       readonly>
+                       class="w-full border rounded p-2 " >
             </div>
 
             {{-- RECEIPT --}}
@@ -123,27 +122,18 @@
 
             {{-- ACTION BUTTONS --}}
             <div class="mt-6 flex flex-row gap-5">
-                @if ($appointment->status === 'completed')
-                    <!-- Legend kapag completed na -->
-                    <span class="text-green-600 font-semibold flex items-center gap-2">
-                        ✔ Completed
-                    </span>
-                @else
-                    <!-- Buttons kapag hindi pa completed -->
-                    <button type="submit"
-                            class="bg-green-600 text-white px-4 py-2 rounded"
-                            data-status="completed">
-                        Complete
-                    </button>
+                <button type="submit"
+                        class="bg-green-600 text-white px-4 py-2 rounded"
+                        data-status="completed">
+                    Complete
+                </button>
 
-                    <button type="submit"
-                            class="bg-red-600 text-white px-4 py-2 rounded"
-                            data-status="no_show">
-                        No Show
-                    </button>
-                @endif
+                <button type="submit"
+                        class="bg-red-600 text-white px-4 py-2 rounded"
+                        data-status="no_show">
+                    No Show
+                </button>
             </div>
-
         </form>
     </div>
 </div>
@@ -316,16 +306,17 @@ window.printReceipt = function () {
                 reader.readAsDataURL(file);
             }
         });
-        $('#finalizeAppointmentForm button[type="submit"]').on('click', function (e) {
+       $('#finalizeAppointmentForm button[type="submit"]').on('click', function (e) {
             e.preventDefault();
 
             // Clear previous validation errors
-            $('.error-text').remove();
-            $('input, textarea, select').removeClass('border-red-500 bg-red-50');
+            $('.form-error').remove();
+            $('input, textarea, select')
+                .removeClass('border-red-500 ring-1 ring-red-500');
 
             const button = $(this);
             const status = button.data('status');
-            $('#status').val(status);
+            $('#status').val(status); // set hidden input
 
             const form = $('#finalizeAppointmentForm')[0];
             const id = $(form).data('id');
@@ -342,54 +333,61 @@ window.printReceipt = function () {
                 showCancelButton: true,
                 confirmButtonText: 'Yes, proceed!'
             }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: `/appointments/${id}/settle`,
-                        method: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
+                if (!result.isConfirmed) return;
 
-                        success: function (res) {
-                        Swal.fire('Success', res.message ?? 'Done!', 'success')
-                            .then(() => {
+                $.ajax({
+                    url: `/appointments/${id}/settle`,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
 
-                                // 🔹 Disable all action buttons
-                                $('#finalizeAppointmentForm button[type="submit"]').remove();
+                    success: function (res) {
+                        Swal.fire(
+                            'Success',
+                            res.message ?? 'Appointment completed successfully!',
+                            'success'
+                        ).then(() => {
+                            window.dispatchEvent(new CustomEvent('open-receipt'));
+                        });
+                    },
 
-                                // 🔹 Show COMPLETED label
-                                $('#finalizeAppointmentForm .mt-6').html(`
-                                    <span class="text-green-600 font-semibold flex items-center gap-2">
-                                        ✔ Completed
-                                    </span>
+                    error: function (xhr) {
+                        // Laravel validation error
+                        if (xhr.status === 422) {
+                            const errors = xhr.responseJSON.errors;
+
+                            // Loop through validation errors
+                            Object.keys(errors).forEach(function (field) {
+                                const input = $(`[name="${field}"]`);
+
+                                // Highlight field (Tailwind)
+                                input.addClass('border-red-500 ring-1 ring-red-500');
+
+                                // Show error message
+                                input.after(`
+                                    <p class="form-error text-sm text-red-600 mt-1">
+                                        ${errors[field][0]}
+                                    </p>
                                 `);
-
-                                window.dispatchEvent(new CustomEvent('open-receipt'));
                             });
-                    },error: function (xhr) {
-                            // Laravel validation error
-                            if (xhr.status === 422) {
-                                const errors = xhr.responseJSON.errors;
 
-                                $.each(errors, function (field, messages) {
-                                    const input = $(`[name="${field}"]`);
+                            // Scroll to first error field
+                            const firstError = Object.keys(errors)[0];
+                            const firstInput = $(`[name="${firstError}"]`);
+                            $('html, body').animate({
+                                scrollTop: firstInput.offset().top - 120
+                            }, 400);
 
-                                    // Highlight field
-                                    input.addClass('border-red-500 bg-red-50');
-
-                                    // Show error message
-                                    input.after(`
-                                        <p class="text-red-500 text-sm mt-1 error-text">
-                                            ${messages[0]}
-                                        </p>
-                                    `);
-                                });
-                            } else {
-                                Swal.fire('Error', 'Something went wrong.', 'error');
-                            }
+                        } else {
+                            Swal.fire(
+                                'Error',
+                                'Something went wrong. Please try again.',
+                                'error'
+                            );
                         }
-                    });
-                }
+                    }
+                });
             });
         });
 

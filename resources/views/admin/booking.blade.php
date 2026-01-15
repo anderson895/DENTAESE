@@ -224,7 +224,7 @@ $(document).on('click', '.approve-btn', function () {
         });
     });
 });
-
+    
 
 $(document).on('click', '.cancel-btn', function () {
     const button = $(this);
