@@ -25,8 +25,6 @@
             <th>User</th>
             <th>Dentist</th>
             <th>Time</th>
-            <th>Description</th>
-            <th>Note</th>
             <th>Price</th>
             <th>Status</th>
             <th>Action</th>
@@ -39,8 +37,7 @@
             <td>{{ $appointment->user->name }}</td>
             <td>{{ $appointment->dentist->name ?? 'N/A' }}</td>
             <td>{{ $appointment->appointment_time }} - {{ $appointment->booking_end_time }}</td>
-            <td>{{ $appointment->desc }}</td>
-            <td>{{ $appointment->work_done }}</td>
+            
             <td>{{ $appointment->total_price }}</td>
             <td>{{ ucfirst($appointment->status) }}</td>
             <td>
@@ -52,7 +49,7 @@
                     data-price="{{ $appointment->total_price }}"
                     data-status="{{ $appointment->status }}"
                     data-services='@json($appointment->service_ids)'>
-                    Update Record
+                    View
                 </button>
             </td>
         </tr>
@@ -61,18 +58,15 @@
 </table>
 
 <!-- MODAL -->
-<!-- MODAL -->
 <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white w-full max-w-lg p-6 rounded-lg shadow">
         <h2 class="text-lg font-bold mb-4">Update Appointment</h2>
 
         <input type="hidden" id="appointment_id">
 
-        <label class="block font-semibold">Description</label>
-        <input id="desc" class="w-full border p-2 mb-3 rounded">
+        <input id="desc" class="w-full border p-2 mb-3 rounded" hidden>
 
-        <label class="block font-semibold">Work Done</label>
-        <textarea id="work_done" class="w-full border p-2 mb-3 rounded"></textarea>
+        <textarea id="work_done" class="w-full border p-2 mb-3 rounded" hidden></textarea>
 
         <label class="block font-semibold">Status</label>
         <select id="status" class="w-full border p-2 mb-3 rounded">
@@ -86,19 +80,26 @@
         <div class="border p-3 rounded mb-3 max-h-40 overflow-y-auto">
             @foreach ($services as $service)
                 <label class="flex items-center space-x-2 mb-1">
-                    <input
-                        type="checkbox"
-                        class="service-checkbox"
-                        value="{{ $service->id }}"
-                        data-price="{{ $service->approx_price }}"
-                    >
-                    <span>{{ $service->name }} (₱{{ number_format($service->approx_price,2) }})</span>
-                </label>
+                <input
+                    type="checkbox"
+                    class="service-checkbox"
+                    value="{{ $service->id }}"
+                >
+                <span>{{ $service->name }}</span>
+            </label>
+
             @endforeach
         </div>
 
         <label class="block font-semibold">Total Price</label>
-        <input id="total_price" readonly class="w-full border p-2 mb-4 rounded bg-gray-100">
+        <input
+            id="total_price"
+            type="number"
+            step="0.01"
+            class="w-full border p-2 mb-4 rounded"
+            placeholder="Enter total price"
+        >
+
 
         <div class="flex justify-end gap-2">
             <button id="closeModal" class="px-4 py-2 bg-gray-400 rounded">Cancel</button>
@@ -110,13 +111,6 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-function computeTotal() {
-    let total = 0;
-    $('.service-checkbox:checked').each(function () {
-        total += parseFloat($(this).data('price'));
-    });
-    $('#total_price').val(total.toFixed(2));
-}
 
 $('.editBtn').click(function () {
     $('#editModal').removeClass('hidden').addClass('flex');
@@ -125,6 +119,7 @@ $('.editBtn').click(function () {
     $('#desc').val($(this).data('desc'));
     $('#work_done').val($(this).data('work'));
     $('#status').val($(this).data('status'));
+    $('#total_price').val($(this).data('price'));
 
     let services = $(this).data('services') || [];
 
@@ -133,11 +128,10 @@ $('.editBtn').click(function () {
     services.forEach(id => {
         $('.service-checkbox[value="' + id + '"]').prop('checked', true);
     });
-
-    computeTotal();
 });
 
-$('.service-checkbox').on('change', computeTotal);
+
+
 
 $('#closeModal').click(function () {
     $('#editModal').addClass('hidden').removeClass('flex');

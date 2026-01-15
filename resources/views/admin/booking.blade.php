@@ -61,6 +61,50 @@
 </div>
 
 
+
+
+
+
+
+
+<!-- Modal for Time Editing -->
+<div id="changeTimeModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded shadow-lg w-96">
+        <h2 class="text-xl font-bold mb-4">Change Appointment Time</h2>
+
+        <input type="hidden" id="changeAppointmentId">
+
+        <div class="mb-3">
+            <label class="block font-semibold mb-1">Start Time</label>
+            <input type="time" id="newStartTime"
+                   class="w-full border rounded p-2">
+        </div>
+
+        <div class="mb-4">
+            <label class="block font-semibold mb-1">End Time</label>
+            <input type="time" id="newEndTime"
+                   class="w-full border rounded p-2">
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <button class="px-3 py-1 bg-gray-300 rounded"
+                    onclick="$('#changeTimeModal').addClass('hidden')">
+                Cancel
+            </button>
+            <button id="saveChangeTime"
+                    class="px-3 py-1 bg-blue-600 text-white rounded">
+                Save
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
 <!-- Booking Modal -->
 
 <div class="overflow-x-auto bg-white p-4 rounded shadow">
@@ -141,6 +185,73 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+$(document).on('click', '.change-time-btn', function () {
+    $('#changeAppointmentId').val($(this).data('id'));
+    $('#newStartTime').val($(this).data('start'));
+    $('#newEndTime').val($(this).data('end'));
+
+    $('#changeTimeModal').removeClass('hidden');
+});
+
+
+
+$('#saveChangeTime').on('click', function () {
+    const appointmentId = $('#changeAppointmentId').val();
+    const startTime = $('#newStartTime').val();
+    const endTime = $('#newEndTime').val();
+
+    if (!startTime || !endTime) {
+        Swal.fire('Error', 'Please fill all fields', 'error');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Confirm Change?',
+        text: 'Update appointment time?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, update'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        // 🔄 Show loader
+        Swal.fire({
+            title: 'Updating...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            url: `/appointments/${appointmentId}/change-time`,
+            type: 'PUT',
+            data: {
+                _token: '{{ csrf_token() }}',
+                appointment_time: startTime,
+                booking_end_time: endTime
+            },
+            success: function () {
+                $('#changeTimeModal').addClass('hidden');
+                location.reload();
+            },
+            error: function (xhr) {
+                Swal.fire(
+                    'Error',
+                    xhr.responseJSON?.message || 'Something went wrong',
+                    'error'
+                );
+            }
+        });
+    });
+});
+
+
+
+
+
 function showUserModal(userId) {
     $('#userModalContent').html('<p class="text-center text-gray-500">Loading...</p>');
     document.getElementById('userModal').classList.remove('hidden');
@@ -269,6 +380,9 @@ $(document).on('click', '.cancel-btn', function () {
     });
 });
 </script>
+
+
+
 <script>
 let openDays = []; // Example: ['mon', 'tue', 'wed']
 
@@ -395,34 +509,6 @@ $('#appointment_date').on('change', function () {
     });
 });
 
-// $('#appointment_date').on('change', function () {
-//      const selectedDate = $(this).val();
-//     const storeId = $('#store_id').val();
-//     const selectedDay = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase(); // 'mon'
-
-//     // // Validate open day
-//     // if (!openDays.includes(selectedDay)) {
-//     //     alert('Store is closed on this day.');
-//     //     $(this).val('');
-//     //     $('#appointment_time').html('<option value="">Store closed on this day</option>').prop('disabled', true);
-//     //     return;
-//     // }
-
-//     $('#appointment_time').html('<option>Loading...</option>').prop('disabled', false);
-
-//     // Fetch available slots
-//     $.get(`/branch/${storeId}/available-slots`, { date: selectedDate }, function (response) {
-//         if (response.slots && response.slots.length > 0) {
-//             let options = `<option value="">-- Select Time --</option>`;
-//             response.slots.forEach(time => {
-//                 options += `<option value="${time}">${time}</option>`;
-//             });
-//             $('#appointment_time').html(options);
-//         } else {
-//             $('#appointment_time').html('<option value="">No slots available</option>');
-//         }
-//     });
-// });
 
 $('#bookingForm').on('submit', function(e) {
     e.preventDefault();

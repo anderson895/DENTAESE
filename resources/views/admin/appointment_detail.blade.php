@@ -24,7 +24,7 @@
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
     <div class="w-full mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">Finalize Appointment</h2>
+        <h2 class="text-2xl font-bold mb-4">Finalize Payment</h2>
 
         <p>
             <strong>Client:</strong>
@@ -125,7 +125,7 @@
                 <button type="submit"
                         class="bg-green-600 text-white px-4 py-2 rounded"
                         data-status="completed">
-                    Finalize Payment
+                    Complete    
                 </button>
 
                 <button type="submit"

@@ -24,6 +24,11 @@ use Illuminate\Support\Facades\Auth;
 
 
 
+Route::put('/appointments/{appointment}/change-time',
+    [AppointmentController::class, 'changeTime']);
+
+
+
 Route::put(
     '/admin/booking-history/{appointment}',
     [AdminBookingController::class, 'updateHistory']

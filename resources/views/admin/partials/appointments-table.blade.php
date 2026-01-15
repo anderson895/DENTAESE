@@ -28,17 +28,12 @@
 
     <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y') }}</td>
     <td>
-        <input type="time" name="appointment_time"
-               class="appointment-time"
-               value="{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}"
-               required>
+    {{ \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A') }}
     </td>
     <td>
-        <input type="time" name="booking_end_time"
-               class="booking-end-time"
-               value="{{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('H:i') }}"
-               required>
+        {{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('h:i A') }}
     </td>
+
     <td>{{ $appointment->desc }}</td>
     <td class="status">{{ ucfirst($appointment->status) }}</td>
    <td>
@@ -56,11 +51,14 @@
         </button>
 
     @elseif ($appointment->status == 'approved')
-    <button type="button"
-                class="approve-btn bg-green-500 text-white px-3 py-1 rounded"
-                data-id="{{ $appointment->id }}">
+            <button type="button"
+            class="change-time-btn bg-green-500 text-white px-3 py-1 rounded"
+            data-id="{{ $appointment->id }}"
+            data-start="{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}"
+            data-end="{{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('H:i') }}">
             Change Time
         </button>
+
         <a href="{{ route('appointments.view', $appointment->id) }}"
            class="bg-blue-500 text-white px-3 py-1 rounded">
             View

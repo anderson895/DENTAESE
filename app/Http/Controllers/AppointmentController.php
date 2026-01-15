@@ -11,6 +11,35 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 class AppointmentController extends Controller
 {
+
+
+
+
+
+
+
+public function changeTime(Request $request, Appointment $appointment)
+{
+    $request->validate([
+        'appointment_time' => 'required',
+        'booking_end_time' => 'required|after:appointment_time',
+    ]);
+
+    $appointment->update([
+        'appointment_time' => $request->appointment_time,
+        'booking_end_time' => $request->booking_end_time,
+    ]);
+
+    return response()->json(['message' => 'Time updated']);
+}
+
+
+
+
+
+
+
+
     //
 
     public function getSchedule(Store $store)
