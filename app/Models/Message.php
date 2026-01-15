@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
 {
-    protected $fillable = ['store_id', 'sender_id', 'receiver_id', 'message', 'is_read'];
+    protected $fillable = [
+        'store_id',
+        'sender_id',
+        'receiver_id',
+        'message',
+        'is_read',
+        'file_path',   // ✅ ADD
+        'type'         // ✅ ADD (text | file)
+    ];
 
     public function sender()
     {
@@ -22,6 +30,5 @@ class Message extends Model
     {
         return $this->belongsTo(Store::class);
     }
-
-    
 }
+

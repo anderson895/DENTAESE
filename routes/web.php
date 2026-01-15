@@ -116,26 +116,26 @@ Route::get('/dental-chart/{patient}', function (User $patient) {
     return view('admin.dental-chart.index', compact('patient'));
 });
 
+// ADMIN
+Route::middleware('auth')->group(function () {
+    Route::get('/chat', [MessageController::class, 'index'])->name('chat.index');
+    Route::get('/patients', [MessageController::class, 'patients'])->name('patients.list');
+    Route::get('/messages/{storeId}/{userId}', [MessageController::class, 'fetch'])->name('messages.fetch');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
 
-Route::get('/chat', [MessageController::class, 'index'])->name('chat.index');
+    // ✅ ADMIN FILE UPLOAD
+    Route::post('/messages/upload', [MessageController::class, 'adminUpload'])
+        ->name('messages.upload');
+});
 
-// Patient sees branches
-Route::get('/branches', [MessageController::class, 'branches'])->name('branches.list');
-
-// Admin sees patients
-Route::get('/patients', [MessageController::class, 'patients'])->name('patients.list');
-
-// Fetch messages (needs both store + patient)
-Route::get('/messages/{storeId}/{userId}', [MessageController::class, 'fetch'])->name('messages.fetch');
-
-Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
-
-// Patient side
+// PATIENT
 Route::middleware('auth')->group(function () {
     Route::get('/patient/chat', [MessageController::class, 'patientIndex'])->name('patient.chat.index');
     Route::get('/patient/branches', [MessageController::class, 'branches'])->name('patient.branches.list');
     Route::get('/patient/messages/{storeId}', [MessageController::class, 'patientMessages'])->name('patient.messages');
     Route::post('/patient/messages', [MessageController::class, 'sendMessage'])->name('patient.messages.store');
+
+    // ✅ FILE UPLOAD
+    Route::post('/patient/messages/upload', [MessageController::class, 'uploadFile'])
+        ->name('patient.messages.upload');
 });
-
-

@@ -63,19 +63,20 @@ public function branches()
     
     
 
-    public function store(Request $request)
+public function store(Request $request)
 {
     $request->validate([
         'store_id' => 'required|exists:stores,id',
-        'user_id'  => 'required|exists:users,id', 
+        'user_id'  => 'required|exists:users,id',
         'message'  => 'required|string',
     ]);
 
     $message = Message::create([
-        'store_id'   => $request->store_id,
-        'sender_id'  => Auth::id(),         
-        'receiver_id'=> $request->user_id,  
-        'message'    => $request->message,
+        'store_id'    => $request->store_id,
+        'sender_id'   => Auth::id(),          // ADMIN
+        'receiver_id' => $request->user_id,   // PATIENT
+        'message'     => $request->message,
+        'type'        => 'text'
     ]);
 
     return response()->json([
@@ -83,6 +84,7 @@ public function branches()
         'message' => $message
     ]);
 }
+
 
 
 
@@ -149,17 +151,87 @@ public function sendMessage(Request $request)
         'message'  => 'required|string',
     ]);
 
+    // Find admin for this branch/store
+    $receiverId = User::where('account_type', 'admin')->first()->id;
+
     $message = Message::create([
-        'store_id'   => $request->store_id,
-        'sender_id'  => Auth::id(),           // patient
-        'receiver_id'=> $request->store_id,   // ❗ if stores are users, point to store-user, else leave null
-        'message'    => $request->message,
+        'store_id'    => $request->store_id,
+        'sender_id'   => Auth::id(),
+        'receiver_id' => $receiverId,
+        'message'     => $request->message,
+        'type'        => 'text',
     ]);
 
     return response()->json([
-        'status'  => 'success',
+        'status' => 'success',
         'message' => $message
     ]);
 }
+
+
+// THIS UPLOAD FUNCTION IS FOR PATIENTS
+public function uploadFile(Request $request)
+{
+    $request->validate([
+        'file' => 'required|file|max:10240', // 10MB
+        'store_id' => 'required'
+    ]);
+
+    $file = $request->file('file');
+
+    // Save file
+    $path = $file->store('chat_files', 'public');
+
+    // Save message
+    $message = Message::create([
+        'store_id' => $request->store_id,
+        'sender_id' => auth()->id(),
+        'message' => $file->getClientOriginalName(),
+        'file_path' => $path,
+        'type' => 'file'
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'file_name' => $file->getClientOriginalName(),
+        'file_url' => asset('storage/' . $path),
+        'message' => $message
+    ]);
+}
+
+// ADMIN FILE UPLOAD
+public function adminUpload(Request $request)
+{
+    $request->validate([
+        'file'     => 'required|file|max:10240',
+        'store_id' => 'required|exists:stores,id',
+        'user_id'  => 'required|exists:users,id', // 👈 PATIENT ID
+    ]);
+
+    $file = $request->file('file');
+    $path = $file->store('chat_files', 'public');
+
+    $message = Message::create([
+        'store_id'    => $request->store_id,
+        'sender_id'   => auth()->id(),        // ADMIN
+        'receiver_id' => $request->user_id,   // PATIENT
+        'message'     => $file->getClientOriginalName(),
+        'file_path'   => $path,
+        'type'        => 'file',
+    ]);
+
+    return response()->json([
+        'status'    => 'success',
+        'file_name'=> $file->getClientOriginalName(),
+        'file_url' => asset('storage/' . $path),
+        'message'  => $message
+    ]);
+}
+
+
+
+
+
+
 
 }

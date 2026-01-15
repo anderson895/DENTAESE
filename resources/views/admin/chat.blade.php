@@ -1,181 +1,236 @@
 @extends('layout.navigation')
 
 @section('title','Chat')
+
 @section('main-content')
-  <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
-  <div class="flex h-screen">
-    
-    <!-- Sidebar (Patients) -->
-    <div class="w-1/4 bg-sky-100 border-r border-sky-300 flex flex-col">
-      <h2 class="text-lg font-bold p-4 bg-sky-300 text-white">Patients</h2>
-      
-      <!-- 🔎 Search bar -->
-      <div class="p-2">
-        <input id="patientSearch" type="text" placeholder="Search patient..."
-          class="w-full border rounded-lg p-2 focus:outline-none focus:ring focus:ring-sky-400">
-      </div>
+<!-- Font Awesome + jQuery -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-      <ul id="patientList" class="flex-1 overflow-y-auto divide-y divide-sky-200"></ul>
+<div class="flex h-screen">
+
+  <!-- ================= SIDEBAR ================= -->
+  <div class="w-1/4 bg-sky-100 border-r border-sky-300 flex flex-col">
+    <h2 class="text-lg font-bold p-4 bg-sky-300 text-white">Patients</h2>
+
+    <div class="p-2">
+      <input id="patientSearch" type="text"
+        placeholder="Search patient..."
+        class="w-full border rounded-lg p-2 focus:ring focus:ring-sky-400">
     </div>
-  
-    <!-- Chat Window -->
-    <div class="flex-1 flex flex-col bg-slate-300">
-      <!-- Header -->
-      <div id="chatHeader" class="p-4 bg-sky-300 text-white font-bold">Select a patient</div>
-      
-      <!-- Messages -->
-      <div id="messagesBox" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
-      
-      <!-- Input -->
-      <div class="p-4 border-t border-sky-300 flex">
-        <input id="messageInput" type="text" placeholder="Type a message..."
-          class="flex-1 border rounded-lg p-2 focus:outline-none focus:ring focus:ring-sky-400">
-        <button id="sendBtn" class="ml-2 bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600">
-          Send
-        </button>
-      </div>
-    </div>
+
+    <ul id="patientList" class="flex-1 overflow-y-auto divide-y"></ul>
   </div>
 
+  <!-- ================= CHAT ================= -->
+  <div class="flex-1 flex flex-col bg-slate-300">
+    <div id="chatHeader"
+      class="p-4 bg-sky-300 text-white font-bold">
+      Select a patient
+    </div>
+
+    <div id="messagesBox"
+      class="flex-1 overflow-y-auto p-4 space-y-3">
+    </div>
+
+    <!-- INPUT -->
+    <div class="p-4 border-t flex items-center gap-2 bg-white">
+
+      <!-- FILE -->
+      <label for="adminFileInput"
+        class="cursor-pointer text-sky-600 text-xl">
+        <i class="fa-solid fa-paperclip"></i>
+      </label>
+      <input type="file" id="adminFileInput" class="hidden">
+
+      <!-- MESSAGE -->
+      <input id="messageInput"
+        type="text"
+        placeholder="Type a message..."
+        class="flex-1 border rounded-lg p-2 focus:ring focus:ring-sky-400">
+
+      <!-- SEND -->
+      <button id="sendBtn"
+        class="bg-sky-500 text-white px-4 py-2 rounded-lg">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
-  let currentPatient = null;
-  const currentStore = "{{ session('active_branch_id') }}"; // admin belongs to branch
-  const authUserId = {{ auth()->id() }};
-  let allPatients = [];
+/* ================= GLOBAL ================= */
+let currentPatient = null;
+const currentStore = "{{ session('active_branch_id') }}";
+const authUserId = {{ auth()->id() }};
+let allPatients = [];
 
-  // Load patient list
- function loadPatients() {
+/* ================= PATIENT LIST ================= */
+function loadPatients() {
   fetch("{{ route('patients.list') }}")
     .then(res => res.json())
     .then(patients => {
       allPatients = patients;
       renderPatientList(patients);
-    })
-    .catch(err => console.error("Error loading patients:", err));
+    });
 }
 
 function renderPatientList(patients) {
-  const patientList = document.getElementById("patientList");
-  patientList.innerHTML = "";
+  const list = document.getElementById("patientList");
+  list.innerHTML = "";
 
-  patients.forEach(patient => {
-    // latest_message is now just a string
-    let lastMsg = patient.latest_message || "No messages yet";
-    let branchName = patient.branch_name ? ` (${patient.branch_name})` : "";
-    let time = patient.latest_message_time ? ` • ${patient.latest_message_time}` : "";
-
-    let li = document.createElement("li");
-    li.className =
-      "p-3 hover:bg-sky-200 cursor-pointer border-b border-gray-200 transition";
-
-    if (currentPatient === patient.id) {
-      li.classList.add("bg-sky-300");
-    }
-
-    // li.innerHTML = `
-    //   <strong>${patient.full_name}</strong><br>
-    //   <small class="text-gray-600">${lastMsg}${time}${branchName}</small>
-    // `;
-   li.innerHTML = `
-      <strong>${patient.full_name}</strong><br>
-      <small class="text-gray-600">${lastMsg}</small>
+  patients.forEach(p => {
+    const li = document.createElement("li");
+    li.className = `
+      p-3 cursor-pointer hover:bg-sky-200
+      ${currentPatient === p.id ? 'bg-sky-300' : ''}
     `;
+
+    li.innerHTML = `
+      <strong>${p.full_name}</strong><br>
+      <small class="text-gray-600">
+        ${p.latest_message ?? 'No messages yet'}
+      </small>
+    `;
+
     li.onclick = () => {
-      currentPatient = patient.id;
-      document.getElementById("chatHeader").textContent = patient.full_name;
-      loadMessages(currentStore, patient.id, patient.full_name);
+      currentPatient = p.id;
+      document.getElementById("chatHeader").textContent = p.full_name;
+      loadMessages(currentStore, p.id);
     };
 
-    patientList.appendChild(li);
+    list.appendChild(li);
   });
 }
 
+/* ================= SEARCH ================= */
+$('#patientSearch').on('input', function () {
+  const q = this.value.toLowerCase();
+  renderPatientList(
+    allPatients.filter(p =>
+      p.full_name.toLowerCase().includes(q)
+    )
+  );
+});
 
-// ✅ Refresh both patients list and messages every 3 seconds
-setInterval(() => {
-  loadPatients(); // refresh patient list (includes latest message below name)
+/* ================= LOAD MESSAGES ================= */
+function loadMessages(storeId, userId) {
+  fetch(`/messages/${storeId}/${userId}`)
+    .then(res => res.json())
+    .then(messages => {
+      const box = document.getElementById("messagesBox");
+      box.innerHTML = "";
 
-  if (currentPatient) {
-    const currentName = document.getElementById("chatHeader").textContent;
-    loadMessages(currentStore, currentPatient, currentName);
-  }
-}, 3000);
+      messages.forEach(msg => {
+        const mine = msg.sender_id === authUserId;
+        const cls = mine
+          ? "bg-sky-500 text-white ml-auto"
+          : "bg-sky-200 text-sky-900";
 
-// ✅ Initial load
-loadPatients();
-
-
-  // Search patients
-  document.getElementById("patientSearch").addEventListener("input", function() {
-    const query = this.value.toLowerCase();
-    const filtered = allPatients.filter(p => p.name.toLowerCase().includes(query));
-    renderPatientList(filtered);
-  });
-
-  // Load messages for a patient
-  function loadMessages(storeId, userId, patientName) {
-    currentPatient = userId;
-    document.getElementById("chatHeader").textContent = patientName;
-
-    fetch(`/messages/${storeId}/${userId}`)
-      .then(res => res.json())
-      .then(messages => {
-        const box = document.getElementById("messagesBox");
-        box.innerHTML = "";
-        messages.forEach(msg => {
-          const isMine = msg.sender_id === authUserId;
+        if (msg.file_path) {
           box.innerHTML += `
-            <div class="${isMine 
-              ? 'bg-sky-500 text-white ml-auto' 
-              : 'bg-sky-200 text-sky-900'} p-2 rounded-lg max-w-md shadow">
+            <div class="${cls} p-2 rounded-lg max-w-md shadow">
+              <i class="fa-solid fa-file"></i>
+              <a href="/storage/${msg.file_path}"
+                 target="_blank"
+                 class="underline ml-2">
+                ${msg.message}
+              </a>
+            </div>`;
+        } else {
+          box.innerHTML += `
+            <div class="${cls} p-2 rounded-lg max-w-md shadow">
               ${msg.message}
             </div>`;
-        });
-        box.scrollTop = box.scrollHeight;
+        }
       });
+
+      box.scrollTop = box.scrollHeight;
+    });
+}
+
+/* ================= SEND TEXT ================= */
+$('#sendBtn').on('click', sendMessage);
+$('#messageInput').on('keypress', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function sendMessage() {
+  const text = $('#messageInput').val().trim();
+  if (!text || !currentPatient) return;
+
+  fetch("{{ route('messages.store') }}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
+    },
+    body: JSON.stringify({
+      store_id: currentStore,
+      user_id: currentPatient,
+      message: text
+    })
+  })
+  .then(res => res.json())
+  .then(r => {
+    if (r.status === 'success') {
+      $('#messageInput').val('');
+      loadMessages(currentStore, currentPatient);
+      loadPatients();
+    }
+  });
+}
+
+/* ================= FILE UPLOAD (ADMIN) ================= */
+$('#adminFileInput').on('change', function () {
+
+  if (!currentPatient) {
+    alert('Select a patient first');
+    return;
   }
+
+  const file = this.files[0];
+  if (!file) return;
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('store_id', currentStore);
+  fd.append('user_id', currentPatient); // ✅ REQUIRED
+
+  $.ajax({
+    url: "{{ route('messages.upload') }}",
+    type: "POST",
+    data: fd,
+    contentType: false,
+    processData: false,
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    },
+    success(res) {
+      if (res.status === 'success') {
+        loadMessages(currentStore, currentPatient);
+        loadPatients();
+        $('#adminFileInput').val('');
+      }
+    },
+    error(err) {
+      console.error(err);
+      alert('Upload failed');
+    }
+  });
+});
+
+/* ================= AUTO REFRESH ================= */
 setInterval(() => {
+  loadPatients();
   if (currentPatient) {
-    loadMessages(currentStore, currentPatient, document.getElementById("chatHeader").textContent);
+    loadMessages(currentStore, currentPatient);
   }
 }, 3000);
-  // Send message (admin to patient)
-  document.getElementById("sendBtn").addEventListener("click", () => {
-    const input = document.getElementById("messageInput");
-    const text = input.value.trim();
-    if (!text || !currentPatient) return;
 
-    fetch("{{ route('messages.store') }}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-      },
-      body: JSON.stringify({
-        store_id: currentStore,
-        user_id: currentPatient,
-        message: text
-      })
-    })
-    .then(res => res.json())
-    .then(resp => {
-      if (resp.status === "success") {
-        const msg = resp.message;
-        const box = document.getElementById("messagesBox");
-        box.innerHTML += `
-          <div class="bg-sky-500 text-white p-2 rounded-lg max-w-md ml-auto shadow">
-            ${msg.message}
-          </div>`;
-        input.value = "";
-        box.scrollTop = box.scrollHeight;
-      } else {
-        alert("Error: " + resp.message);
-      }
-    });
-  });
-
-
+/* INIT */
+loadPatients();
 </script>
 @endsection
