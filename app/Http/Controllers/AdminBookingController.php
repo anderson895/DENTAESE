@@ -164,8 +164,16 @@ public function view($id)
     );
     $medicines = medicines::get();
 
-    $serviceNames = \App\Models\Service::whereIn('id', $appointment->service_ids ?? [])
+   $serviceNames = \App\Models\Service::whereIn('id', $appointment->service_ids ?? [])
     ->pluck('name');
+
+    $servicePrices = \App\Models\Service::whereIn('id', $appointment->service_ids ?? [])
+        ->pluck('approx_price');
+
+    $totalPrice = $servicePrices->sum();
+
+
+
 
     return view('admin.appointment_detail', compact(
         'appointment',
@@ -173,8 +181,12 @@ public function view($id)
         'patient',
         'patientinfo',
         'medicines',
-        'serviceNames'
+        'serviceNames',
+        'servicePrices',
+        'totalPrice'
     ));
+
+
 }
 
 public function settle(Request $request, $id)

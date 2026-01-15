@@ -166,37 +166,62 @@ $(document).on('click', '.approve-btn', function () {
     const endTime = row.find('.booking-end-time').val();
 
     // detect type
-    const isChangeTime = button.text().trim().toLowerCase() == 'change time';
+    const isChangeTime = button.text().trim().toLowerCase() === 'change time';
 
-    $.ajax({
-        url: `/appointments/${appointmentId}/approve`,
-        type: 'PUT',
-        data: {
-            _token: '{{ csrf_token() }}',
-            appointment_time: time,
-            booking_end_time: endTime,
-            change_time: isChangeTime ? 1 : 0, // send indicator to backend
-        },
-        success: function (res) {
-            Swal.fire({
-                icon: 'success',
-                title: isChangeTime ? 'Time Changed!' : 'Approved!',
-                text: isChangeTime 
-                    ? 'Appointment time has been successfully updated.' 
-                    : 'Appointment has been approved.'
-            });
+    // CONFIRMATION
+    Swal.fire({
+        title: 'Are you sure?',
+        text: isChangeTime
+            ? 'Do you want to change the appointment time?'
+            : 'Do you want to approve this appointment?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, proceed',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
 
-            $.get('{{ route('appointments.fetch') }}', function (html) {
-                $('#appointments-table-body').html(html);
-            });
-        },
-        error: function (xhr) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: xhr.responseJSON?.message || 'Something went wrong.'
-            });
-        }
+        // LOADING
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            url: `/appointments/${appointmentId}/approve`,
+            type: 'PUT',
+            data: {
+                _token: '{{ csrf_token() }}',
+                appointment_time: time,
+                booking_end_time: endTime,
+                change_time: isChangeTime ? 1 : 0,
+            },
+            success: function (res) {
+                Swal.fire({
+                    icon: 'success',
+                    title: isChangeTime ? 'Time Changed!' : 'Approved!',
+                    text: isChangeTime
+                        ? 'Appointment time has been successfully updated.'
+                        : 'Appointment has been approved.'
+                });
+
+                $.get('{{ route('appointments.fetch') }}', function (html) {
+                    $('#appointments-table-body').html(html);
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: xhr.responseJSON?.message || 'Something went wrong.'
+                });
+            }
+        });
     });
 });
 

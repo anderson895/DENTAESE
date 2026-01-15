@@ -23,67 +23,122 @@
 
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
-        <div class="w-full mx-auto bg-white p-6 rounded shadow">
-            <h2 class="text-2xl font-bold mb-4">Finalize Appointment</h2>
-        
-            <p><strong>Client:</strong>{{ $appointment->user->lastname ?? 'N/A' }}, {{ $appointment->user->name ?? 'N/A' }} {{ $appointment->user->middlename ?? 'N/A' }} {{ $appointment->user->suffix ?? '' }}</p>
-            <p><strong>Dentist:</strong> {{ $appointment->dentist->name ?? 'N/A' }}</p>
-        
-            @php
-                use Carbon\Carbon;
-        
-                $date = Carbon::parse($appointment->appointment_date)->format('F j, Y');
-                $start = Carbon::parse($appointment->appointment_time)->format('g:i A');
-                $end = Carbon::parse($appointment->booking_end_time)->format('g:i A');
-            @endphp
-        
-            <p><strong>Date:</strong> {{ $date }}</p>
-            <p><strong>Time:</strong> {{ $start }} - {{ $end }}</p>
-            <p><strong>Branch:</strong> {{ $appointment->store->name ?? 'N/A' }}</p>
-            <p><strong>Description:</strong> {{ $appointment->desc }}</p>
-        
-            <form id="finalizeAppointmentForm" data-id="{{ $appointment->id }}" enctype="multipart/form-data" method="POST">
-                @csrf
-        
-                <div class="mt-4">
-                    <label class="block font-semibold">Note</label>
-                    <textarea name="work_done" rows="4" class="w-full border rounded p-2" required></textarea>
+    <div class="w-full mx-auto bg-white p-6 rounded shadow">
+        <h2 class="text-2xl font-bold mb-4">Finalize Appointment</h2>
+
+        <p>
+            <strong>Client:</strong>
+            {{ $appointment->user->lastname ?? 'N/A' }},
+            {{ $appointment->user->name ?? 'N/A' }}
+            {{ $appointment->user->middlename ?? 'N/A' }}
+            {{ $appointment->user->suffix ?? '' }}
+        </p>
+
+        <p><strong>Dentist:</strong> {{ $appointment->dentist->name ?? 'N/A' }}</p>
+
+        @php
+            use Carbon\Carbon;
+
+            $date  = Carbon::parse($appointment->appointment_date)->format('F j, Y');
+            $start = Carbon::parse($appointment->appointment_time)->format('g:i A');
+            $end   = Carbon::parse($appointment->booking_end_time)->format('g:i A');
+        @endphp
+
+        <p><strong>Date:</strong> {{ $date }}</p>
+        <p><strong>Time:</strong> {{ $start }} - {{ $end }}</p>
+        <p><strong>Branch:</strong> {{ $appointment->store->name ?? 'N/A' }}</p>
+        <p><strong>Description:</strong> {{ $appointment->desc }}</p>
+
+        <form id="finalizeAppointmentForm"
+              data-id="{{ $appointment->id }}"
+              enctype="multipart/form-data"
+              method="POST">
+            @csrf
+
+            {{-- NOTE --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Note</label>
+                <textarea name="work_done"
+                          rows="4"
+                          class="w-full border rounded p-2"
+                          required></textarea>
+            </div>
+
+            {{-- SERVICES --}}
+            <div class="mt-4">
+                <label class="block font-semibold mb-1">Service Done</label>
+
+                <ul class="list-disc ml-5">
+                    @foreach ($serviceNames as $index => $service)
+                        <li>
+                            {{ $service }}
+                            – ₱{{ number_format($servicePrices[$index], 2) }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            {{-- PAYMENT TYPE --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Payment Type</label>
+                <select class="w-full border rounded p-2"
+                        name="paytype"
+                        id="paytype"
+                        required>
+                    <option value="GCASH">GCASH</option>
+                    <option value="CASH">CASH</option>
+                </select>
+            </div>
+
+            {{-- TOTAL PRICE --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Total Price (₱)</label>
+                <input type="number"
+                       name="total_price"
+                       value="{{ $totalPrice }}"
+                       step="0.01"
+                       min="0"
+                       class="w-full border rounded p-2 bg-gray-100"
+                       readonly>
+            </div>
+
+            {{-- RECEIPT --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Upload Payment Receipt</label>
+                <input type="file"
+                       name="payment_receipt"
+                       accept="image/*"
+                       class="w-full border rounded p-2"
+                       id="payment_receipt_input">
+
+                <div class="mt-2">
+                    <img id="receipt_preview"
+                         src="#"
+                         alt="Receipt Preview"
+                         class="max-w-xs rounded border hidden" />
                 </div>
-        
-                <div class="mt-4">
-                    <p><strong>Service Done:</strong> {{ $serviceNames->join(', ') }}</p>
-        
-                    <label class="block font-semibold">Payment Type</label>
-                    <select class="w-full border rounded p-2" name="paytype" id="paytype" required>
-                        <option value="GCASH">GCASH</option>
-                        <option value="CASH">CASH</option>
-                    </select>
-                </div>
-        
-                <div class="mt-4">
-                    <label class="block font-semibold">Total Price (₱)</label>
-                    <input type="number" name="total_price" step="0.01" min="0" class="w-full border rounded p-2" required>
-                </div>
-        
-                <div class="mt-4">
-                    <label class="block font-semibold">Upload Payment Receipt</label>
-                    <input type="file" name="payment_receipt" accept="image/*" class="w-full border rounded p-2" id="payment_receipt_input">
-                    
-                    <!-- Image preview -->
-                    <div class="mt-2">
-                        <img id="receipt_preview" src="#" alt="Receipt Preview" class="max-w-xs rounded border hidden" />
-                    </div>
-                </div>
-        
-                <input type="hidden" name="status" id="status" value="completed">
-        
-                <div class="mt-6 flex flex-row gap-5">
-                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded" data-status="completed">Complete</button>
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded" data-status="no_show">No Show</button>
-                </div>
-            </form>
-        </div>
+            </div>
+
+            <input type="hidden" name="status" id="status" value="completed">
+
+            {{-- ACTION BUTTONS --}}
+            <div class="mt-6 flex flex-row gap-5">
+                <button type="submit"
+                        class="bg-green-600 text-white px-4 py-2 rounded"
+                        data-status="completed">
+                    Complete
+                </button>
+
+                <button type="submit"
+                        class="bg-red-600 text-white px-4 py-2 rounded"
+                        data-status="no_show">
+                    No Show
+                </button>
+            </div>
+        </form>
     </div>
+</div>
+
 
     <div x-show="tab==='treatment'" x-cloak>
         <div id="printable-treatment">
@@ -255,9 +310,13 @@ window.printReceipt = function () {
         $('#finalizeAppointmentForm button[type="submit"]').on('click', function (e) {
             e.preventDefault();
 
+            // Clear previous validation errors
+            $('.error-text').remove();
+            $('input, textarea, select').removeClass('border-red-500 bg-red-50');
+
             const button = $(this);
             const status = button.data('status');
-            $('#status').val(status); // Set hidden input
+            $('#status').val(status);
 
             const form = $('#finalizeAppointmentForm')[0];
             const id = $(form).data('id');
@@ -281,19 +340,41 @@ window.printReceipt = function () {
                         data: formData,
                         processData: false,
                         contentType: false,
+
                         success: function (res) {
                             Swal.fire('Success', res.message ?? 'Done!', 'success')
                                 .then(() => {
                                     window.dispatchEvent(new CustomEvent('open-receipt'));
                                 });
                         },
-                        error: function () {
-                            Swal.fire('Error', 'Something went wrong.', 'error');
+
+                        error: function (xhr) {
+                            // Laravel validation error
+                            if (xhr.status === 422) {
+                                const errors = xhr.responseJSON.errors;
+
+                                $.each(errors, function (field, messages) {
+                                    const input = $(`[name="${field}"]`);
+
+                                    // Highlight field
+                                    input.addClass('border-red-500 bg-red-50');
+
+                                    // Show error message
+                                    input.after(`
+                                        <p class="text-red-500 text-sm mt-1 error-text">
+                                            ${messages[0]}
+                                        </p>
+                                    `);
+                                });
+                            } else {
+                                Swal.fire('Error', 'Something went wrong.', 'error');
+                            }
                         }
                     });
                 }
             });
         });
+
     });
 </script>
 <script>
