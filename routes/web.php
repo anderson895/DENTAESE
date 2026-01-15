@@ -137,3 +137,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/patient/messages/{storeId}', [MessageController::class, 'patientMessages'])->name('patient.messages');
     Route::post('/patient/messages', [MessageController::class, 'sendMessage'])->name('patient.messages.store');
 });
+
+

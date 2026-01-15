@@ -22,6 +22,14 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitLogController;
 use Illuminate\Support\Facades\Auth;
 
+
+
+Route::put(
+    '/admin/booking-history/{appointment}',
+    [AdminBookingController::class, 'updateHistory']
+)->name('admin.booking.history.update');
+
+
 Route::post('/remove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
 Route::patch('/updateProfile', [ProfileController::class, 'updateProfile'])->middleware('auth')->name('updateProfile');
 

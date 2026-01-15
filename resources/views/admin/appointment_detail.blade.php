@@ -125,7 +125,7 @@
                 <button type="submit"
                         class="bg-green-600 text-white px-4 py-2 rounded"
                         data-status="completed">
-                    Complete
+                    Finalize Payment
                 </button>
 
                 <button type="submit"
