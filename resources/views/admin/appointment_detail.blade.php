@@ -351,13 +351,22 @@ window.printReceipt = function () {
                         contentType: false,
 
                         success: function (res) {
-                            Swal.fire('Success', res.message ?? 'Done!', 'success')
-                                .then(() => {
-                                    window.dispatchEvent(new CustomEvent('open-receipt'));
-                                });
-                        },
+                        Swal.fire('Success', res.message ?? 'Done!', 'success')
+                            .then(() => {
 
-                        error: function (xhr) {
+                                // 🔹 Disable all action buttons
+                                $('#finalizeAppointmentForm button[type="submit"]').remove();
+
+                                // 🔹 Show COMPLETED label
+                                $('#finalizeAppointmentForm .mt-6').html(`
+                                    <span class="text-green-600 font-semibold flex items-center gap-2">
+                                        ✔ Completed
+                                    </span>
+                                `);
+
+                                window.dispatchEvent(new CustomEvent('open-receipt'));
+                            });
+                    },error: function (xhr) {
                             // Laravel validation error
                             if (xhr.status === 422) {
                                 const errors = xhr.responseJSON.errors;
