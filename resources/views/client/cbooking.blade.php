@@ -197,12 +197,31 @@
         <div id="dentistCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
         <h2 class="text-xl font-bold mb-2">Choose Date & Time</h2>
-        <div class="w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl">
-
+        <div class="flex flex-col gap-6 lg:flex-row">
+  
+        <!-- Calendar (Left) -->
+        <div class="w-full lg:w-2/3">
             <div class="bg-white rounded-2xl shadow-md p-4 sm:p-6">
-                <div id="calendar"></div>
+            <div id="calendar"></div>
             </div>
         </div>
+
+        <!-- Appointments Card (Right) -->
+        <div class="w-full lg:w-1/3">
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
+            <h2 class="mb-4 text-lg font-semibold text-emerald-600">
+            Booked Slots
+            </h2>
+
+            <div id="bookedSlots" class="space-y-3 text-sm text-gray-500">
+            <p>No booked slots</p>
+            </div>
+        </div>
+        </div>
+
+
+        </div>
+
 
 
         <input hidden type="text" id="appointment_date" class="w-full p-2 border rounded mt-4" placeholder="Selected date will appear here" readonly>
@@ -449,6 +468,8 @@ $('#appointment_date').on('change', function () {
         .prop('disabled', false)
         .html('<option>Loading...</option>');
 
+    $('#bookedSlots').html('<p>Loading...</p>');
+
     $.get(`/branch/${storeId}/dentist/${dentistId}/slots`, { date }, function (resp) {
 
         if (resp.status === 'success') {
@@ -457,6 +478,7 @@ $('#appointment_date').on('change', function () {
             const booked = resp.booked_slots || [];
             const allTimes = [...new Set([...resp.slots, ...booked])].sort();
 
+            // Populate dropdown
             allTimes.forEach(time => {
                 const label = formatTimeToAMPM(time);
                 options += booked.includes(time)
@@ -466,13 +488,37 @@ $('#appointment_date').on('change', function () {
 
             $('#appointment_time').html(options);
             checkStep2NextButton();
+
+            // 🔹 Render booked slots card
+            if (booked.length) {
+                let bookedHtml = '';
+                booked.forEach(time => {
+                    bookedHtml += `
+                        <div class="flex items-center justify-between rounded-xl bg-emerald-50 p-3">
+                            <span class="font-medium text-emerald-700">
+                                ${formatTimeToAMPM(time)}
+                            </span>
+                            <span class="text-xs font-semibold text-red-500">
+                                Booked
+                            </span>
+                        </div>
+                    `;
+                });
+                $('#bookedSlots').html(bookedHtml);
+            } else {
+                $('#bookedSlots').html('<p>No booked slots</p>');
+            }
+
         } else {
             $('#appointment_time')
                 .html('<option>No slots available</option>')
                 .prop('disabled', true);
+
+            $('#bookedSlots').html('<p>No booked slots</p>');
         }
     });
 });
+
 
 $('#appointment_time').on('change', checkStep2NextButton);
 
@@ -498,7 +544,12 @@ $('#bookingForm').on('submit', function (e) {
             $('#bookingForm')[0].reset();
             goToStep(1);
         } else {
-            Swal.fire('Error!', resp.message, 'error');
+            Swal.fire({
+            icon: 'info',
+            title: 'Info',
+            text: resp.message
+            });
+
         }
     });
 });
