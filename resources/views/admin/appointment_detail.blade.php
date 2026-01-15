@@ -24,7 +24,7 @@
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
     <div class="w-full mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">Finalize Appointment</h2>
+        <h2 class="text-2xl font-bold mb-4">Finalize Appointment </h2>
 
         <p>
             <strong>Client:</strong>
@@ -123,18 +123,27 @@
 
             {{-- ACTION BUTTONS --}}
             <div class="mt-6 flex flex-row gap-5">
-                <button type="submit"
-                        class="bg-green-600 text-white px-4 py-2 rounded"
-                        data-status="completed">
-                    Complete
-                </button>
+                @if ($appointment->status === 'completed')
+                    <!-- Legend kapag completed na -->
+                    <span class="text-green-600 font-semibold flex items-center gap-2">
+                        ✔ Completed
+                    </span>
+                @else
+                    <!-- Buttons kapag hindi pa completed -->
+                    <button type="submit"
+                            class="bg-green-600 text-white px-4 py-2 rounded"
+                            data-status="completed">
+                        Complete
+                    </button>
 
-                <button type="submit"
-                        class="bg-red-600 text-white px-4 py-2 rounded"
-                        data-status="no_show">
-                    No Show
-                </button>
+                    <button type="submit"
+                            class="bg-red-600 text-white px-4 py-2 rounded"
+                            data-status="no_show">
+                        No Show
+                    </button>
+                @endif
             </div>
+
         </form>
     </div>
 </div>
