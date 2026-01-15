@@ -5,9 +5,6 @@
 @section('main-content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<!-- Font Awesome + jQuery -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <div class="flex h-screen">
 
@@ -59,6 +56,11 @@
     </div>
   </div>
 </div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 
 <script>
 /* ================= GLOBAL ================= */
@@ -183,6 +185,7 @@ function sendMessage() {
   });
 }
 
+
 /* ================= FILE UPLOAD (ADMIN) ================= */
 $('#adminFileInput').on('change', function () {
 
@@ -208,19 +211,43 @@ $('#adminFileInput').on('change', function () {
     headers: {
       'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
     },
+
+    // 👉 SWEETALERT LOADER
+    beforeSend() {
+      Swal.fire({
+        title: 'Uploading file...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+    },
+
     success(res) {
+      Swal.close(); // ❌ close loader
+
       if (res.status === 'success') {
         loadMessages(currentStore, currentPatient);
         loadPatients();
         $('#adminFileInput').val('');
       }
     },
+
     error(err) {
+      Swal.close(); // ❌ close loader
       console.error(err);
-      alert('Upload failed');
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Upload failed',
+        text: 'Unable to upload file. Please try again.'
+      });
     }
   });
 });
+
 
 /* ================= AUTO REFRESH ================= */
 setInterval(() => {

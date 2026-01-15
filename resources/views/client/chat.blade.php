@@ -42,6 +42,7 @@
 
 
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <script>
@@ -70,7 +71,23 @@ $('#fileInput').on('change', function () {
     headers: {
       'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
     },
+
+    // 👉 SWEETALERT LOADER
+    beforeSend: function () {
+      Swal.fire({
+        title: 'Uploading...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+    },
+
     success: function (res) {
+      Swal.close(); // ❌ close loader
+
       if (res.status === 'success') {
         $('#messagesBox').append(`
           <div class="bg-sky-500 text-white p-2 rounded-lg max-w-md ml-auto shadow">
@@ -85,11 +102,18 @@ $('#fileInput').on('change', function () {
         loadBranches();
       }
     },
+
     error: function () {
-      alert('File upload failed');
+      Swal.close(); // ❌ close loader
+      Swal.fire({
+        icon: 'error',
+        title: 'Upload failed',
+        text: 'File upload failed. Please try again.'
+      });
     }
   });
 });
+
 
 
 
