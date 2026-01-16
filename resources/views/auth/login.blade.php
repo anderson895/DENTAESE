@@ -76,8 +76,6 @@
         btn.textContent = 'Show';
       }
     }
-    </script>
-<script>
 $(document).ready(function () {
     $('#loginForm').submit(function (event) {
         event.preventDefault();
@@ -88,11 +86,24 @@ $(document).ready(function () {
             _token: '{{ csrf_token() }}'
         };
 
+        // 🔄 Show loader habang nagpo-process
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             type: 'POST',
             url: '{{ route('loginform') }}',
             data: formData,
             success: function (response) {
+                Swal.close(); // ❌ close loader
+
                 if (response.status === "success") {
                     Swal.fire({
                         title: 'Success!',
@@ -107,10 +118,18 @@ $(document).ready(function () {
                 }
             },
             error: function (xhr) {
+                Swal.close(); // ❌ close loader
                 console.log(xhr.responseText);
+
+                Swal.fire(
+                    'Error',
+                    'May nangyaring problema. Pakisubukan muli.',
+                    'error'
+                );
             }
         });
     });
 });
 </script>
+
 @endsection
