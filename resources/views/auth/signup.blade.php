@@ -110,7 +110,7 @@
         Please register your face to continue
     </p>
 
-    <input type="text" id="face_token" name="face_token">
+    <input hidden type="text" id="face_token" name="face_token">
 
     <button type="button"
         id="capturemodal"
