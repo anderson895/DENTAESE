@@ -8,23 +8,38 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
-<div x-data="{ tab: 'checkin' }" class="p-6">
+<div x-data="{ tab: 'info' }" class="p-6">
 
     <h1 class="text-2xl font-bold mb-4">Appointment #{{ $appointment->id }}</h1>
 
     <!-- Tabs -->
     <div class="flex border-b mb-4">
-        <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
-        <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
         <button @click="tab='info'" :class="tab==='info' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Dental Chart</button>
-        <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
+        <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='rx'" :class="tab==='rx' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">RX</button>
+        <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
+        <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
     </div>
 
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
     <div class="w-full mx-auto bg-white p-6 rounded shadow">
+
+    <div class="flex items-center mt-2">
+        
         <h2 class="text-2xl font-bold mb-4">Finalize Payment</h2>
+        <!-- Next button (right) -->
+        <button
+            @click="tab='rx'"
+            class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+        >
+            Next
+        </button>
+    </div>
+
+     
+
+        
 
         <p>
             <strong>Client:</strong>
@@ -121,19 +136,28 @@
             <input type="hidden" name="status" id="status" value="completed">
 
             {{-- ACTION BUTTONS --}}
-            <div class="mt-6 flex flex-row gap-5">
-                <button type="submit"
-                        class="bg-green-600 text-white px-4 py-2 rounded"
-                        data-status="completed">
-                    Complete    
-                </button>
+            <div class="mt-6">
+                @if ($appointment->status === 'completed')
+                    <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
+                        Completed
+                    </span>
+                @else
+                    <div class="flex flex-row gap-5" id="action-buttons">
+                        <button type="submit"
+                                class="bg-green-600 text-white px-4 py-2 rounded"
+                                data-status="completed">
+                            Complete
+                        </button>
 
-                <button type="submit"
-                        class="bg-red-600 text-white px-4 py-2 rounded"
-                        data-status="no_show">
-                    No Show
-                </button>
+                        <button type="submit"
+                                class="bg-red-600 text-white px-4 py-2 rounded"
+                                data-status="no_show">
+                            No Show
+                        </button>
+                    </div>
+                @endif
             </div>
+
         </form>
     </div>
 </div>
@@ -180,26 +204,33 @@
     x-cloak
     x-show="openReceiptModal"
     @open-receipt.window="openReceiptModal = true"
+    @close-receipt.window="openReceiptModal = false"
+    @keydown.escape.window="openReceiptModal = false"
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 no-print"
 >
 
+    <!-- BACKDROP CLICK CLOSE -->
+    <div
+        @click="openReceiptModal = false"
+        class="absolute inset-0"
+    ></div>
 
-    <div class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative">
+    <!-- MODAL CONTENT -->
+    <div
+        class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative z-10"
+        @click.stop
+    >
 
-        <!-- Close -->
+        <!-- CLOSE BUTTON -->
         <button
             @click="openReceiptModal = false"
             class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 no-print"
-        >✕</button>
+        >
+            ✕
+        </button>
 
         <!-- ================= RECEIPT ================= -->
-        <div
-            id="ack-receipt-print"
-            class="print-area"
-        >
-
-
-
+        <div id="ack-receipt-print" class="print-area">
 
             <!-- HEADER -->
             <div style="text-align:center; line-height:1.4;">
@@ -255,7 +286,6 @@
                         style="border-bottom:1px solid #000; display:inline-block; width:120px;">
                     </span>
                     ) in full / partial payment for
-
                     <span style="border-bottom:1px solid #000; display:inline-block; width:45%;">
                         {{ $appointment->service_name }}
                     </span>
@@ -264,7 +294,6 @@
 
             <!-- SIGNATURE -->
             <div style="margin-top:40px; text-align:right;">
-                <div style="margin-bottom:40px;"></div>
                 <strong>By:</strong>
                 <div style="border-top:1px solid #000; width:220px; margin-left:auto; padding-top:5px;">
                     {{ Auth::user()->name }} {{ Auth::user()->lastname }}
@@ -275,16 +304,19 @@
             </div>
         </div>
 
-        <!-- Print Button -->
+        <!-- PRINT BUTTON -->
         <div class="mt-6 flex justify-end no-print">
-            <button onclick="printCheckinReceipt()"
-                class="bg-green-600 text-white px-4 py-2 rounded">
+            <button
+                onclick="printCheckinReceipt()"
+                class="bg-green-600 text-white px-4 py-2 rounded"
+            >
                 Print
             </button>
         </div>
 
     </div>
 </div>
+
 
 
 
@@ -298,47 +330,54 @@
 {{-- Scripts --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
 function printCheckinReceipt() {
     const receipt = document.getElementById('ack-receipt-print');
     if (!receipt) return;
 
-    const clone = receipt.cloneNode(true);
+    const printWindow = window.open('', '_blank', 'width=900,height=600');
 
-    const originalBody = document.body.innerHTML;
+    const doc = printWindow.document;
 
-    document.body.innerHTML = `
-        <style>
-            @media print {
-                @page { margin: 10mm; }
-                body {
-                    font-family: system-ui, sans-serif;
-                }
+    // Title
+    const title = doc.createElement('title');
+    title.textContent = 'Check-in Receipt';
+    doc.head.appendChild(title);
+
+    // Print styles
+    const style = doc.createElement('style');
+    style.textContent = `
+        @media print {
+            @page { margin: 10mm; }
+            body {
+                font-family: system-ui, sans-serif;
+                margin: 0;
             }
-        </style>
+        }
     `;
+    doc.head.appendChild(style);
 
-    document.body.appendChild(clone);
-    window.print();
+    // Tailwind (optional)
+    const tailwind = doc.createElement('link');
+    tailwind.rel = 'stylesheet';
+    tailwind.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css';
+    doc.head.appendChild(tailwind);
 
-    // restore page
+    // Content
+    const clone = receipt.cloneNode(true);
+    doc.body.appendChild(clone);
+
+    // Wait for styles & content
     setTimeout(() => {
-        document.body.innerHTML = originalBody;
-        window.location.reload();
-    }, 200);
+        printWindow.focus();
+        printWindow.print();
+    }, 500);
 }
 </script>
 
 
+
 <script>
-
-
-
-
-
-
-
 $(document).on('input', 'input[name="total_price"]', function () {
     let value = parseFloat($(this).val());
 
@@ -407,51 +446,24 @@ $(document).on('input', 'input[name="total_price"]', function () {
                     data: formData,
                     processData: false,
                     contentType: false,
-
                     success: function (res) {
                         Swal.fire(
                             'Success',
                             res.message ?? 'Appointment completed successfully!',
                             'success'
                         ).then(() => {
+
+                            // UI-only update (Blade remains untouched)
+                            if ($('#status').val() === 'completed') {
+                                $('#action-buttons').replaceWith(`
+                                    <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
+                                        Completed
+                                    </span>
+                                `);
+                            }
+
                             window.dispatchEvent(new CustomEvent('open-receipt'));
                         });
-                    },
-
-                    error: function (xhr) {
-                        // Laravel validation error
-                        if (xhr.status === 422) {
-                            const errors = xhr.responseJSON.errors;
-
-                            // Loop through validation errors
-                            Object.keys(errors).forEach(function (field) {
-                                const input = $(`[name="${field}"]`);
-
-                                // Highlight field (Tailwind)
-                                input.addClass('border-red-500 ring-1 ring-red-500');
-
-                                // Show error message
-                                input.after(`
-                                    <p class="form-error text-sm text-red-600 mt-1">
-                                        ${errors[field][0]}
-                                    </p>
-                                `);
-                            });
-
-                            // Scroll to first error field
-                            const firstError = Object.keys(errors)[0];
-                            const firstInput = $(`[name="${firstError}"]`);
-                            $('html, body').animate({
-                                scrollTop: firstInput.offset().top - 120
-                            }, 400);
-
-                        } else {
-                            Swal.fire(
-                                'Error',
-                                'Something went wrong. Please try again.',
-                                'error'
-                            );
-                        }
                     }
                 }); 
             });

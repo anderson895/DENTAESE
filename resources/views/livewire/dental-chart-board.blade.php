@@ -1,9 +1,23 @@
 <div class="space-y-6">
      @if (auth()->user()->account_type == 'admin')
-    <button onclick="printDiv('printable-info')" 
-    class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
-    Print Dental Chart
-</button>
+    <div class="flex items-center mt-2">
+        <!-- Print button (left) -->
+        <button
+            onclick="printDiv('printable-info')"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden"
+        >
+            Print Dental Chart
+        </button>
+
+        <!-- Next button (right) -->
+        <button
+            @click="tab='checkin'"
+            class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+        >
+            Next
+        </button>
+    </div>
+
 @endif
     <!-- Temporary Upper Teeth -->
     <div>
@@ -321,6 +335,8 @@
                 <input type="checkbox" wire:model.change="chart.tmd_muscle_spasm" @if(auth()->user()->account_type == 'patient') disabled @endif> Muscle Spasm
             </label>
         </div>
+
+        
     
     </div>
     

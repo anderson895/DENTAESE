@@ -1,3 +1,15 @@
+<div class="flex items-center mt-2 mb-4">
+        <button onclick="window.printRx()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Print Rx</button>
+
+        <!-- Next button (right) -->
+        <button
+            @click="tab='treatment'"
+            class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+        >
+            Next
+        </button>
+</div>    
+    
     <!-- Input area hidden in print -->
     <div class="flex gap-2 mb-4 no-print">
         <select id="medicine-select" class="border p-2 rounded w-full">
@@ -44,9 +56,6 @@
     </div>
 </div>
 
-<div class="text-right mt-4">
-    <button onclick="window.printRx()" class="bg-green-600 text-white px-4 py-2 rounded">Print Rx</button>
-</div>
 
 <script>
 const medicines = @json($medicines);
