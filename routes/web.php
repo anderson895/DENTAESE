@@ -91,6 +91,11 @@ Route::get('/faceui',[AuthUi::class, 'FaceUi'])->name('faceui');
 Route::post('/get-face-landmarks', [FaceRecognitionController::class, 'getLandmarks']);
 
 
+// Face registration for new users
+Route::post('/cregister-face-registration', [FaceRecognitionController::class, 'registerFaceForSignup']);
+
+
+
 Route::get('/qr',[AuthUi::class, 'Qr'])->name('Qr');
 Route::post('/qr-login', [QrController::class, 'LoginQr'])->name('qr.login');
 

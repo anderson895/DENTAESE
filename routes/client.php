@@ -25,6 +25,11 @@ Route::middleware(['auth', Client::class])->group(function(){
      
     //Route::get('/cprofile', [Clientside::class,'CProfile'])->name('CProfile')->middleware('auth');
     Route::post('/cregister-face',[Facerecognition::class,'registerFace'])->name("cregister-face")->middleware('auth');
+    
+    
+
+
+
     Route::post('/cremove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
     Route::get('/cprofile', [ProfileController::class, 'showProfile'])->name('CProfile');
    
@@ -42,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 });
+
+
 
 Route::post('/profile/upload', [ProfileController::class, 'uploadprofileimage'])->name('profile.upload');
 

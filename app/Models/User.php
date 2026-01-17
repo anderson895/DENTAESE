@@ -60,7 +60,9 @@ class User extends Authenticatable
     'qr_code',
     'qr_token',
     'is_consent',
+    'face_token', // <- add this
 ];
+
 
     /**
      * The attributes that should be hidden for serialization.
