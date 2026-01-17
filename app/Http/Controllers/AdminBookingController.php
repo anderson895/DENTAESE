@@ -194,28 +194,26 @@ public function settle(Request $request, $id)
     $appointment = Appointment::findOrFail($id);
 
     if ($request->status === 'no_show') {
-        $appointment->status = 'no_show';
-        $appointment->save();
-
+        $appointment->update(['status' => 'no_show']);
         return response()->json(['message' => 'Marked as No Show.']);
     }
 
-  
     $validated = $request->validate([
-        'work_done' => 'required|string',
+        'work_done' => 'nullable|string',
         'paytype' => 'required|string',
         'total_price' => 'required|numeric',
         'payment_receipt' => 'nullable|image|max:2048',
     ]);
 
-
     $data = [
-        'work_done' => $validated['work_done'],
         'payment_type' => $validated['paytype'],
         'total_price' => $validated['total_price'],
         'status' => 'completed',
     ];
 
+    if (!empty($validated['work_done'])) {
+        $data['work_done'] = $validated['work_done'];
+    }
 
     if ($request->hasFile('payment_receipt')) {
         $file = $request->file('payment_receipt');
@@ -224,12 +222,14 @@ public function settle(Request $request, $id)
         $data['payment_image'] = $filename;
     }
 
-
     $appointment->update($data);
 
-    return response()->json(['status' => 'success', 'message' => 'Appointment finalized successfully.']);
-
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Appointment finalized successfully.'
+    ]);
 }
+
 
 
 public function fetch()
