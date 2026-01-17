@@ -99,6 +99,8 @@
             <label>Confirm Password</label>
             <input type="password" id="confirm_password" name="confirm_password" class="w-full border p-2 rounded" required>
         </div>
+
+        
     </div>
 </div>
 
@@ -107,6 +109,8 @@
     <p class="mb-4 font-semibold text-gray-700">
         Please register your face to continue
     </p>
+
+    <input type="text" id="face_token" name="face_token">
 
     <button type="button"
         id="capturemodal"
@@ -147,11 +151,6 @@
 </div>
 </div>
 
-
-
-
-
-
 <!-- JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -159,6 +158,7 @@
 <script>
 let currentStep = 1;
 const totalSteps = 4;
+let faceRegistered = false;
 
 function showStep(step) {
     $('.step').addClass('hidden');
@@ -176,8 +176,7 @@ $(document).ready(function () {
 
     /* NEXT BUTTON */
     $('.next').click(function () {
-
-        /* STEP 2 → SEND OTP */
+        /* STEP 2 → PASSWORD VALIDATION ONLY */
         if (currentStep === 2) {
             const password = $('#password').val();
             const confirmPassword = $('#confirm_password').val();
@@ -187,31 +186,8 @@ $(document).ready(function () {
                 return;
             }
 
-            const formData = new FormData($('#signupForm')[0]);
-            formData.append('_token', '{{ csrf_token() }}');
-
-            Swal.fire({
-                title: 'Sending OTP...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            $.ajax({
-                url: '{{ route("send.otp") }}',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function () {
-                    Swal.close();
-                    currentStep++;
-                    showStep(currentStep);
-                },
-                error: function (xhr) {
-                    Swal.close();
-                    Swal.fire('Error', xhr.responseJSON.message, 'error');
-                }
-            });
+            currentStep++;
+            showStep(currentStep);
             return;
         }
 
@@ -221,8 +197,16 @@ $(document).ready(function () {
             return;
         }
 
-        currentStep++;
-        showStep(currentStep);
+        if (currentStep === 3 && faceRegistered) {
+            currentStep++;
+            showStep(currentStep);
+            return;
+        }
+
+        if (currentStep < totalSteps) {
+            currentStep++;
+            showStep(currentStep);
+        }
     });
 
     /* PREV BUTTON */
@@ -242,7 +226,7 @@ $(document).ready(function () {
         $('#confirm_password').attr('type', this.checked ? 'text' : 'password');
     });
 
-    /* SUBMIT → OTP VERIFY */
+    /* SUBMIT → OTP VERIFY → FINAL SIGNUP */
     $('#signupForm').on('submit', function (e) {
         e.preventDefault();
         const otp = $('#otp').val();
@@ -259,22 +243,40 @@ $(document).ready(function () {
         });
 
         $.ajax({
-            url: '{{ route("verify.otp") }}',
-            method: 'GET',
-            data: { otp, _token: '{{ csrf_token() }}' },
-            success: function (res) {
-                Swal.fire('Success', res.message, 'success').then(() => {
-                    localStorage.clear();
-                    window.location.href = "{{ route('login') }}";
+        url: '{{ route("verify.otp") }}',
+        method: 'GET',
+        data: { otp, _token: '{{ csrf_token() }}' },
+        success: function (res) {
+            Swal.fire('OTP Verified', res.message, 'success').then(() => {
+                // Submit final signup including face_token
+                const finalFormData = new FormData($('#signupForm')[0]);
+                $.ajax({
+                    url: '{{ route("final.signup") }}',
+                    method: 'POST',
+                    data: finalFormData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        Swal.fire('Account Created', res.message, 'success').then(() => {
+                            localStorage.clear();
+                            window.location.href = "{{ route('login') }}";
+                        });
+                    },
+                    error: function (xhr) {
+                        Swal.fire('Error', xhr.responseJSON.message, 'error');
+                    }
                 });
-            },
-            error: function (xhr) {
-                Swal.fire('Error', xhr.responseJSON.message, 'error');
-            }
-        });
+            });
+        },
+        error: function (xhr) {
+            Swal.fire('Error', xhr.responseJSON.message, 'error');
+        }
+    });
+
     });
 });
 </script>
+
 <!-- ================= FACE CAPTURE ================= -->
 <script>
 const openBtn = document.getElementById('capturemodal');
@@ -284,11 +286,8 @@ const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const captureButton = document.getElementById('capture');
 const context = canvas.getContext('2d');
+let stream = null;
 
-let faceRegistered = false;
-let stream = null; // store camera stream
-
-// --- Open modal & start camera ---
 openBtn.addEventListener('click', async () => {
     modal.classList.remove('hidden');
     try {
@@ -300,13 +299,11 @@ openBtn.addEventListener('click', async () => {
     }
 });
 
-// --- Close modal & stop camera ---
 closeBtn.addEventListener('click', () => {
     modal.classList.add('hidden');
     stopCamera();
 });
 
-// --- Capture & register face ---
 captureButton.addEventListener('click', async () => {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -315,21 +312,8 @@ captureButton.addEventListener('click', async () => {
             return Swal.fire('Error', 'Failed to capture image.', 'error');
         }
 
-        // Collect all required signup fields
         const formData = new FormData();
         formData.append('face_image', blob, 'face.jpg');
-        formData.append('name', $('input[name="name"]').val());
-        formData.append('middlename', $('input[name="middlename"]').val() || '');
-        formData.append('lastname', $('input[name="lastname"]').val());
-        formData.append('suffix', $('select[name="suffix"]').val() || '');
-        formData.append('birth_date', $('input[name="birth_date"]').val());
-        formData.append('birthplace', $('input[name="birthplace"]').val());
-        formData.append('current_address', $('input[name="current_address"]').val());
-        formData.append('email', $('input[name="email"]').val());
-        formData.append('contact_number', $('input[name="contact_number"]').val() || '');
-        formData.append('user', $('input[name="user"]').val());
-        formData.append('password', $('#password').val());
-        formData.append('account_type', 'patient');
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
         Swal.fire({
@@ -350,30 +334,44 @@ captureButton.addEventListener('click', async () => {
 
             const text = await res.text();
             let data;
+            try { data = JSON.parse(text); } catch { throw new Error('Invalid server response.'); }
 
-            // Parse JSON safely
-            try {
-                data = JSON.parse(text);
-            } catch {
-                console.error('Server returned non-JSON:', text);
-                throw new Error('Invalid response from server. Check console.');
-            }
+            if (!res.ok) throw new Error(data.message || 'Face registration failed.');
 
-            if (!res.ok) {
-                throw new Error(data.message || 'Face registration failed.');
-            }
-
-            // Success → mark face as registered
+            // ✅ FACE SUCCESS
             faceRegistered = true;
+            $('#face_token').val(data.face_token); // store token for final signup
+
             Swal.fire('Success', data.message, 'success');
             modal.classList.add('hidden');
             stopCamera();
 
-            // Move to next step in the signup wizard
-            if (typeof currentStep !== 'undefined' && typeof showStep === 'function') {
-                currentStep++;
-                showStep(currentStep);
-            }
+            // --- SEND OTP ---
+            const otpFormData = new FormData($('#signupForm')[0]);
+            otpFormData.append('_token', '{{ csrf_token() }}');
+
+            Swal.fire({
+                title: 'Sending OTP...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            $.ajax({
+                url: '{{ route("send.otp") }}',
+                method: 'POST',
+                data: otpFormData,
+                processData: false,
+                contentType: false,
+                success: function () {
+                    Swal.close();
+                    currentStep++;
+                    showStep(currentStep);
+                },
+                error: function (xhr) {
+                    Swal.close();
+                    Swal.fire('Error', xhr.responseJSON.message, 'error');
+                }
+            });
 
         } catch (err) {
             console.error(err);
@@ -383,7 +381,6 @@ captureButton.addEventListener('click', async () => {
     }, 'image/jpeg');
 });
 
-// --- Stop camera helper ---
 function stopCamera() {
     if (stream) {
         stream.getTracks().forEach(track => track.stop());

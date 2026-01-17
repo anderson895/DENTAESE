@@ -111,6 +111,9 @@ Route::post('/login-face', [AuthUi::class, 'loginFace'])->name('login-face');
 Route::post('/signup/send-otp', [AuthUi::class, 'sendOtp'])->name('send.otp');
 Route::get('/signup/verify-otp', [AuthUi::class, 'verifyOtp'])->name('verify.otp');
 
+// --- NEW: Final signup route (after OTP is verified) ---
+Route::post('/signup/final', [AuthUi::class, 'finalSignup'])->name('final.signup');
+
 
 
 

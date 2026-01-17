@@ -70,24 +70,15 @@ class FaceRecognitionController extends Controller
         }
     }
 
-    public function registerFaceForSignup(Request $request)
+   public function registerFaceForSignup(Request $request)
 {
     $request->validate([
-        'name' => 'required|string',
-        'lastname' => 'required|string',
-        'birth_date' => 'required|date',
-        'birthplace' => 'required|string',
-        'current_address' => 'required|string',
-        'email' => 'required|email|unique:users,email',
-        'user' => 'required|string|unique:users,user', // username
-        'password' => 'required|string|min:6',
         'face_image' => 'required|image',
     ]);
 
     $image = $request->file('face_image');
 
     try {
-        // Detect face
         $detectResponse = Http::attach(
             'image_file',
             file_get_contents($image),
@@ -114,29 +105,12 @@ class FaceRecognitionController extends Controller
         ], 500);
     }
 
-    // Save new user with the face token (same as profile registration)
-    $user = User::create([
-        'name' => $request->name,
-        'middlename' => $request->middlename ?? null,
-        'lastname' => $request->lastname,
-        'suffix' => $request->suffix ?? null,
-        'birth_date' => $request->birth_date,
-        'birthplace' => $request->birthplace,
-        'current_address' => $request->current_address,
-        'email' => $request->email,
-        'contact_number' => $request->contact_number ?? null,
-        'user' => $request->user,
-        'password' => bcrypt($request->password),
-        'account_type' => 'patient',
-        'face_token' => $faceToken, // store detected face token
-    ]);
-
     return response()->json([
-        'message' => 'User registered successfully with face!',
-        'user' => $user,
+        'message' => 'Face detected successfully.',
         'face_token' => $faceToken,
-    ], 201);
+    ], 200);
 }
+
 
 
 }
