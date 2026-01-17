@@ -174,74 +174,123 @@
     </div>
 </div>
 
-<div 
+<!-- Modal -->
+<div
     x-data="{ openReceiptModal: false }"
     x-cloak
+    x-show="openReceiptModal"
     @open-receipt.window="openReceiptModal = true"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 no-print"
 >
-    <!-- Trigger button (optional manual open) -->
-    {{-- <button @click="openReceiptModal = true"
-        class="bg-blue-600 text-white px-4 py-2 rounded">
-        Print Receipt
-    </button> --}}
 
-    <!-- Modal -->
-    <div x-show="openReceiptModal"
-         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative">
-            <!-- Close -->
-            <button @click="openReceiptModal = false"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">✕</button>
 
-            <!-- Receipt -->
-            <div id="receipt-content" class="text-sm font-serif">
-                <h2 class="text-center text-lg font-bold">
-                    Santiago – Amancio Dental Clinic
-                </h2>
-                <p class="text-center">
-                    {{ ($appointment->store->name ?? 'N/A') }}<br>
-                  {{ ($appointment->store->address ?? 'N/A') }}<br>
-               
-                </p>
+    <div class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative">
 
-                <h3 class="text-center font-bold mt-4 underline">
-                    ACKNOWLEDGEMENT RECEIPT
-                </h3>
+        <!-- Close -->
+        <button
+            @click="openReceiptModal = false"
+            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 no-print"
+        >✕</button>
 
-<div class="mt-4 leading-relaxed">
-    <p>
-        Received from 
-        <u>{{ e($appointment->user->name ?? 'N/A') }} {{ ($appointment->user->lastname ?? '') }} {{ e($appointment->user->suffix ?? '') }}</u>
-        of 
-        <u>{{ $appointment->user->current_address }}</u>,
-        the sum of 
-        <u><span id="receipt-sum">____________________________</span></u>
-        for 
-        <u>{{ e($appointment->service_name ?? '') }}</u>
-        on 
-        <u>{{ now()->format('F j, Y') }}</u>.
-    </p>
-</div>
+        <!-- ================= RECEIPT ================= -->
+        <div
+            id="ack-receipt-print"
+            class="print-area"
+        >
 
-                <div class="mt-8 flex justify-between">
-                    <span></span>
-                <div class="text-center mt-8">
-                <p><strong>{{ Auth::user()->name }} {{ Auth::user()->lastname }} {{ Auth::user()->suffix }}</strong></p>
-                <p class="text-sm">{{ Auth::user()->position }}</p>
-            </div>
-                            </div>
+
+
+
+            <!-- HEADER -->
+            <div style="text-align:center; line-height:1.4;">
+                <strong>Santiago – Amancio Dental Clinic</strong><br>
+                <span style="font-size:10pt;">
+                    {{ $appointment->store->address ?? 'N/A' }}<br>
+                    {{ $appointment->store->name ?? 'N/A' }}
+                </span>
             </div>
 
-            <!-- Print -->
-            <div class="mt-6 flex justify-end">
-                <button onclick="printReceipt()"
-                    class="bg-green-600 text-white px-4 py-2 rounded">
-                    Print
-                </button>
+            <hr style="margin:10px 0;">
+
+            <!-- TITLE -->
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <strong>ACKNOWLEDGEMENT RECEIPT</strong>
+                <span>
+                    Date:
+                    <span style="border-bottom:1px solid #000; padding:0 40px;">
+                        {{ now()->format('m/d/Y') }}
+                    </span>
+                </span>
+            </div>
+
+            <!-- BODY -->
+            <div style="line-height:2;">
+                <div>
+                    Received from
+                    <span style="border-bottom:1px solid #000; display:inline-block; width:75%;">
+                        {{ $appointment->user->name }}
+                        {{ $appointment->user->lastname }}
+                        {{ $appointment->user->suffix }}
+                    </span>
+                </div>
+
+                <div>
+                    Address at
+                    <span style="border-bottom:1px solid #000; display:inline-block; width:78%;">
+                        {{ $appointment->user->current_address }}
+                    </span>
+                </div>
+
+                <div>
+                    the sum of
+                    <span id="receipt-sum-words"
+                        style="border-bottom:1px solid #000; display:inline-block; width:78%;">
+                        ____________________________
+                    </span>
+                </div>
+
+                <div>
+                    ( ₱
+                    <span id="receipt-sum-amount"
+                        style="border-bottom:1px solid #000; display:inline-block; width:120px;">
+                    </span>
+                    ) in full / partial payment for
+
+                    <span style="border-bottom:1px solid #000; display:inline-block; width:45%;">
+                        {{ $appointment->service_name }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- SIGNATURE -->
+            <div style="margin-top:40px; text-align:right;">
+                <div style="margin-bottom:40px;"></div>
+                <strong>By:</strong>
+                <div style="border-top:1px solid #000; width:220px; margin-left:auto; padding-top:5px;">
+                    {{ Auth::user()->name }} {{ Auth::user()->lastname }}
+                </div>
+                <div style="font-size:10pt;">
+                    {{ Auth::user()->position }}
+                </div>
             </div>
         </div>
+
+        <!-- Print Button -->
+        <div class="mt-6 flex justify-end no-print">
+            <button onclick="printCheckinReceipt()"
+                class="bg-green-600 text-white px-4 py-2 rounded">
+                Print
+            </button>
+        </div>
+
     </div>
 </div>
+
+
+
+
+</div>
+
 
 
 
@@ -251,48 +300,65 @@
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    $(document).on('input', 'input[name="total_price"]', function () {
-    let value = parseFloat($(this).val()) || 0;
-    // Format as PHP currency style ₱1,234.56
-    let formatted = value > 0 ? `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '____________________________';
-    $('#receipt-sum').text(formatted);
-});
-window.printReceipt = function () {
-    // Get the receipt HTML
-    const receipt = document.getElementById('receipt-content').innerHTML;
+function printCheckinReceipt() {
+    const receipt = document.getElementById('ack-receipt-print');
+    if (!receipt) return;
 
-    // Backup the current page’s body
-    const original = document.body.innerHTML;
+    const clone = receipt.cloneNode(true);
 
-    // Replace body with only the receipt + print CSS
+    const originalBody = document.body.innerHTML;
+
     document.body.innerHTML = `
         <style>
             @media print {
-                @page {
-                    margin: 0; /* removes browser header/footer space */
-                }
+                @page { margin: 10mm; }
                 body {
-                    margin: 20mm; /* your custom margin */
+                    font-family: system-ui, sans-serif;
                 }
             }
         </style>
-        ${receipt}
     `;
 
-    // Trigger print
+    document.body.appendChild(clone);
     window.print();
 
-    // Restore original page after a short delay
+    // restore page
     setTimeout(() => {
-        document.body.innerHTML = original;
-        // Redirect to another page after print
-        window.location.href = '/appointments'; // change this to your target URL
-    }, 500); // 500ms delay to ensure print dialog has started
-};
+        document.body.innerHTML = originalBody;
+        window.location.reload();
+    }, 200);
+}
 </script>
 
 
 <script>
+
+
+
+
+
+
+
+$(document).on('input', 'input[name="total_price"]', function () {
+    let value = parseFloat($(this).val());
+
+    if (!value || value <= 0) {
+        // $('#receipt-sum-amount').text('_________');
+        $('#receipt-sum-words').text('__________________________');
+        return;
+    }
+
+    // Format number ₱
+    let formattedAmount = value.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    // $('#receipt-sum-amount').text(formattedAmount);
+
+    // OPTIONAL: words (simple version)
+    $('#receipt-sum-words').text(formattedAmount + ' PESOS ONLY');
+});
     $(document).ready(function () {
                 $('#payment_receipt_input').on('change', function (event) {
             const [file] = this.files;
@@ -393,6 +459,11 @@ window.printReceipt = function () {
 
     });
 </script>
+
+
+
+
+
 <script>
     function printDiv(divId) {
         const redirectUrl = "{{ route('appointments.view', ['id' => $appointment->id]) }}";
@@ -412,11 +483,7 @@ window.printReceipt = function () {
                 clonedInputs[index].value = input.value;
             }
         });
-    
-        // Backup original page
         const originalBody = document.body.innerHTML;
-    
-        // Replace body with cloned content + print styles
         document.body.innerHTML = `
         
             <style>
@@ -429,14 +496,8 @@ window.printReceipt = function () {
             </style>
         `;
         document.body.appendChild(clone);
-    
-        // Trigger print
         window.print();
-    
-        // Restore original page
         setTimeout(() => {
-            // document.body.innerHTML = originalBody;
-            // if (window.Alpine) window.Alpine.initTree(document.body);
             window.location.href = redirectUrl;
         }, 200);
     }
