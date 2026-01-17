@@ -175,13 +175,13 @@
                       <tbody>
                         @forelse ($expiringSoon as $batch)
                             <tr class="text-gray-700 dark:text-gray-100">
-                                <th class="border-t-0 px-4 py-4 text-left text-xs">
+                                <th class="border-t-0 px-4 py-4 text-left text-xs text-gray-500">
                                     {{ $batch->medicine->name }}
                                 </th>
-                                <td class="border-t-0 px-4 py-4 text-xs">
+                                <td class="border-t-0 px-4 py-4 text-xs text-gray-500">
                                     {{ $batch->quantity }}
                                 </td>
-                                <td class="border-t-0 px-4 py-4 text-xs">
+                                <td class="border-t-0 px-4 py-4 text-xs text-gray-500">
                                     Exp: {{ \Carbon\Carbon::parse($batch->expiry_date)->format('M d, Y') }}
                                 </td>
                             </tr>

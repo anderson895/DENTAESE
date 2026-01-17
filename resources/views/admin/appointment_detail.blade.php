@@ -61,7 +61,7 @@
                 <textarea name="work_done"
                           rows="4"
                           class="w-full border rounded p-2"
-                          required></textarea>
+                          ></textarea>
             </div>
 
             {{-- SERVICES --}}

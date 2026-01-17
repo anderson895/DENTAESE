@@ -29,9 +29,17 @@
     <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y') }}</td>
     <td>
     {{ \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A') }}
+    <input hidden type="time" name="appointment_time"
+               class="appointment-time"
+               value="{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}"
+               required>
     </td>
     <td>
         {{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('h:i A') }}
+         <input hidden type="time" name="booking_end_time"
+               class="booking-end-time"
+               value="{{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('H:i') }}"
+               required>
     </td>
 
     <td>{{ $appointment->desc }}</td>

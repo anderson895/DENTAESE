@@ -12,17 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            //
+            $table->string('file_path')->nullable()->after('message');
+            $table->string('type')->default('text')->after('file_path');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            //
+            $table->dropColumn(['file_path', 'type']);
         });
     }
+
 };
