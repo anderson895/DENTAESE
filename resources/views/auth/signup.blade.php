@@ -288,13 +288,6 @@ $('input, select').each(function () {
     }
 });
 
-// Optional: Clear saved data when form is successfully submitted
-// $('#signupForm').on('submit', function () {
-//     $('input, select').each(function () {
-//         const name = $(this).attr('name');
-//         localStorage.removeItem('signup_' + name);
-//     });
-// });
 
 </script>
 @endsection
