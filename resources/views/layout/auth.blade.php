@@ -91,8 +91,8 @@
             <a href="{{ url('/') }}#services" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Services</a>
             <a href="{{ route('login') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login</a>
             <a href="{{ route('signupui') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Signup</a>
-            <a href="{{ url('/qr') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login with QR</a>
-            <a href="{{ url('/faceui') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login with Face</a>
+            <!-- <a href="{{ url('/qr') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login with QR</a>
+            <a href="{{ url('/faceui') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login with Face</a> -->
         </div>
     </nav>
 
