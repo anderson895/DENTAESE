@@ -21,6 +21,19 @@
         <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
     </div>
 
+    <div x-show="tab==='patient'" x-cloak>
+        <div id="printable-patient">
+            @include('client.patient_record', ['patient'=> $patient])
+        </div>
+       
+    </div>
+    
+    <div x-show="tab==='rx'" x-cloak>
+        <div id="printable-rx">
+            @include('admin.dental-chart.rx', ['medicines'=> $medicines, 'appointment'=>$appointment])
+        </div>
+    </div>
+
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
     <div class="w-full mx-auto bg-white p-6 rounded shadow">
@@ -167,10 +180,6 @@
         <div id="printable-treatment">
             @include('admin.dental-chart.treatment-record', ['record' => $record])
         </div>
-        {{-- <button onclick="printDiv('printable-treatment')" 
-            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
-            Print Treatment Record
-        </button> --}}
     </div>
     
     <div x-show="tab==='info'" x-cloak>
@@ -180,22 +189,7 @@
      
     </div>
     
-    <div x-show="tab==='patient'" x-cloak>
-        <div id="printable-patient">
-            @include('client.patient_record', ['patient'=> $patient])
-        </div>
-       
-    </div>
     
-    <div x-show="tab==='rx'" x-cloak>
-        <div id="printable-rx">
-            @include('admin.dental-chart.rx', ['medicines'=> $medicines, 'appointment'=>$appointment])
-        </div>
-        {{-- <button onclick="printDiv('printable-rx')" 
-            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
-            Print RX
-        </button> --}}
-    </div>
 </div>
 
 <!-- Modal -->
