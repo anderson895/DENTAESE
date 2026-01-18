@@ -237,47 +237,53 @@ public function verifyOtp(Request $request)
         return response()->json(['message' => 'Invalid OTP.'], 400);
     }
 
-    $data = Session::get('pending_user');
-    $data['password'] = bcrypt($data['password']);
-
-
-      $tempFileName = $data['verification_id'] ?? null;
-
-    if ($tempFileName) {
-        $tempPath = storage_path('app/temp_verifications/' . $tempFileName);
-        $newPath = 'verifications/' . $tempFileName;
-
-        if (file_exists($tempPath)) {
-            Storage::disk('public')->put($newPath, file_get_contents($tempPath));
-            unlink($tempPath); // delete from temp
-            $data['verification_id'] = $newPath;
-        }
-    }
-
-    // $user = newuser::create($data);
-
-        $existingUser = User::whereRaw('LOWER(TRIM(lastname)) = ?', [strtolower(trim($data['lastname']))])
-        ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($data['name']))])
-        ->whereDate('birth_date', $data['birth_date'])
-        ->first();
-
- if ($existingUser) {
-   
-    $user = NewUser::create($data);
-    $message = 'An account with the same details already exists. Your information has been sent for validation. Please wait for email confirmation.';
-} else {
-  
-    $user = User::create($data);
-    $message = 'Account created successfully! You can now log in to your account.';
+    // OTP is valid → just return success
+    // The user is not created yet; frontend will submit to finalSignup
+    return response()->json([
+        'status' => 'success',
+        'message' => 'OTP verified successfully.',
+    ]);
 }
 
-    Session::forget(['pending_user', 'signup_otp']);
+
+public function finalSignup(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string',
+        'lastname' => 'required|string',
+        'birth_date' => 'required|date',
+        'birthplace' => 'required|string',
+        'current_address' => 'required|string',
+        'email' => 'required|email|unique:users,email',
+        'user' => 'required|string|unique:users,user',
+        'password' => 'required|string|min:6',
+        'face_token' => 'required|string',
+    ]);
+
+    $user = User::create([
+        'name' => $request->name,
+        'middlename' => $request->middlename ?? null,
+        'lastname' => $request->lastname,
+        'suffix' => $request->suffix ?? null,
+        'birth_date' => $request->birth_date,
+        'birthplace' => $request->birthplace,
+        'current_address' => $request->current_address,
+        'email' => $request->email,
+        'contact_number' => $request->contact_number ?? null,
+        'user' => $request->user,
+        'password' => bcrypt($request->password),
+        'account_type' => 'patient',
+        'face_token' => $request->face_token,
+    ]);
 
     return response()->json([
-    'status' => 'success',
-    'message' => $message,
-]);
+        'status' => 'success',
+        'message' => 'Account created successfully!',
+        'user' => $user,
+    ], 201);
 }
+
+
 
 
 //qr 

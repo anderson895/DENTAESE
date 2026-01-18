@@ -8,23 +8,51 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
-<div x-data="{ tab: 'checkin' }" class="p-6">
+<div x-data="{ tab: 'info' }" class="p-6">
 
     <h1 class="text-2xl font-bold mb-4">Appointment #{{ $appointment->id }}</h1>
 
     <!-- Tabs -->
     <div class="flex border-b mb-4">
-        <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
-        <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
         <button @click="tab='info'" :class="tab==='info' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Dental Chart</button>
-        <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
+        <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='rx'" :class="tab==='rx' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">RX</button>
+        <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
+        <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
+    </div>
+
+    <div x-show="tab==='patient'" x-cloak>
+        <div id="printable-patient">
+            @include('client.patient_record', ['patient'=> $patient])
+        </div>
+       
+    </div>
+    
+    <div x-show="tab==='rx'" x-cloak>
+        <div id="printable-rx">
+            @include('admin.dental-chart.rx', ['medicines'=> $medicines, 'appointment'=>$appointment])
+        </div>
     </div>
 
     <!-- Tab Contents -->
     <div x-show="tab==='checkin'">
     <div class="w-full mx-auto bg-white p-6 rounded shadow">
+
+    <div class="flex items-center mt-2">
+        
         <h2 class="text-2xl font-bold mb-4">Finalize Payment</h2>
+        <!-- Next button (right) -->
+        <button
+            @click="tab='rx'"
+            class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+        >
+            Next
+        </button>
+    </div>
+
+     
+
+        
 
         <p>
             <strong>Client:</strong>
@@ -121,19 +149,28 @@
             <input type="hidden" name="status" id="status" value="completed">
 
             {{-- ACTION BUTTONS --}}
-            <div class="mt-6 flex flex-row gap-5">
-                <button type="submit"
-                        class="bg-green-600 text-white px-4 py-2 rounded"
-                        data-status="completed">
-                    Complete    
-                </button>
+            <div class="mt-6">
+                @if ($appointment->status === 'completed')
+                    <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
+                        Completed
+                    </span>
+                @else
+                    <div class="flex flex-row gap-5" id="action-buttons">
+                        <button type="submit"
+                                class="bg-green-600 text-white px-4 py-2 rounded"
+                                data-status="completed">
+                            Complete
+                        </button>
 
-                <button type="submit"
-                        class="bg-red-600 text-white px-4 py-2 rounded"
-                        data-status="no_show">
-                    No Show
-                </button>
+                        <button type="submit"
+                                class="bg-red-600 text-white px-4 py-2 rounded"
+                                data-status="no_show">
+                            No Show
+                        </button>
+                    </div>
+                @endif
             </div>
+
         </form>
     </div>
 </div>
@@ -143,10 +180,6 @@
         <div id="printable-treatment">
             @include('admin.dental-chart.treatment-record', ['record' => $record])
         </div>
-        {{-- <button onclick="printDiv('printable-treatment')" 
-            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
-            Print Treatment Record
-        </button> --}}
     </div>
     
     <div x-show="tab==='info'" x-cloak>
@@ -156,92 +189,134 @@
      
     </div>
     
-    <div x-show="tab==='patient'" x-cloak>
-        <div id="printable-patient">
-            @include('client.patient_record', ['patient'=> $patient])
-        </div>
-       
-    </div>
     
-    <div x-show="tab==='rx'" x-cloak>
-        <div id="printable-rx">
-            @include('admin.dental-chart.rx', ['medicines'=> $medicines, 'appointment'=>$appointment])
-        </div>
-        {{-- <button onclick="printDiv('printable-rx')" 
-            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
-            Print RX
-        </button> --}}
-    </div>
 </div>
 
-<div 
+<!-- Modal -->
+<div
     x-data="{ openReceiptModal: false }"
     x-cloak
+    x-show="openReceiptModal"
     @open-receipt.window="openReceiptModal = true"
+    @close-receipt.window="openReceiptModal = false"
+    @keydown.escape.window="openReceiptModal = false"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 no-print"
 >
-    <!-- Trigger button (optional manual open) -->
-    {{-- <button @click="openReceiptModal = true"
-        class="bg-blue-600 text-white px-4 py-2 rounded">
-        Print Receipt
-    </button> --}}
 
-    <!-- Modal -->
-    <div x-show="openReceiptModal"
-         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative">
-            <!-- Close -->
-            <button @click="openReceiptModal = false"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">✕</button>
+    <!-- BACKDROP CLICK CLOSE -->
+    <div
+        @click="openReceiptModal = false"
+        class="absolute inset-0"
+    ></div>
 
-            <!-- Receipt -->
-            <div id="receipt-content" class="text-sm font-serif">
-                <h2 class="text-center text-lg font-bold">
-                    Santiago – Amancio Dental Clinic
-                </h2>
-                <p class="text-center">
-                    {{ ($appointment->store->name ?? 'N/A') }}<br>
-                  {{ ($appointment->store->address ?? 'N/A') }}<br>
-               
-                </p>
+    <!-- MODAL CONTENT -->
+    <div
+        class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative z-10"
+        @click.stop
+    >
 
-                <h3 class="text-center font-bold mt-4 underline">
-                    ACKNOWLEDGEMENT RECEIPT
-                </h3>
+        <!-- CLOSE BUTTON -->
+        <button
+            @click="openReceiptModal = false"
+            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 no-print"
+        >
+            ✕
+        </button>
 
-<div class="mt-4 leading-relaxed">
-    <p>
-        Received from 
-        <u>{{ e($appointment->user->name ?? 'N/A') }} {{ ($appointment->user->lastname ?? '') }} {{ e($appointment->user->suffix ?? '') }}</u>
-        of 
-        <u>{{ $appointment->user->current_address }}</u>,
-        the sum of 
-        <u><span id="receipt-sum">____________________________</span></u>
-        for 
-        <u>{{ e($appointment->service_name ?? '') }}</u>
-        on 
-        <u>{{ now()->format('F j, Y') }}</u>.
-    </p>
-</div>
+        <!-- ================= RECEIPT ================= -->
+        <div id="ack-receipt-print" class="print-area">
 
-                <div class="mt-8 flex justify-between">
-                    <span></span>
-                <div class="text-center mt-8">
-                <p><strong>{{ Auth::user()->name }} {{ Auth::user()->lastname }} {{ Auth::user()->suffix }}</strong></p>
-                <p class="text-sm">{{ Auth::user()->position }}</p>
-            </div>
-                            </div>
+            <!-- HEADER -->
+            <div style="text-align:center; line-height:1.4;">
+                <strong>Santiago – Amancio Dental Clinic</strong><br>
+                <span style="font-size:10pt;">
+                    {{ $appointment->store->address ?? 'N/A' }}<br>
+                    {{ $appointment->store->name ?? 'N/A' }}
+                </span>
             </div>
 
-            <!-- Print -->
-            <div class="mt-6 flex justify-end">
-                <button onclick="printReceipt()"
-                    class="bg-green-600 text-white px-4 py-2 rounded">
-                    Print
-                </button>
+            <hr style="margin:10px 0;">
+
+            <!-- TITLE -->
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <strong>ACKNOWLEDGEMENT RECEIPT</strong>
+                <span>
+                    Date:
+                    <span style="border-bottom:1px solid #000; padding:0 40px;">
+                        {{ now()->format('m/d/Y') }}
+                    </span>
+                </span>
+            </div>
+
+            <!-- BODY -->
+            <div style="line-height:2;">
+                <div>
+                    Received from
+                    <span style="border-bottom:1px solid #000; display:inline-block; width:75%;">
+                        {{ $appointment->user->name }}
+                        {{ $appointment->user->lastname }}
+                        {{ $appointment->user->suffix }}
+                    </span>
+                </div>
+
+                <div>
+                    Address at
+                    <span style="border-bottom:1px solid #000; display:inline-block; width:78%;">
+                        {{ $appointment->user->current_address }}
+                    </span>
+                </div>
+
+                <div>
+                    the sum of
+                    <span id="receipt-sum-words"
+                        style="border-bottom:1px solid #000; display:inline-block; width:78%;">
+                        ____________________________
+                    </span>
+                </div>
+
+                <div>
+                    ( ₱
+                    <span id="receipt-sum-amount"
+                        style="border-bottom:1px solid #000; display:inline-block; width:120px;">
+                    </span>
+                    ) in full / partial payment for
+                    <span style="border-bottom:1px solid #000; display:inline-block; width:45%;">
+                        {{ $appointment->service_name }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- SIGNATURE -->
+            <div style="margin-top:40px; text-align:right;">
+                <strong>By:</strong>
+                <div style="border-top:1px solid #000; width:220px; margin-left:auto; padding-top:5px;">
+                    {{ Auth::user()->name }} {{ Auth::user()->lastname }}
+                </div>
+                <div style="font-size:10pt;">
+                    {{ Auth::user()->position }}
+                </div>
             </div>
         </div>
+
+        <!-- PRINT BUTTON -->
+        <div class="mt-6 flex justify-end no-print">
+            <button
+                onclick="printCheckinReceipt()"
+                class="bg-green-600 text-white px-4 py-2 rounded"
+            >
+                Print
+            </button>
+        </div>
+
     </div>
 </div>
+
+
+
+
+
+</div>
+
 
 
 
@@ -249,50 +324,74 @@
 {{-- Scripts --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-    $(document).on('input', 'input[name="total_price"]', function () {
-    let value = parseFloat($(this).val()) || 0;
-    // Format as PHP currency style ₱1,234.56
-    let formatted = value > 0 ? `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '____________________________';
-    $('#receipt-sum').text(formatted);
-});
-window.printReceipt = function () {
-    // Get the receipt HTML
-    const receipt = document.getElementById('receipt-content').innerHTML;
+function printCheckinReceipt() {
+    const receipt = document.getElementById('ack-receipt-print');
+    if (!receipt) return;
 
-    // Backup the current page’s body
-    const original = document.body.innerHTML;
+    const printWindow = window.open('', '_blank', 'width=900,height=600');
 
-    // Replace body with only the receipt + print CSS
-    document.body.innerHTML = `
-        <style>
-            @media print {
-                @page {
-                    margin: 0; /* removes browser header/footer space */
-                }
-                body {
-                    margin: 20mm; /* your custom margin */
-                }
+    const doc = printWindow.document;
+
+    // Title
+    const title = doc.createElement('title');
+    title.textContent = 'Check-in Receipt';
+    doc.head.appendChild(title);
+
+    // Print styles
+    const style = doc.createElement('style');
+    style.textContent = `
+        @media print {
+            @page { margin: 10mm; }
+            body {
+                font-family: system-ui, sans-serif;
+                margin: 0;
             }
-        </style>
-        ${receipt}
+        }
     `;
+    doc.head.appendChild(style);
 
-    // Trigger print
-    window.print();
+    // Tailwind (optional)
+    const tailwind = doc.createElement('link');
+    tailwind.rel = 'stylesheet';
+    tailwind.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css';
+    doc.head.appendChild(tailwind);
 
-    // Restore original page after a short delay
+    // Content
+    const clone = receipt.cloneNode(true);
+    doc.body.appendChild(clone);
+
+    // Wait for styles & content
     setTimeout(() => {
-        document.body.innerHTML = original;
-        // Redirect to another page after print
-        window.location.href = '/appointments'; // change this to your target URL
-    }, 500); // 500ms delay to ensure print dialog has started
-};
+        printWindow.focus();
+        printWindow.print();
+    }, 500);
+}
 </script>
 
 
+
 <script>
+$(document).on('input', 'input[name="total_price"]', function () {
+    let value = parseFloat($(this).val());
+
+    if (!value || value <= 0) {
+        // $('#receipt-sum-amount').text('_________');
+        $('#receipt-sum-words').text('__________________________');
+        return;
+    }
+
+    // Format number ₱
+    let formattedAmount = value.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    // $('#receipt-sum-amount').text(formattedAmount);
+
+    // OPTIONAL: words (simple version)
+    $('#receipt-sum-words').text(formattedAmount + ' PESOS ONLY');
+});
     $(document).ready(function () {
                 $('#payment_receipt_input').on('change', function (event) {
             const [file] = this.files;
@@ -341,51 +440,24 @@ window.printReceipt = function () {
                     data: formData,
                     processData: false,
                     contentType: false,
-
                     success: function (res) {
                         Swal.fire(
                             'Success',
                             res.message ?? 'Appointment completed successfully!',
                             'success'
                         ).then(() => {
+
+                            // UI-only update (Blade remains untouched)
+                            if ($('#status').val() === 'completed') {
+                                $('#action-buttons').replaceWith(`
+                                    <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
+                                        Completed
+                                    </span>
+                                `);
+                            }
+
                             window.dispatchEvent(new CustomEvent('open-receipt'));
                         });
-                    },
-
-                    error: function (xhr) {
-                        // Laravel validation error
-                        if (xhr.status === 422) {
-                            const errors = xhr.responseJSON.errors;
-
-                            // Loop through validation errors
-                            Object.keys(errors).forEach(function (field) {
-                                const input = $(`[name="${field}"]`);
-
-                                // Highlight field (Tailwind)
-                                input.addClass('border-red-500 ring-1 ring-red-500');
-
-                                // Show error message
-                                input.after(`
-                                    <p class="form-error text-sm text-red-600 mt-1">
-                                        ${errors[field][0]}
-                                    </p>
-                                `);
-                            });
-
-                            // Scroll to first error field
-                            const firstError = Object.keys(errors)[0];
-                            const firstInput = $(`[name="${firstError}"]`);
-                            $('html, body').animate({
-                                scrollTop: firstInput.offset().top - 120
-                            }, 400);
-
-                        } else {
-                            Swal.fire(
-                                'Error',
-                                'Something went wrong. Please try again.',
-                                'error'
-                            );
-                        }
                     }
                 }); 
             });
@@ -393,6 +465,11 @@ window.printReceipt = function () {
 
     });
 </script>
+
+
+
+
+
 <script>
     function printDiv(divId) {
         const redirectUrl = "{{ route('appointments.view', ['id' => $appointment->id]) }}";
@@ -412,11 +489,7 @@ window.printReceipt = function () {
                 clonedInputs[index].value = input.value;
             }
         });
-    
-        // Backup original page
         const originalBody = document.body.innerHTML;
-    
-        // Replace body with cloned content + print styles
         document.body.innerHTML = `
         
             <style>
@@ -429,14 +502,8 @@ window.printReceipt = function () {
             </style>
         `;
         document.body.appendChild(clone);
-    
-        // Trigger print
         window.print();
-    
-        // Restore original page
         setTimeout(() => {
-            // document.body.innerHTML = originalBody;
-            // if (window.Alpine) window.Alpine.initTree(document.body);
             window.location.href = redirectUrl;
         }, 200);
     }

@@ -16,6 +16,13 @@ use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Controllers\QrController;
 
+
+use App\Http\Controllers\DentalToothController;
+
+Route::post('/dental/tooth/save', [DentalToothController::class, 'store'])->name('dental.tooth.save');
+
+Route::get('/dental/tooth/{patient}', [DentalToothController::class, 'fetch'])->name('dental.tooth.fetch');
+
 // Route::get('/', function () {
 //     return view('auth.login');
 // })->name('login');
@@ -91,6 +98,11 @@ Route::get('/faceui',[AuthUi::class, 'FaceUi'])->name('faceui');
 Route::post('/get-face-landmarks', [FaceRecognitionController::class, 'getLandmarks']);
 
 
+// Face registration for new users
+Route::post('/cregister-face-registration', [FaceRecognitionController::class, 'registerFaceForSignup']);
+
+
+
 Route::get('/qr',[AuthUi::class, 'Qr'])->name('Qr');
 Route::post('/qr-login', [QrController::class, 'LoginQr'])->name('qr.login');
 
@@ -105,6 +117,9 @@ Route::post('/login-face', [AuthUi::class, 'loginFace'])->name('login-face');
 // web.php
 Route::post('/signup/send-otp', [AuthUi::class, 'sendOtp'])->name('send.otp');
 Route::get('/signup/verify-otp', [AuthUi::class, 'verifyOtp'])->name('verify.otp');
+
+// --- NEW: Final signup route (after OTP is verified) ---
+Route::post('/signup/final', [AuthUi::class, 'finalSignup'])->name('final.signup');
 
 
 
