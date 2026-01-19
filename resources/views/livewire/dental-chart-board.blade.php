@@ -45,20 +45,19 @@
 
 
 <div class="mt-6 p-4 border rounded-lg bg-gray-50 flex flex-col">
-    <h3 class="text-sm font-bold mb-3">Legend</h3>
     <div class="flex flex-row justify-between">
         <!-- Condition -->  
         <div class="mb-4">
             <h4 class="text-xs font-semibold mb-1">Condition</h4>
             <ul class="text-xs space-y-1">
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#ffffff"></span>✓ - Present Teeth</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#ef4444"></span>D - Decayed (Caries Indicated for Filling)</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#7c2d12"></span>M - Missing due to Caries</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#6b7280"></span>MO - Missing due to Other Causes</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#f59e0b"></span>Im - Impacted Tooth</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#8b5cf6"></span>Sp - Supernumerary Tooth</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#78350f"></span>Rf - Root Fragment</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#cbd5e1"></span>Un - Unerupted</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#ffffff; border-color:#000000"></span>✓ - Present Teeth</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#ef4444; border-color:#000000"></span>D - Decayed (Caries Indicated for Filling)</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#7c2d12; border-color:#000000"></span>M - Missing due to Caries</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#6b7280; border-color:#000000"></span>MO - Missing due to Other Causes</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#f59e0b; border-color:#000000"></span>Im - Impacted Tooth</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#8b5cf6; border-color:#000000"></span>Sp - Supernumerary Tooth</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#78350f; border-color:#000000"></span>Rf - Root Fragment</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#cbd5e1; border-color:#000000"></span>Un - Unerupted</li>
             </ul>
         </div>
 
@@ -66,16 +65,16 @@
         <div class="mb-4">
             <h4 class="text-xs font-semibold mb-1">Restorations &amp; Prosthetics</h4>
             <ul class="text-xs space-y-1">
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#737373"></span>Am - Amalgam Filling</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#3b82f6"></span>Co - Composite Filling</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#facc15"></span>JC - Jacket Crown</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#a855f7"></span>Ab - Abutment</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#ec4899"></span>Att - Attachment</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#f97316"></span>P - Pontic</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#06b6d4"></span>In - Inlay</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#14b8a6"></span>Imp - Implant</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#84cc16"></span>S - Sealants</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#f472b6"></span>Rm - Removable Denture</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#737373; border-color:#000000"></span>Am - Amalgam Filling</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#3b82f6; border-color:#000000"></span>Co - Composite Filling</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#facc15; border-color:#000000"></span>JC - Jacket Crown</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#a855f7; border-color:#000000"></span>Ab - Abutment</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#ec4899; border-color:#000000"></span>Att - Attachment</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#f97316; border-color:#000000"></span>P - Pontic</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#06b6d4; border-color:#000000"></span>In - Inlay</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#14b8a6; border-color:#000000"></span>Imp - Implant</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#84cc16; border-color:#000000"></span>S - Sealants</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#f472b6; border-color:#000000"></span>Rm - Removable Denture</li>
             </ul>
         </div>
 
@@ -83,12 +82,13 @@
         <div>
             <h4 class="text-xs font-semibold mb-1">Surgery</h4>
             <ul class="text-xs space-y-1">
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#dc2626"></span>X - Extraction due to Caries</li>
-                <li><span class="inline-block w-3 h-3 mr-2 rounded" style="background-color:#991b1b"></span>XO - Extraction due to Other Causes</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#dc2626; border-color:#000000"></span>X - Extraction due to Caries</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#991b1b; border-color:#000000"></span>XO - Extraction due to Other Causes</li>
             </ul>
         </div>
     </div>
 </div>
+
 
 
 
