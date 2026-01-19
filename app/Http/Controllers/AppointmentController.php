@@ -298,6 +298,17 @@ if ($nextBooking) {
 
 public function appointmentadmin(Request $request)
 {
+    $type = $request->appt_type;
+
+    // If walk-in or emergency, set date and time to today automatically
+    if ($type === 'walkin' || $type === 'emergency') {
+        $request->merge([
+            'appointment_date' => now()->format('Y-m-d'),
+            'appointment_time' => now()->format('H:i'), // current time
+        ]);
+    }
+
+    // Validation
     $request->validate([
         'user_id' => 'required|exists:users,id',
         'store_id' => 'required|exists:stores,id',
@@ -306,24 +317,21 @@ public function appointmentadmin(Request $request)
         'appointment_date' => 'required|date|after_or_equal:today',
         'appointment_time' => 'required|date_format:H:i',
         'desc' =>'required',
-        
     ]);
-    $type = $request->appt_type;
-
 
     $store = Store::findOrFail($request->store_id);
-$user = User::findOrFail($request->user_id);
+    $user = User::findOrFail($request->user_id);
     $service = Service::findOrFail($request->service_id);
 
-    //  Check if store is open that day
+    // Check if store is open that day
     $day = strtolower(Carbon::parse($request->appointment_date)->format('D'));
     if (!in_array($day, $store->open_days ?? [])) {
         return back()->withErrors(['appointment_date' => 'Store is closed on this day.']);
     }
 
-   $booking_end = Carbon::parse($request->appointment_time)->addMinutes($service->approx_time);
+    $booking_end = Carbon::parse($request->appointment_time)->addMinutes($service->approx_time);
 
-    //  Check if time is within hours
+    // Check if time is within hours
     if (
         $request->appointment_time < $store->opening_time->format('H:i') ||
         $request->appointment_time > $store->closing_time->format('H:i')
@@ -332,80 +340,75 @@ $user = User::findOrFail($request->user_id);
     }
 
     // Check if time slot is already taken
- $alreadyBooked = Appointment::where('store_id', $store->id)
-    ->where('dentist_id', $request->dentist_id) //  check per dentist
-    ->where('status', '!=', 'cancelled')
-   
-    ->where('appointment_date', $request->appointment_date)
-    ->where('appointment_time', $request->appointment_time)
-    ->exists();
+    $alreadyBooked = Appointment::where('store_id', $store->id)
+        ->where('dentist_id', $request->dentist_id)
+        ->where('status', '!=', 'cancelled')
+        ->where('appointment_date', $request->appointment_date)
+        ->where('appointment_time', $request->appointment_time)
+        ->exists();
 
     if ($alreadyBooked) {
         return back()->withErrors(['appointment_time' => 'This time slot is already booked.']);
     }
 
     if ($booking_end->format('H:i') > $store->closing_time->format('H:i')) {
-    return back()->withErrors(['appointment_time' => 'Booking ends after store closing time.']);
+        return back()->withErrors(['appointment_time' => 'Booking ends after store closing time.']);
     }
 
-   
-//     $userHasBooking = Appointment::where('user_id', $user->id)
-//     ->where('appointment_date', $request->appointment_date)
-//     ->where('status', '!=', 'cancelled')
-//     ->exists();
+    // Only check pending appointments if NOT emergency
+    if ($type !== 'emergency') {
+        $userHasPending = Appointment::where('user_id', $user->id)
+            ->whereNotIn('status', ['completed', 'no_show','cancelled'])
+            ->exists();
 
-// if ($userHasBooking) {
-//     return response()->json(['status'=>'error','message' =>'Patient already have a booking on this day.']);
-//     #return back()->withErrors(['appointment_date' => 'You already have a booking on this day.']);
-// }
-$userHasPending = Appointment::where('user_id', $user->id)
-    ->whereNotIn('status', ['completed', 'no_show','cancelled'])
-    
-    ->exists();
+        if ($userHasPending) {
+            return response()->json([
+                'status'=>'error',
+                'message' => $user->lastname . ", ". $user->name . ' has Pending Appointment.'
+            ]);
+        }
+    }
 
-if ($userHasPending) {
-return response()->json(['status'=>'error','message' => $user->lastname.", ". $user->name . ' has Pending Appointment.']);
-#return back()->withErrors(['appointment_date' => 'You already have a booking on this day.']);
-}
-$service_ids = [$service->id];
+    $service_ids = [$service->id];
 
-    //  Create the appointment
-    if ($type === 'walkin') {
-     $appointment = Appointment::create([
-        'store_id' => $store->id,
-        'user_id' => $user->id, // assumes you're logged in
-        'dentist_id' => $request->dentist_id,
-        'service_ids' => $service_ids,
-        'appointment_date' => $request->appointment_date,
-        'appointment_time' => $request->appointment_time,
-        'booking_end_time' => $booking_end->format('H:i'),
-        'desc'=> $request->desc,
-        'status' => 'approved',
-    ]);
-     return response()->json([
-        'status' => 'redirect',
-        'url' => route('appointments.view', $appointment->id)
-    ]);
+    // Create the appointment
+    if ($type === 'walkin' || $type === 'emergency') {
+        $appointment = Appointment::create([
+            'store_id' => $store->id,
+            'user_id' => $user->id,
+            'dentist_id' => $request->dentist_id,
+            'service_ids' => $service_ids,
+            'appointment_date' => $request->appointment_date,
+            'appointment_time' => $request->appointment_time,
+            'booking_end_time' => $booking_end->format('H:i'),
+            'desc'=> $request->desc,
+            'status' => $type === 'emergency' ? 'approved' : 'approved', // emergency also approved immediately
+        ]);
+
+        return response()->json([
+            'status' => 'redirect',
+            'url' => route('appointments.view', $appointment->id)
+        ]);
+    }
+
+    if ($type === 'normal') {
+        Appointment::create([
+            'store_id' => $store->id,
+            'user_id' => $user->id,
+            'dentist_id' => $request->dentist_id,
+            'service_ids' => $service_ids,
+            'appointment_date' => $request->appointment_date,
+            'appointment_time' => $request->appointment_time,
+            'booking_end_time' => $booking_end->format('H:i'),
+            'desc'=> $request->desc,
+            'status' => 'pending',
+        ]);
+
+        return response()->json(['status'=>'success','message' =>'Appointment created successfully']);
+    }
 }
 
-if ($type === 'normal') {
-    Appointment::create([
-        'store_id' => $store->id,
-        'user_id' => $user->id, 
-        'dentist_id' => $request->dentist_id,
-      'service_ids' => $service_ids,
-        'appointment_date' => $request->appointment_date,
-        'appointment_time' => $request->appointment_time,
-        'booking_end_time' => $booking_end->format('H:i'),
-        'desc'=> $request->desc,
-        'status' => 'pending',
-    ]);
-    return response()->json(['status'=>'success','message' =>'Appointment created successfully']);
-}
-    
-    #return back()->with('success','Appointment created successfully');
-    // return redirect()->route('CBooking')->with('success', 'Appointment booked successfully!');
-}
+
 
 
 // public function index()
