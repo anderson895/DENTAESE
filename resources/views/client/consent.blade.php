@@ -89,8 +89,7 @@
                 </li>
             </ul>
         </div>
-
-                <!-- Clinic Policies -->
+        <!-- Clinic Policies -->
         <div class="pt-4">
             <strong>Clinic Policies & Appointment Guidelines</strong>
 
@@ -165,3 +164,4 @@
 
 </div>
 @endsection
+<!-- awdaw -->

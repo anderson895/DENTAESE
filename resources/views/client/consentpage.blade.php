@@ -44,7 +44,6 @@
         Repeated no-shows may affect your ability to book future appointments.
     </li>
 </ul>
-
 <!-- Clinic Policies -->
 <div class="pt-4">
     <strong>Clinic Policies & Appointment Guidelines</strong>
@@ -111,7 +110,7 @@
 
     
 
-
+<!-- awdaw -->
     
 </div>
 
