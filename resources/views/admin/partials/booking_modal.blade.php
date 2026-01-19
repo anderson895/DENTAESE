@@ -75,12 +75,12 @@
             <!-- Submit -->
             <button type="submit" name="appointment_type" value="normal"
     class="bg-blue-600 text-white px-4 py-2 rounded">
-    Book Appointment
+    Walk-in
 </button>
 
 <button type="submit" name="appointment_type" value="walkin"
     class="bg-green-600 text-white px-4 py-2 rounded">
-    Walk-in
+    Emergency
 </button>
     
         </form>
