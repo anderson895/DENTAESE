@@ -44,9 +44,73 @@
         Repeated no-shows may affect your ability to book future appointments.
     </li>
 </ul>
+<!-- Clinic Policies -->
+<div class="pt-4">
+    <strong>Clinic Policies & Appointment Guidelines</strong>
+
+    <ul class="list-disc ml-6 mt-3 space-y-3 text-sm text-justify">
+        <li>
+            All patients must use the clinic's official appointment system to make appointments in advance.
+            Patients who walk in are dependent on availability.
+        </li>
+
+        <li>
+            Patients are unable to set a new appointment unless it is an emergency or urgent.
+        </li>
+
+        <li>
+            Patients are expected to arrive at least 10 minutes before their scheduled appointment.
+            If you are more than fifteen minutes late, the clinic may decide to reschedule or cancel.
+        </li>
+
+        <li>
+            Cancellations of appointments must be made at least 48 hours before the scheduled time.
+            Penalties or limitations on future reservations may be imposed for failure to notify the clinic.
+        </li>
+
+        <li>
+            All dental services must be paid for in full right after treatment,
+            unless the clinic management specifies.
+        </li>
+
+        <li>
+            Payments for completed services are nonrefundable.
+            Refunds for cancelled appointments, if any, are subject to clinic review and policy guidelines.
+        </li>
+
+        <li>
+            All patient information gathered by the clinic will be handled confidentially and safeguarded
+            in accordance with the Data Privacy Act.
+            Information may be used for medical, billing, and appointment purposes.
+        </li>
+
+        <li>
+            Patients must give informed permission before they have any dental operation.
+            The clinic maintains the right to refuse treatment if permission is not provided.
+        </li>
+
+        <li>
+            The clinic pays close attention to infection control, sanitation, and safety regulations
+            to provide a clean and safe environment for both patients and staff.
+        </li>
+
+        <li>
+            Patients are asked to show kindness to clinic staff and other patients.
+            Any violent or disruptive behavior may result in a refusal of service.
+        </li>
+
+        <li>
+            The clinic reserves the right to update or modify these policies at any time.
+            Updated policies will take effect immediately upon publishing or system update.
+        </li>
+    </ul>
+</div>
+
     </div>
 
+    
 
+<!-- awdaw -->
     
 </div>
 

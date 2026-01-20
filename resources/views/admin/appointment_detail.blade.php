@@ -8,7 +8,8 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
-<div x-data="{ tab: 'info' }" class="p-6">
+<div x-data="{ tab: localStorage.getItem('activeTab') || 'info', openReceiptModal: true }" 
+     x-init="$watch('tab', value => localStorage.setItem('activeTab', value))">
 
     <h1 class="text-2xl font-bold mb-4">Appointment #{{ $appointment->id }}</h1>
 
@@ -149,7 +150,23 @@
             <input type="hidden" name="status" id="status" value="completed">
 
             {{-- ACTION BUTTONS --}}
+
             <div class="mt-6">
+                    <div class="flex flex-row gap-5" id="action-buttons">
+                        <button type="submit"
+                                class="bg-green-600 text-white px-4 py-2 rounded"
+                                data-status="completed">
+                            Complete
+                        </button>
+
+                        <button type="submit"
+                                class="bg-red-600 text-white px-4 py-2 rounded"
+                                data-status="no_show">
+                            No Show
+                        </button>
+                    </div>
+            </div>
+            <!-- <div class="mt-6">
                 @if ($appointment->status === 'completed')
                     <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
                         Completed
@@ -169,7 +186,7 @@
                         </button>
                     </div>
                 @endif
-            </div>
+            </div> -->
 
         </form>
     </div>
@@ -203,11 +220,6 @@
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 no-print"
 >
 
-    <!-- BACKDROP CLICK CLOSE -->
-    <div
-        @click="openReceiptModal = false"
-        class="absolute inset-0"
-    ></div>
 
     <!-- MODAL CONTENT -->
     <div
@@ -217,11 +229,12 @@
 
         <!-- CLOSE BUTTON -->
         <button
-            @click="openReceiptModal = false"
-            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 no-print"
-        >
-            ✕
-        </button>
+        @click="openReceiptModal = false; localStorage.setItem('activeTab', 'rx'); location.reload();"
+        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 no-print"
+    >
+        ✕
+    </button>
+
 
         <!-- ================= RECEIPT ================= -->
         <div id="ack-receipt-print" class="print-area">
@@ -371,6 +384,7 @@ function printCheckinReceipt() {
 
 
 
+
 <script>
 $(document).on('input', 'input[name="total_price"]', function () {
     let value = parseFloat($(this).val());
@@ -405,6 +419,8 @@ $(document).on('input', 'input[name="total_price"]', function () {
                 reader.readAsDataURL(file);
             }
         });
+
+        
        $('#finalizeAppointmentForm button[type="submit"]').on('click', function (e) {
             e.preventDefault();
 

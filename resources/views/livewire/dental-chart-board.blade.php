@@ -44,6 +44,51 @@
 </style>
 
 
+<div class="mt-6 p-4 border rounded-lg bg-gray-50 flex flex-col">
+    <div class="flex flex-row justify-between">
+        <!-- Condition -->  
+        <div class="mb-4">
+            <h4 class="text-xs font-semibold mb-1">Condition</h4>
+            <ul class="text-xs space-y-1">
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#ffffff; border-color:#000000"></span>✓ - Present Teeth</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#ef4444; border-color:#000000"></span>D - Decayed (Caries Indicated for Filling)</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#7c2d12; border-color:#000000"></span>M - Missing due to Caries</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#6b7280; border-color:#000000"></span>MO - Missing due to Other Causes</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#f59e0b; border-color:#000000"></span>Im - Impacted Tooth</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#8b5cf6; border-color:#000000"></span>Sp - Supernumerary Tooth</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#78350f; border-color:#000000"></span>Rf - Root Fragment</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#cbd5e1; border-color:#000000"></span>Un - Unerupted</li>
+            </ul>
+        </div>
+
+        <!-- Restorations & Prosthetics -->
+        <div class="mb-4">
+            <h4 class="text-xs font-semibold mb-1">Restorations &amp; Prosthetics</h4>
+            <ul class="text-xs space-y-1">
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#737373; border-color:#000000"></span>Am - Amalgam Filling</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#3b82f6; border-color:#000000"></span>Co - Composite Filling</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#facc15; border-color:#000000"></span>JC - Jacket Crown</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#a855f7; border-color:#000000"></span>Ab - Abutment</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#ec4899; border-color:#000000"></span>Att - Attachment</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#f97316; border-color:#000000"></span>P - Pontic</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#06b6d4; border-color:#000000"></span>In - Inlay</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#14b8a6; border-color:#000000"></span>Imp - Implant</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#84cc16; border-color:#000000"></span>S - Sealants</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#f472b6; border-color:#000000"></span>Rm - Removable Denture</li>
+            </ul>
+        </div>
+
+        <!-- Surgery -->
+        <div>
+            <h4 class="text-xs font-semibold mb-1">Surgery</h4>
+            <ul class="text-xs space-y-1">
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#dc2626; border-color:#000000"></span>X - Extraction due to Caries</li>
+                <li><span class="inline-block w-3 h-3 mr-2 rounded border" style="background-color:#991b1b; border-color:#000000"></span>XO - Extraction due to Other Causes</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 
 
 
@@ -127,52 +172,7 @@ HTML;
 </div>
 
 {{-- LEGEND --}}
-<div class="mt-6 p-4 border rounded-lg bg-gray-50 flex flex-col">
-        <h3 class="text-sm font-bold mb-3">Legend</h3>
-        <div class="flex flex-row  justify-between">
-              <!-- Condition -->  
-        <div class="mb-4">
-            <h4 class="text-xs font-semibold mb-1">Condition</h4>
-            <ul class="text-xs space-y-1">
-                <li>✓ - Present Teeth</li>
-                <li>D - Decayed (Caries Indicated for Filling)</li>
-                <li>M - Missing due to Caries</li>
-                <li>MO - Missing due to Other Causes</li>
-                <li>Im - Impacted Tooth</li>
-                <li>Sp - Supernumerary Tooth</li>
-                <li>Rf - Root Fragment</li>
-                <li>Un - Unerupted</li>
-            </ul>
-        </div>
-    
-        <!-- Restorations & Prosthetics -->
-        <div class="mb-4">
-            <h4 class="text-xs font-semibold mb-1">Restorations &amp; Prosthetics</h4>
-            <ul class="text-xs space-y-1">
-                <li>Am - Amalgam Filling</li>
-                <li>Co - Composite Filling</li>
-                <li>JC - Jacket Crown</li>
-                <li>Ab - Abutment</li>
-                <li>Att - Attachment</li>
-                <li>P - Pontic</li>
-                <li>In - Inlay</li>
-                <li>Imp - Implant</li>
-                <li>S - Sealants</li>
-                <li>Rm - Removable Denture</li>
-            </ul>
-        </div>
-    
-        <!-- Surgery -->
-        <div>
-            <h4 class="text-xs font-semibold mb-1">Surgery</h4>
-            <ul class="text-xs space-y-1">
-                <li>X - Extraction due to Caries</li>
-                <li>XO - Extraction due to Other Causes</li>
-            </ul>
-        </div>
-        </div>
-      
-    </div>
+
     
     <div class="mt-6 space-y-4">
 
@@ -247,7 +247,7 @@ HTML;
 <script>
 const DATA = {
   condition: [
-    ["✓", "Present Teeth", "#10b981"],
+    ["✓", "Present Teeth", "#ffffff"],
     ["D", "Decayed", "#ef4444"],
     ["M", "Missing (Caries)", "#7c2d12"],
     ["MO", "Missing (Other)", "#6b7280"],
@@ -339,8 +339,14 @@ document.addEventListener('click', function (e) {
    MODAL
 ===================================================== */
 function openModal() {
+  // Rebuild the groups every time
+  buildGroup('condition', 'conditionGroup');
+  buildGroup('restoration', 'restorationGroup');
+  buildGroup('surgery', 'surgeryGroup');
+
   $('#toothModal').removeClass('hidden').addClass('flex');
 }
+
 
 function closeModal() {
   $('#toothModal').addClass('hidden').removeClass('flex');
@@ -413,25 +419,29 @@ function fetchTeeth() {
    APPLY FETCHED DATA (NEW STRUCTURE)
 ===================================================== */
 function applyFetchedTeeth() {
-  if (!fetchedRecords.length) return;
+  const allTeeth = document.querySelectorAll('svg[data-tooth]');
+  allTeeth.forEach(svg => {
+    // Default: present teeth color
+    svg.querySelectorAll('.slice, .inner-slice').forEach(el => {
+      el.style.fill = '#ffffff'; // green
+      el.dataset.code  = '✓';
+      el.dataset.group = 'condition';
+    });
 
-  fetchedRecords.forEach(record => {
-    const svg = document.querySelector(
-      `svg[data-tooth="${String(record.tooth)}"]`
-    );
-
-    if (!svg || !record.data) return;
+    // Kung may fetched record, i-override ang color
+    const record = fetchedRecords.find(r => r.tooth == svg.dataset.tooth);
+    if (!record || !record.data) return;
 
     Object.entries(record.data).forEach(([part, info]) => {
       const el = svg.querySelector(`[data-part="${part}"]`);
       if (!el) return;
-
       el.style.fill = info.color;
       el.dataset.code  = info.code;
       el.dataset.group = info.group;
     });
   });
 }
+
 
 /* =====================================================
    MUTATION OBSERVER (LIVEWIRE / ALPINE SAFE)

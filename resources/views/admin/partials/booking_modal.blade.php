@@ -1,5 +1,10 @@
 
 <div class="flex flex-col md:flex-row md:gap-10">
+    
+    
+      @php
+                    $branch = \App\Models\Store::find(session('active_branch_id'));
+                @endphp
     <!-- 70% Booking Form -->
     <div class="md:w-[70%]">
         <form id="bookingForm" class="space-y-4">
@@ -25,7 +30,7 @@
                         <option value="{{ $store->id }}">{{ $store->name }}</option>
                     @endforeach
                 </select>
-                <div id="storedetail" hidden></div>
+                <div id="storedetail" ></div>
             </div>
 
             {{-- Services --}}
@@ -52,36 +57,48 @@
             </div>
             <input type="hidden" id="selected_dentist" name="selected_dentist" value="">
             <!-- Date -->
-            <div>
-                <label for="appointment_date" class="block font-semibold">Select Date</label>
-                <input type="date" id="appointment_date" name="appointment_date"
-                       class="w-full p-2 border rounded" required disabled>
+                        <!-- Date and Time Wrapper -->
+            <div id="datetimeWrapper" style="display: none;">
+                <!-- Date -->
+                <div>
+                    <label for="appointment_date" class="block font-semibold">Select Date</label>
+                    <input type="date" id="appointment_date" name="appointment_date"
+                        class="w-full p-2 border rounded" required disabled>
+                </div>
+
+                <!-- Time -->
+                <div>
+                    <label for="appointment_time" class="block font-semibold">Select Time</label>
+                    <select id="appointment_time" name="appointment_time" class="w-full p-2 border rounded" required disabled>
+                        <option value="">-- Select Date First --</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- Time -->
-            <div>
-                <label for="appointment_time" class="block font-semibold">Select Time</label>
-                <select id="appointment_time" name="appointment_time" class="w-full p-2 border rounded" required disabled>
-                    <option value="">-- Select Date First --</option>
-                </select>
-            </div>
+
 
             <!-- Description -->
             <div>
                 <label for="desc" class="block font-semibold">Appointment Description</label>
-                <textarea class="w-full p-2 border rounded" rows="10" cols="30" id="desc" name="desc" required></textarea>
+                <textarea class="w-full p-2 border rounded" rows="10" cols="30" id="desc" name="desc"></textarea>
             </div>
 
-            <!-- Submit -->
-            <button type="submit" name="appointment_type" value="normal"
-    class="bg-blue-600 text-white px-4 py-2 rounded">
-    Book Appointment
-</button>
+                        <!-- Submit -->
+            <button type="submit" name="appointment_type" id="normal" value="normal"
+                class="bg-blue-600 text-white px-4 py-2 rounded">
+                Book Appointment
+            </button>
 
-<button type="submit" name="appointment_type" value="walkin"
-    class="bg-green-600 text-white px-4 py-2 rounded">
-    Walk-in
-</button>
+            <button type="submit" name="appointment_type" id="walkin" value="walkin"
+                class="bg-green-600 text-white px-4 py-2 rounded">
+                Walk-in
+            </button>
+
+            <button type="submit" name="appointment_type" id="emergency" value="emergency"
+                class="bg-red-600 text-white px-4 py-2 rounded">
+                Emergency
+            </button>
+
     
         </form>
     </div>
@@ -99,15 +116,51 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-let openDays = []; // Example: ['mon', 'tue', 'wed']
 
-// Map day string to index (Sunday = 0)
+function formatTimeToAMPM(time24) {
+            const [hourStr, minute] = time24.split(':');
+            let hour = parseInt(hourStr);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12;
+            hour = hour ? hour : 12; // kapag 0, gawing 12
+            return `${hour}:${minute} ${ampm}`;
+        }
+
+let openDays = []; 
 const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 
 let flatpickrInstance;
 
 $('#store_id').on('change', function () {
     const storeId = $(this).val();
+
+
+
+    // Disable buttons by default
+const walkinBtn = $('#walkin');
+const emergencyBtn = $('#emergency');
+
+if (!storeId) {
+    walkinBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    emergencyBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    $('#storedetail').html('');
+    $('#appointment_date').prop('disabled', true);
+    return;
+}
+
+// Check if selected branch is the active branch
+const activeBranchId = '{{ $branch->id }}';
+if (storeId != activeBranchId) {
+    // Disable buttons and add disabled style
+    walkinBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    emergencyBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+} else {
+    // Enable buttons and remove disabled style
+    walkinBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+    emergencyBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+}
+
+
     if (!storeId) return;
 
    $.get(`/store/${storeId}/schedule`, function (data) {
@@ -131,19 +184,16 @@ $('#store_id').on('change', function () {
             fri: 'Friday',
             sat: 'Saturday'
         };
-
-        // Get flatpickr days (numbers) and readable labels
         openDays = (data.open_days || []).map(day => dayNameToNumber[day.toLowerCase()]);
         const readableDays = (data.open_days || []).map(day => dayNameToLabel[day.toLowerCase()]).join(', ');
 
-        // Re-initialize flatpickr
         if (flatpickrInstance) {
             flatpickrInstance.destroy();
         }
 
         flatpickrInstance = flatpickr("#appointment_date", {
             dateFormat: "Y-m-d",
-            minDate: new Date().fp_incr(2), // disables today & tomorrow
+            minDate: new Date().fp_incr(2), 
             disable: [
                 function (date) {
                     return !openDays.includes(date.getDay());
@@ -151,15 +201,18 @@ $('#store_id').on('change', function () {
             ]
         });
 
+       
+
         $('#storedetail').html(`
             <div class="bg-white p-4 rounded shadow">
                 <h2 class="text-xl font-bold mb-2">${data.name}</h2>
                 <p><strong>Address:</strong> ${data.address}</p>
-                <p><strong>Opening Time:</strong> ${data.opening_time}</p>
-                <p><strong>Closing Time:</strong> ${data.closing_time}</p>
+                <p><strong>Opening Time:</strong> ${formatTimeToAMPM(data.opening_time)}</p>
+                <p><strong>Closing Time:</strong> ${formatTimeToAMPM(data.closing_time)}</p>
                 <p><strong>Open Days:</strong> ${readableDays}</p>
             </div>
         `);
+
 
         $('#appointment_date').prop('disabled', false);
     }
@@ -200,20 +253,16 @@ $.get(`/branch/${storeId}/dentists`, function (response) {
         if (response.dentists && response.dentists.length > 0) {
             selectHtml += `<option value="">-- Choose Dentist --</option>`;
             response.dentists.forEach(d => {
-                // use escape here if names may contain backticks, but this is basic
                 selectHtml += `<option value="${d.id}">${d.name}</option>`;
             });
             selectHtml += `</select>`;
             $w.html(selectHtml);
-            // enable appointment date/time if needed
             $('#dentist_id').prop('disabled', false);
         } else {
             selectHtml += `<option value="">No dentists available</option></select>`;
             $w.html(selectHtml);
             $('#dentist_id').prop('disabled', true);
         }
-
-        // debug check: confirm newly injected select exists and has options
         console.log('dentist select after replace:', $('#dentist_id').length, $('#dentist_id option').length);
 });
 });
@@ -221,7 +270,7 @@ $.get(`/branch/${storeId}/dentists`, function (response) {
 flatpickr("#appointment_date", {
     disable: [
         function(date) {
-            return !openDays.includes(date.getDay()); // disables closed days
+            return !openDays.includes(date.getDay()); 
         }
     ]
 });
@@ -250,7 +299,8 @@ $(document).on('change', '#appointment_date', function () {
         if (response.slots && response.slots.length > 0) {
             let options = `<option value="">-- Select Time --</option>`;
             response.slots.forEach(time => {
-                options += `<option value="${time}">${time}</option>`;
+                const timeAMPM = formatTimeToAMPM(time); // convert to AM/PM
+                options += `<option value="${time}">${timeAMPM}</option>`;
             });
             $('#appointment_time').html(options);
         } else {
@@ -259,49 +309,52 @@ $(document).on('change', '#appointment_date', function () {
     });
 });
 
-// $('#appointment_date').on('change', function () {
-//      const selectedDate = $(this).val();
-//     const storeId = $('#store_id').val();
-//     const selectedDay = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase(); // 'mon'
-
-//     // // Validate open day
-//     // if (!openDays.includes(selectedDay)) {
-//     //     alert('Store is closed on this day.');
-//     //     $(this).val('');
-//     //     $('#appointment_time').html('<option value="">Store closed on this day</option>').prop('disabled', true);
-//     //     return;
-//     // }
-
-//     $('#appointment_time').html('<option>Loading...</option>').prop('disabled', false);
-
-//     // Fetch available slots
-//     $.get(`/branch/${storeId}/available-slots`, { date: selectedDate }, function (response) {
-//         if (response.slots && response.slots.length > 0) {
-//             let options = `<option value="">-- Select Time --</option>`;
-//             response.slots.forEach(time => {
-//                 options += `<option value="${time}">${time}</option>`;
-//             });
-//             $('#appointment_time').html(options);
-//         } else {
-//             $('#appointment_time').html('<option value="">No slots available</option>');
-//         }
-//     });
-// });
 let clickedButton = null;
 
 $('button[type="submit"]').on('click', function () {
-    clickedButton = $(this).val(); // normal OR walkin
+    clickedButton = $(this).val(); // "normal" or "walkin"
+
+    if (clickedButton === 'walkin') {
+        $('#datetimeWrapper').hide();
+        $('#appointment_date, #appointment_time').prop('required', false);
+    } else if (clickedButton === 'normal') {
+        $('#datetimeWrapper').show();
+        $('#appointment_date, #appointment_time').prop('required', true);
+        
+    }
 });
 
 $('#bookingForm').on('submit', function(e) {
     e.preventDefault();
+
+    if (clickedButton === 'normal') {
+        const date = $('#appointment_date').val();
+        const time = $('#appointment_time').val();
+        if (!date || !time) {
+            Swal.fire('Error!', 'Please select date and time for the appointment.', 'error');
+            return;
+        }
+    }
+
+    // 🔹 Disable submit buttons
+    $('button[type="submit"]').prop('disabled', true);
+
+    // 🔹 Show loading
+    Swal.fire({
+        title: 'Processing...',
+        text: 'Please wait while we save your appointment.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
 
     const formData = {
         _token: '{{ csrf_token() }}',
         user_id: $('#user_id').val(),
         store_id: $('#store_id').val(),
         service_id: $('#service_id').val(),
-         dentist_id: $('#selected_dentist').val(),
+        dentist_id: $('#selected_dentist').val(),
         appointment_date: $('#appointment_date').val(),
         appointment_time: $('#appointment_time').val(),
         desc: $('#desc').val(),
@@ -313,37 +366,45 @@ $('#bookingForm').on('submit', function(e) {
         method: 'POST',
         data: formData,
         success: function(response) {
-          if (response.status === 'redirect') {
-        window.location.href = response.url;
-        return;
-    }
-        if (response.status === 'success') {
-            Swal.fire('Success!', response.message, 'success');
-            $('#bookingForm')[0].reset();
-            $('#appointment_date').prop('disabled', true); 
-            $('#appointment_time').html('<option value="">-- Select Date First --</option>').prop('disabled', true);
-              $('#storedetail').html(`
-        `);
+            
+            console.log(response);
+            
+            Swal.close(); // 🔹 close loading
+            $('button[type="submit"]').prop('disabled', false);
 
-        $('#appointment_date').prop('disabled', false);
-        //  window.location.href = '{{ route('appointments.incomplete') }}';   
-     
-        } else if (response.status === 'error') {
-            Swal.fire('Error!', response.message, 'error');
-        }
-       
-      
-        },
-        error: function(xhr) {
-            const errors = xhr.responseJSON.errors;
-            let message = 'Error booking appointment.';
-
-            if (errors) {
-                message = Object.values(errors).map(e => e.join(', ')).join(' ');
+            if (response.status === 'redirect') {
+                window.location.href = response.url;
+                return;
             }
 
-            alert(message);
+           if (response.status === 'success') {
+                Swal.fire('Success!', response.message, 'success').then(() => {
+                    location.reload(); // 🔹 reload page after closing the alert
+                });
+            } else {
+                // 🔹 Fix: Pass icon as third argument, message as second
+                Swal.fire(
+                    'Error!',
+                    'The branch must be logged in to process walk-in or emergency requests',
+                    'error'
+                );
+            }
+
+        },
+        error: function(xhr) {
+            Swal.close(); // 🔹 close loading
+            $('button[type="submit"]').prop('disabled', false);
+
+            let message = 'Error booking appointment.';
+            if (xhr.responseJSON?.errors) {
+                message = Object.values(xhr.responseJSON.errors)
+                    .map(e => e.join(', '))
+                    .join(' ');
+            }
+            Swal.fire('Error!', message, 'error');
         }
     });
 });
+
+
 </script>
