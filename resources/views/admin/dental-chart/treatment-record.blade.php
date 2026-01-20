@@ -20,30 +20,64 @@
                     <tr>
                         <th class="py-2 px-4 text-left">Date</th>
                         <th class="py-2 px-4 text-left">Procedure</th>
-                        <th class="py-2 px-4 text-left">Work Done</th>
+                        <th class="py-2 px-4 text-left">Notes</th>
                         <th class="py-2 px-4 text-left">Dentist</th>
                         <th class="py-2 px-4 text-left">Branch</th>
                         <th class="py-2 px-4 text-left">Amount Charged</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($record as $r)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-2 px-4">
-                                {{ $r->appointment_date ? \Carbon\Carbon::parse($r->appointment_date)->format('M d, Y') : '-' }}
-                            </td>
-                            <td class="py-2 px-4">{{ $r->desc ?? '-' }}</td>
-                            <td class="py-2 px-4">{{ $r->work_done ?? '-' }}</td>
-                            <td class="py-2 px-4">{{ $r->dentist->name ?? '-' }}</td>
-                            <td class="py-2 px-4">{{ $r->branch ?? '-' }}</td>
-                            <td class="py-2 px-4">{{ $r->total_price ?? '-' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4">No treatment records found.</td>
-                        </tr>
-                    @endforelse
+                @forelse ($record as $r)
+                    <tr class="border-b hover:bg-gray-50">
+                        {{-- Date --}}
+                        <td class="py-2 px-4">
+                            {{ $r->appointment_date
+                                ? \Carbon\Carbon::parse($r->appointment_date)->format('M d, Y')
+                                : '-' }}
+                        </td>
+
+                        {{-- Procedure / Services --}}
+                        <td class="py-2 px-4">
+                            @php
+                                $services = [];
+                                if (!empty($r->service_ids)) {
+                                    $serviceIds = is_string($r->service_ids) ? json_decode($r->service_ids, true) : $r->service_ids;
+                                    $services = \App\Models\Service::whereIn('id', $serviceIds)->pluck('name');
+                                }
+                            @endphp
+                            @if ($services->isNotEmpty())
+                                <ul class="list-disc pl-4">
+                                    @foreach ($services as $service)
+                                        <li>{{ $service }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                -
+                            @endif
+                        </td>
+
+                        {{-- Notes / Work Done --}}
+                        <td class="py-2 px-4">{{ $r->work_done ?? '-' }}</td>
+
+                        {{-- Dentist --}}
+                        <td class="py-2 px-4">{{ $r->dentist->name ?? '-' }}</td>
+
+                        {{-- Branch / Store --}}
+                        <td class="py-2 px-4">{{ $r->store->name ?? '-' }}</td>
+
+                        {{-- Amount Charged --}}
+                        <td class="py-2 px-4">{{ $r->total_price ?? '-' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            No treatment records found.
+                        </td>
+                    </tr>
+                @endforelse
                 </tbody>
+
+
             </table>
         </div>
     </div>
