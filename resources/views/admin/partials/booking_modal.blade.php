@@ -1,5 +1,10 @@
 
 <div class="flex flex-col md:flex-row md:gap-10">
+    
+    
+      @php
+                    $branch = \App\Models\Store::find(session('active_branch_id'));
+                @endphp
     <!-- 70% Booking Form -->
     <div class="md:w-[70%]">
         <form id="bookingForm" class="space-y-4">
@@ -25,7 +30,7 @@
                         <option value="{{ $store->id }}">{{ $store->name }}</option>
                     @endforeach
                 </select>
-                <div id="storedetail" hidden></div>
+                <div id="storedetail" ></div>
             </div>
 
             {{-- Services --}}
@@ -75,21 +80,21 @@
             <!-- Description -->
             <div>
                 <label for="desc" class="block font-semibold">Appointment Description</label>
-                <textarea class="w-full p-2 border rounded" rows="10" cols="30" id="desc" name="desc" required></textarea>
+                <textarea class="w-full p-2 border rounded" rows="10" cols="30" id="desc" name="desc"></textarea>
             </div>
 
                         <!-- Submit -->
-            <button type="submit" name="appointment_type" value="normal"
+            <button type="submit" name="appointment_type" id="normal" value="normal"
                 class="bg-blue-600 text-white px-4 py-2 rounded">
                 Book Appointment
             </button>
 
-            <button type="submit" name="appointment_type" value="walkin"
+            <button type="submit" name="appointment_type" id="walkin" value="walkin"
                 class="bg-green-600 text-white px-4 py-2 rounded">
                 Walk-in
             </button>
 
-            <button type="submit" name="appointment_type" value="emergency"
+            <button type="submit" name="appointment_type" id="emergency" value="emergency"
                 class="bg-red-600 text-white px-4 py-2 rounded">
                 Emergency
             </button>
@@ -111,6 +116,16 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+
+function formatTimeToAMPM(time24) {
+            const [hourStr, minute] = time24.split(':');
+            let hour = parseInt(hourStr);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12;
+            hour = hour ? hour : 12; // kapag 0, gawing 12
+            return `${hour}:${minute} ${ampm}`;
+        }
+
 let openDays = []; 
 const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 
@@ -118,6 +133,34 @@ let flatpickrInstance;
 
 $('#store_id').on('change', function () {
     const storeId = $(this).val();
+
+
+
+    // Disable buttons by default
+const walkinBtn = $('#walkin');
+const emergencyBtn = $('#emergency');
+
+if (!storeId) {
+    walkinBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    emergencyBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    $('#storedetail').html('');
+    $('#appointment_date').prop('disabled', true);
+    return;
+}
+
+// Check if selected branch is the active branch
+const activeBranchId = '{{ $branch->id }}';
+if (storeId != activeBranchId) {
+    // Disable buttons and add disabled style
+    walkinBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    emergencyBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+} else {
+    // Enable buttons and remove disabled style
+    walkinBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+    emergencyBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+}
+
+
     if (!storeId) return;
 
    $.get(`/store/${storeId}/schedule`, function (data) {
@@ -158,15 +201,18 @@ $('#store_id').on('change', function () {
             ]
         });
 
+       
+
         $('#storedetail').html(`
             <div class="bg-white p-4 rounded shadow">
                 <h2 class="text-xl font-bold mb-2">${data.name}</h2>
                 <p><strong>Address:</strong> ${data.address}</p>
-                <p><strong>Opening Time:</strong> ${data.opening_time}</p>
-                <p><strong>Closing Time:</strong> ${data.closing_time}</p>
+                <p><strong>Opening Time:</strong> ${formatTimeToAMPM(data.opening_time)}</p>
+                <p><strong>Closing Time:</strong> ${formatTimeToAMPM(data.closing_time)}</p>
                 <p><strong>Open Days:</strong> ${readableDays}</p>
             </div>
         `);
+
 
         $('#appointment_date').prop('disabled', false);
     }
@@ -253,7 +299,8 @@ $(document).on('change', '#appointment_date', function () {
         if (response.slots && response.slots.length > 0) {
             let options = `<option value="">-- Select Time --</option>`;
             response.slots.forEach(time => {
-                options += `<option value="${time}">${time}</option>`;
+                const timeAMPM = formatTimeToAMPM(time); // convert to AM/PM
+                options += `<option value="${time}">${timeAMPM}</option>`;
             });
             $('#appointment_time').html(options);
         } else {
@@ -268,30 +315,39 @@ $('button[type="submit"]').on('click', function () {
     clickedButton = $(this).val(); // "normal" or "walkin"
 
     if (clickedButton === 'walkin') {
-        $('#datetimeWrapper').hide();  // hide date/time for walk-in
+        $('#datetimeWrapper').hide();
         $('#appointment_date, #appointment_time').prop('required', false);
     } else if (clickedButton === 'normal') {
-        $('#datetimeWrapper').show();  // show date/time for normal booking
+        $('#datetimeWrapper').show();
         $('#appointment_date, #appointment_time').prop('required', true);
-
-        // Do NOT pre-fill date or time — leave empty
-        $('#appointment_date').val('');
-        $('#appointment_time').val('');
+        
     }
 });
 
 $('#bookingForm').on('submit', function(e) {
-    // For normal booking, prevent submit if date/time are empty
+    e.preventDefault();
+
     if (clickedButton === 'normal') {
         const date = $('#appointment_date').val();
         const time = $('#appointment_time').val();
         if (!date || !time) {
             Swal.fire('Error!', 'Please select date and time for the appointment.', 'error');
-            return false; // stop submission
+            return;
         }
     }
 
-    e.preventDefault();
+    // 🔹 Disable submit buttons
+    $('button[type="submit"]').prop('disabled', true);
+
+    // 🔹 Show loading
+    Swal.fire({
+        title: 'Processing...',
+        text: 'Please wait while we save your appointment.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
 
     const formData = {
         _token: '{{ csrf_token() }}',
@@ -310,30 +366,45 @@ $('#bookingForm').on('submit', function(e) {
         method: 'POST',
         data: formData,
         success: function(response) {
+            
+            console.log(response);
+            
+            Swal.close(); // 🔹 close loading
+            $('button[type="submit"]').prop('disabled', false);
+
             if (response.status === 'redirect') {
                 window.location.href = response.url;
                 return;
             }
-            if (response.status === 'success') {
-                Swal.fire('Success!', response.message, 'success');
-                $('#bookingForm')[0].reset();
-                $('#appointment_date').prop('disabled', true); 
-                $('#appointment_time').html('<option value="">-- Select Date First --</option>').prop('disabled', true);
-                $('#storedetail').html('');
-                $('#appointment_date').prop('disabled', false);
-            } else if (response.status === 'error') {
-                Swal.fire('Error!', response.message, 'error');
+
+           if (response.status === 'success') {
+                Swal.fire('Success!', response.message, 'success').then(() => {
+                    location.reload(); // 🔹 reload page after closing the alert
+                });
+            } else {
+                // 🔹 Fix: Pass icon as third argument, message as second
+                Swal.fire(
+                    'Error!',
+                    'The branch must be logged in to process walk-in or emergency requests',
+                    'error'
+                );
             }
+
         },
         error: function(xhr) {
-            const errors = xhr.responseJSON.errors;
+            Swal.close(); // 🔹 close loading
+            $('button[type="submit"]').prop('disabled', false);
+
             let message = 'Error booking appointment.';
-            if (errors) {
-                message = Object.values(errors).map(e => e.join(', ')).join(' ');
+            if (xhr.responseJSON?.errors) {
+                message = Object.values(xhr.responseJSON.errors)
+                    .map(e => e.join(', '))
+                    .join(' ');
             }
-            alert(message);
+            Swal.fire('Error!', message, 'error');
         }
     });
 });
+
 
 </script>

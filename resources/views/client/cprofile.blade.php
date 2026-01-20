@@ -40,6 +40,18 @@
     </ul>
 </div>
 
+<div id="record-tab" class="tab-content hidden">
+    @if($record)
+        @include('admin.dental-chart.treatment-record', ['record' => $record])
+    @else
+        <p>No treatment record available.</p>
+    @endif
+</div>
+
+<div id="consent-tab" class="tab-content hidden">
+    @include('client.consentpage')
+</div>
+
 <div id="profile-tab" class="tab-content">
 <div class="flex flex-col h-full ">
 <div class="flex flex-row h-full  gap-5">
@@ -211,17 +223,7 @@
     @endif
 </div>
 
-<div id="record-tab" class="tab-content hidden">
-    @if($record)
-        @include('admin.dental-chart.treatment-record', ['record' => $record])
-    @else
-        <p>No treatment record available.</p>
-    @endif
-</div>
 
-<div id="consent-tab" class="tab-content hidden">
-    @include('client.consentpage')
-</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

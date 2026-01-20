@@ -308,7 +308,7 @@ public function appointmentadmin(Request $request)
         ]);
     }
 
-    // Validation
+        // Validation
     $request->validate([
         'user_id' => 'required|exists:users,id',
         'store_id' => 'required|exists:stores,id',
@@ -316,8 +316,9 @@ public function appointmentadmin(Request $request)
         'dentist_id' => 'required|exists:users,id',
         'appointment_date' => 'required|date|after_or_equal:today',
         'appointment_time' => 'required|date_format:H:i',
-        'desc' =>'required',
+        'desc' => 'nullable|string', // ✅ now optional
     ]);
+
 
     $store = Store::findOrFail($request->store_id);
     $user = User::findOrFail($request->user_id);

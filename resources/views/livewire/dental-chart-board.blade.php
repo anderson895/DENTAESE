@@ -339,8 +339,14 @@ document.addEventListener('click', function (e) {
    MODAL
 ===================================================== */
 function openModal() {
+  // Rebuild the groups every time
+  buildGroup('condition', 'conditionGroup');
+  buildGroup('restoration', 'restorationGroup');
+  buildGroup('surgery', 'surgeryGroup');
+
   $('#toothModal').removeClass('hidden').addClass('flex');
 }
+
 
 function closeModal() {
   $('#toothModal').addClass('hidden').removeClass('flex');
