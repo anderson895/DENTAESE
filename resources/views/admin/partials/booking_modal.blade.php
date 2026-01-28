@@ -336,17 +336,13 @@ $('#bookingForm').on('submit', function(e) {
         }
     }
 
-    // 🔹 Disable submit buttons
     $('button[type="submit"]').prop('disabled', true);
 
-    // 🔹 Show loading
     Swal.fire({
         title: 'Processing...',
         text: 'Please wait while we save your appointment.',
         allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        didOpen: () => Swal.showLoading()
     });
 
     const formData = {
@@ -354,7 +350,7 @@ $('#bookingForm').on('submit', function(e) {
         user_id: $('#user_id').val(),
         store_id: $('#store_id').val(),
         service_id: $('#service_id').val(),
-        dentist_id: $('#selected_dentist').val(),
+        dentist_id: $('#dentist_id').val(), // ✅ FIXED
         appointment_date: $('#appointment_date').val(),
         appointment_time: $('#appointment_time').val(),
         desc: $('#desc').val(),
@@ -366,10 +362,7 @@ $('#bookingForm').on('submit', function(e) {
         method: 'POST',
         data: formData,
         success: function(response) {
-            
-            console.log(response);
-            
-            Swal.close(); // 🔹 close loading
+            Swal.close();
             $('button[type="submit"]').prop('disabled', false);
 
             if (response.status === 'redirect') {
@@ -377,34 +370,22 @@ $('#bookingForm').on('submit', function(e) {
                 return;
             }
 
-           if (response.status === 'success') {
-                Swal.fire('Success!', response.message, 'success').then(() => {
-                    location.reload(); // 🔹 reload page after closing the alert
-                });
+            if (response.status === 'success') {
+                Swal.fire('Success!', response.message, 'success').then(() => location.reload());
             } else {
-                // 🔹 Fix: Pass icon as third argument, message as second
-                Swal.fire(
-                    'Error!',
-                    'The branch must be logged in to process walk-in or emergency requests',
-                    'error'
-                );
+                Swal.fire('Error!', response.message || 'Unknown error', 'error');
             }
-
         },
         error: function(xhr) {
-            Swal.close(); // 🔹 close loading
+            Swal.close();
             $('button[type="submit"]').prop('disabled', false);
 
-            let message = 'Error booking appointment.';
-            if (xhr.responseJSON?.errors) {
-                message = Object.values(xhr.responseJSON.errors)
-                    .map(e => e.join(', '))
-                    .join(' ');
-            }
+            let message = xhr.responseJSON?.message || 'Error booking appointment.';
             Swal.fire('Error!', message, 'error');
         }
     });
 });
+
 
 
 </script>
