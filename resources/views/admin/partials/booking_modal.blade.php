@@ -48,7 +48,7 @@
             <div>
                 <label for="dentist_id" class="block font-semibold">Select Dentist</label>
                 <div id="dentistWrapper">
-                <select id="dentist_id" name="dentist_id" class="w-full p-2 border rounded"  disabled>
+                <select id="dentist_id" name="dentist_id" class="dentist_id w-full p-2 border rounded"  disabled>
                   
                     <option value="">-- Choose Dentist --</option>
                     
@@ -249,7 +249,7 @@ $.get(`/branch/${storeId}/dentists`, function (response) {
             return;
         }
 
-        let selectHtml = `<select id="dentist_id" name="dentist_id" class="w-full p-2 border rounded" required>`;
+        let selectHtml = `<select id="dentist_id" name="dentist_id" class="dentist_id w-full p-2 border rounded" required>`;
         if (response.dentists && response.dentists.length > 0) {
             selectHtml += `<option value="">-- Choose Dentist --</option>`;
             response.dentists.forEach(d => {
@@ -327,6 +327,8 @@ $('button[type="submit"]').on('click', function () {
 $('#bookingForm').on('submit', function(e) {
     e.preventDefault();
 
+    console.log($('.dentist_id').val());
+
     if (clickedButton === 'normal') {
         const date = $('#appointment_date').val();
         const time = $('#appointment_time').val();
@@ -350,7 +352,7 @@ $('#bookingForm').on('submit', function(e) {
         user_id: $('#user_id').val(),
         store_id: $('#store_id').val(),
         service_id: $('#service_id').val(),
-        dentist_id: $('#dentist_id').val(), // ✅ FIXED
+        dentist_id: $('.dentist_id').val(), 
         appointment_date: $('#appointment_date').val(),
         appointment_time: $('#appointment_time').val(),
         desc: $('#desc').val(),
