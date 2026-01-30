@@ -8,6 +8,23 @@
         background-color:#F5F5F5;
         padding: 2px;
     }
+    
+    #video, #overlayCanvas {
+        display: block;
+        width: 320px;
+        height: 240px;
+    }
+    
+    #overlayCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+    
+    .w-3.h-3.rounded-full {
+        transition: all 0.3s ease;
+    }
 </style>
 
       <!-- Tab Navigation -->
@@ -113,15 +130,61 @@
                 
 
             <!-- Modal -->
-                    <div id="modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-                        <div class="bg-white p-6 rounded shadow-lg w-96">
-                            <h2 class="text-lg font-bold mb-4">Capture & Register</h2>
-                            <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-                            <video id="video" width="320" height="240" autoplay></video>
-                            <button class="mt-4 px-4 py-2 bg-green-500 text-white rounded" id="capture">Capture</button>
-                            <button id="closemodal" class="mt-4 px-4 py-2 bg-red-500 text-white rounded">Close</button>
+            <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-xl shadow-lg w-fit">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-800 text-center">Face Registration</h2>
+
+                    <div class="relative">
+                        <!-- Video with progress border -->
+                        <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
+                            <div class="relative inline-block">
+                                <video id="video" width="320" height="240" autoplay playsinline class="rounded-md block" style="width: 320px; height: 240px;"></video>
+                                <canvas id="overlayCanvas" width="320" height="240" class="absolute top-0 left-0 rounded-md pointer-events-none" style="width: 320px; height: 240px;"></canvas>
+                            </div>
+                        </div>
+                        <canvas id="canvas" width="320" height="240" class="hidden"></canvas>
+                    </div>
+
+                    <div class="mt-4 space-y-2">
+                        <!-- Debug info -->
+                        <div class="text-center text-xs text-gray-500">
+                            <p id="debugInfo">FPS: --</p>
+                        </div>
+
+                        <!-- Progress text -->
+                        <div class="text-center">
+                            <p id="instructionText" class="text-sm font-semibold text-gray-700">
+                                Move your head left and right, then open your mouth
+                            </p>
+                            <p id="progressText" class="text-xs text-gray-500 mt-1">
+                                Progress: 0%
+                            </p>
+                        </div>
+
+                        <!-- Status indicators -->
+                        <div class="flex justify-center gap-4 text-xs">
+                            <div class="flex items-center gap-1">
+                                <span id="leftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <span>Left Turn</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <span>Right Turn</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span id="mouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <span>Open Mouth</span>
+                            </div>
                         </div>
                     </div>
+
+                    <div class="flex items-center justify-end mt-4">
+                        <button id="closemodal" type="button" class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded-md">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
              
             </div>
         </div>
@@ -227,8 +290,9 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+
 <script>
 document.querySelectorAll(".tab-button").forEach(button => {
     button.addEventListener("click", () => {
@@ -250,36 +314,344 @@ document.querySelectorAll(".tab-button").forEach(button => {
     });
     });
 </script>
-<script>
-    const openBtn = document.getElementById('capturemodal');
-    const modal = document.getElementById('modal');
-    const closeBtn = document.getElementById('closemodal');
-  
-    openBtn.addEventListener('click', () => {
-      modal.classList.remove('hidden');
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-        })
-        .catch(err => {
-            console.error("Error accessing webcam: ", err);
-        });
-    });
-  
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  </script>
-  
-<script>
-    
-     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const captureButton = document.getElementById('capture');
-    const context = canvas.getContext('2d');
-  
 
-        captureButton.addEventListener('click', () => {
+<!-- ================= FACE CAPTURE WITH VALIDATION ================= -->
+<script>
+let modelsLoaded = false;
+let isDetecting = false;
+let animationFrameId = null;
+
+// Tracking variables
+let headMovementLeft = false;
+let headMovementRight = false;
+let mouthOpened = false;
+let currentProgress = 0;
+
+// FPS tracking
+let lastFrameTime = Date.now();
+let frameCount = 0;
+let fps = 0;
+
+const openBtn = document.getElementById('capturemodal');
+const modal = document.getElementById('modal');
+const closeBtn = document.getElementById('closemodal');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const context = canvas.getContext('2d');
+let stream = null;
+
+async function loadModels() {
+    if (modelsLoaded) return;
+    
+    try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68');
+        modelsLoaded = true;
+        console.log('✅ Models loaded successfully');
+    } catch (err) {
+        console.error('❌ Model loading error:', err);
+        Swal.fire('Error', 'Failed to load face detection models', 'error');
+    }
+}
+
+function updateProgress() {
+    let progress = 0;
+    
+    // Head movement left (33.33% of total)
+    if (headMovementLeft) progress += 33.33;
+    
+    // Head movement right (33.33% of total)
+    if (headMovementRight) progress += 33.33;
+    
+    // Mouth opened (33.33% of total)
+    if (mouthOpened) progress += 33.34;
+    
+    currentProgress = Math.min(100, Math.round(progress));
+    
+    // Update visual progress
+    const videoContainer = document.querySelector('#video').parentElement;
+    videoContainer.style.setProperty('--progress', currentProgress + '%');
+    
+    document.getElementById('progressText').textContent = `Progress: ${currentProgress}%`;
+    
+    // Update instruction text
+    if (!headMovementLeft && !headMovementRight && !mouthOpened) {
+        document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
+    } else if (headMovementLeft && !headMovementRight && !mouthOpened) {
+        document.getElementById('instructionText').textContent = 'Now turn your head to the right';
+    } else if (!headMovementLeft && headMovementRight && !mouthOpened) {
+        document.getElementById('instructionText').textContent = 'Now turn your head to the left';
+    } else if (headMovementLeft && headMovementRight && !mouthOpened) {
+        document.getElementById('instructionText').textContent = 'Great! Now open your mouth wide';
+    } else if (mouthOpened && (!headMovementLeft || !headMovementRight)) {
+        if (!headMovementLeft && !headMovementRight) {
+            document.getElementById('instructionText').textContent = 'Now turn your head left and right';
+        } else if (!headMovementLeft) {
+            document.getElementById('instructionText').textContent = 'Now turn your head to the left';
+        } else {
+            document.getElementById('instructionText').textContent = 'Now turn your head to the right';
+        }
+    } else {
+        document.getElementById('instructionText').textContent = 'Verification complete!';
+    }
+    
+    // Update indicators
+    if (headMovementLeft) {
+        document.getElementById('leftIndicator').className = 'w-3 h-3 rounded-full bg-green-500';
+    } else {
+        document.getElementById('leftIndicator').className = 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+    }
+    
+    if (headMovementRight) {
+        document.getElementById('rightIndicator').className = 'w-3 h-3 rounded-full bg-green-500';
+    } else {
+        document.getElementById('rightIndicator').className = 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+    }
+    
+    if (mouthOpened) {
+        document.getElementById('mouthIndicator').className = 'w-3 h-3 rounded-full bg-green-500';
+    } else {
+        document.getElementById('mouthIndicator').className = 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+    }
+    
+    // Auto-submit when complete
+    if (currentProgress === 100) {
+        setTimeout(() => {
+            captureFaceAndRegister();
+        }, 500);
+    }
+}
+
+function detectMouthOpening(landmarks) {
+    // Get mouth landmarks
+    const mouth = landmarks.getMouth();
+    
+    // Get upper and lower lip points
+    const upperLip = mouth[13];
+    const lowerLip = mouth[19];
+    
+    // Calculate vertical distance between upper and lower lip
+    const mouthOpenDistance = Math.abs(lowerLip.y - upperLip.y);
+    
+    // Get mouth width for normalization
+    const leftMouthCorner = mouth[0];
+    const rightMouthCorner = mouth[6];
+    const mouthWidth = Math.abs(rightMouthCorner.x - leftMouthCorner.x);
+    
+    // Calculate mouth aspect ratio (height/width)
+    const mouthAspectRatio = mouthOpenDistance / mouthWidth;
+    
+    // Threshold for mouth opening detection
+    const MOUTH_OPEN_THRESHOLD = 0.35;
+    
+    // Detect mouth opening
+    if (mouthAspectRatio > MOUTH_OPEN_THRESHOLD && !mouthOpened) {
+        mouthOpened = true;
+        console.log('✅ MOUTH OPENED | Ratio:', mouthAspectRatio.toFixed(3));
+        updateProgress();
+    }
+}
+
+function detectHeadMovement(landmarks) {
+    const nose = landmarks.getNose();
+    const jawline = landmarks.getJawOutline();
+    
+    const noseTip = nose[3];
+    const leftJaw = jawline[0];
+    const rightJaw = jawline[16];
+    
+    const faceWidth = rightJaw.x - leftJaw.x;
+    const noseOffset = noseTip.x - leftJaw.x;
+    const noseRatio = noseOffset / faceWidth;
+    
+    // Detect left turn
+    if (noseRatio < 0.38 && !headMovementLeft) {
+        headMovementLeft = true;
+        console.log('✅ HEAD TURNED LEFT | Ratio:', noseRatio.toFixed(3));
+        updateProgress();
+    }
+    
+    // Detect right turn
+    if (noseRatio > 0.62 && !headMovementRight) {
+        headMovementRight = true;
+        console.log('✅ HEAD TURNED RIGHT | Ratio:', noseRatio.toFixed(3));
+        updateProgress();
+    }
+}
+
+function drawBoundingBoxes(detection, video, canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (!detection) return;
+    
+    const { detection: faceDetection, landmarks } = detection;
+    const scaleX = canvas.width / video.videoWidth;
+    const scaleY = canvas.height / video.videoHeight;
+    
+    // Draw face box
+    const box = faceDetection.box;
+    const scaledBox = {
+        x: box.x * scaleX,
+        y: box.y * scaleY,
+        width: box.width * scaleX,
+        height: box.height * scaleY
+    };
+    
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(scaledBox.x, scaledBox.y, scaledBox.width, scaledBox.height);
+    
+    // Label
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
+    ctx.fillRect(scaledBox.x, scaledBox.y - 25, 60, 23);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Arial';
+    ctx.fillText('FACE', scaledBox.x + 8, scaledBox.y - 7);
+}
+
+// MAIN DETECTION LOOP
+async function detectFaceLoop() {
+    if (!isDetecting) return;
+    
+    const overlayCanvas = document.getElementById('overlayCanvas');
+    
+    // Calculate FPS
+    frameCount++;
+    const now = Date.now();
+    if (now - lastFrameTime > 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFrameTime = now;
+    }
+    
+    // Update debug info
+    document.getElementById('debugInfo').textContent = `FPS: ${fps}`;
+    
+    if (video && !video.paused && !video.ended && video.readyState === video.HAVE_ENOUGH_DATA) {
+        // Match canvas size
+        if (overlayCanvas.width !== video.videoWidth || overlayCanvas.height !== video.videoHeight) {
+            overlayCanvas.width = video.videoWidth;
+            overlayCanvas.height = video.videoHeight;
+        }
+        
+        try {
+            const detection = await faceapi
+                .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 224,
+                    scoreThreshold: 0.5
+                }))
+                .withFaceLandmarks();
+            
+            if (detection) {
+                drawBoundingBoxes(detection, video, overlayCanvas);
+                detectHeadMovement(detection.landmarks);
+                detectMouthOpening(detection.landmarks);
+            } else {
+                const ctx = overlayCanvas.getContext('2d');
+                ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            }
+        } catch (err) {
+            console.error('Detection error:', err);
+        }
+    }
+    
+    // Continue loop
+    animationFrameId = requestAnimationFrame(detectFaceLoop);
+}
+
+function startDetection() {
+    console.log('🎬 Starting detection loop...');
+    isDetecting = true;
+    detectFaceLoop();
+}
+
+function stopDetection() {
+    console.log('⏹️ Stopping detection loop...');
+    isDetecting = false;
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+}
+
+function resetTracking() {
+    headMovementLeft = false;
+    headMovementRight = false;
+    mouthOpened = false;
+    currentProgress = 0;
+    fps = 0;
+    frameCount = 0;
+    
+    document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
+    document.getElementById('progressText').textContent = 'Progress: 0%';
+    document.getElementById('debugInfo').textContent = 'FPS: --';
+    document.getElementById('leftIndicator').className = 'w-3 h-3 rounded-full bg-gray-300';
+    document.getElementById('rightIndicator').className = 'w-3 h-3 rounded-full bg-gray-300';
+    document.getElementById('mouthIndicator').className = 'w-3 h-3 rounded-full bg-gray-300';
+    
+    const videoContainer = document.querySelector('#video').parentElement;
+    videoContainer.style.setProperty('--progress', '0%');
+}
+
+openBtn.addEventListener('click', async () => {
+    modal.classList.remove('hidden');
+    resetTracking();
+
+    try {
+        // Request camera with specific constraints
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 30 }
+            }
+        });
+        
+        video.srcObject = stream;
+        
+        // Wait for video to actually start playing
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                video.play();
+                resolve();
+            };
+        });
+        
+        console.log('📹 Camera started - resolution:', video.videoWidth, 'x', video.videoHeight);
+        
+        // Load models
+        await loadModels();
+        
+        // Small delay then start detection
+        setTimeout(() => {
+            startDetection();
+        }, 500);
+        
+    } catch (err) {
+        console.error("❌ Webcam error:", err);
+        Swal.fire('Error', 'Unable to access webcam', 'error');
+        modal.classList.add('hidden');
+    }
+});
+
+closeBtn.addEventListener('click', () => {
+    stopDetection();
+    modal.classList.add('hidden');
+    stopCamera();
+    resetTracking();
+});
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+}
+
+function captureFaceAndRegister() {
+    stopDetection();
+    
     // Draw video frame onto canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -294,7 +666,7 @@ document.querySelectorAll(".tab-button").forEach(button => {
         fetch('/cregister-face', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}' // for Laravel Blade
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: formData
         })
@@ -341,8 +713,12 @@ document.querySelectorAll(".tab-button").forEach(button => {
             });
         });
     }, 'image/jpeg');
-});
+}
 
+// Load models on page load
+$(document).ready(function() {
+    loadModels();
+});
 </script>
 
 <script>
@@ -366,7 +742,7 @@ document.querySelectorAll(".tab-button").forEach(button => {
                 .then(res => res.json())
                 .then(data => {
                     Swal.fire('Removed!', data.message, 'success').then(() => {
-                        location.reload(); // Optional: refresh to reflect change
+                        location.reload();
                     });
                 })
                 .catch(error => {
@@ -377,69 +753,63 @@ document.querySelectorAll(".tab-button").forEach(button => {
         });
     });
 
-
     ///update profile
     $('#updateProfile').submit(function (event) {
         event.preventDefault();
         var formData = {
-                       
-                        email : $('input[name="email"]').val(),
-                       
-                        contact : $('input[name="contact"]').val(),
-                        user : $('input[name="user"]').val(),
-                        password : $('input[name="password"]').val(),
-                      
-
-                    }
+            email : $('input[name="email"]').val(),
+            contact : $('input[name="contact"]').val(),
+            user : $('input[name="user"]').val(),
+            password : $('input[name="password"]').val(),
+        }
        $.ajax({
             type: "patch",
             url: "{{route('updateProfile')}}",
             data:formData,
             headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    },
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function (response) {
                 if (response.status == 'success') {
                     Swal.fire({
-                                title: 'Success!',
-                                text: response.message,
-                                icon: 'success',
-                              
-                            })
+                        title: 'Success!',
+                        text: response.message,
+                        icon: 'success',
+                    })
                 } else {
                     Swal.fire({
-                                title: 'Error!',
-                                text: response.message,
-                                icon: 'error',
-                              
-                            })
+                        title: 'Error!',
+                        text: response.message,
+                        icon: 'error',
+                    })
                 }
-            }, error: function (xhr) {
-        if (xhr.status === 422) {
-            const errors = xhr.responseJSON.errors;
-            let errorList = '';
+            }, 
+            error: function (xhr) {
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorList = '';
 
-            for (let field in errors) {
-                errorList += `${errors[field].join(', ')}\n`;
+                    for (let field in errors) {
+                        errorList += `${errors[field].join(', ')}\n`;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: errorList.trim(),
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Something went wrong!',
+                    });
+                }
             }
-
-            Swal.fire({
-                icon: 'error',
-                title: 'Validation Error',
-                text: errorList.trim(),
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Something went wrong!',
-            });
-        }
-    }
         });
     })
+</script>
 
-    </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const slides = document.querySelectorAll('.medical-form-slide');
@@ -455,17 +825,19 @@ document.addEventListener('DOMContentLoaded', () => {
         indicator.textContent = `${index + 1} of ${slides.length}`;
     }
 
-    nextBtn.addEventListener('click', () => {
-        currentSlide = (currentSlide + 1) % slides.length;
-        showSlide(currentSlide);
-    });
+    if (nextBtn && prevBtn) {
+        nextBtn.addEventListener('click', () => {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        });
 
-    prevBtn.addEventListener('click', () => {
-        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-        showSlide(currentSlide);
-    });
+        prevBtn.addEventListener('click', () => {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+        });
 
-    showSlide(currentSlide);
+        showSlide(currentSlide);
+    }
 });
 </script>
 @endsection
