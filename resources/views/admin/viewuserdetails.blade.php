@@ -192,12 +192,15 @@
        @include('client.patient_record', ['patient'=> $patient])
         
     </div>
-    <div id="printable-info" class="tab-content hidden">
-        @include('admin.dental-chart.index', ['patient'=> $patient])
-    </div>
+
     <div id="record-tab" class="tab-content hidden">
         @include('admin.dental-chart.treatment-record', ['record' => $record])
     </div>
+
+    <div id="printable-info" class="tab-content hidden">
+        @include('admin.dental-chart.index', ['patient'=> $patient])
+    </div>
+    
     @endif
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

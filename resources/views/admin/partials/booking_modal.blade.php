@@ -48,7 +48,7 @@
             <div>
                 <label for="dentist_id" class="block font-semibold">Select Dentist</label>
                 <div id="dentistWrapper">
-                <select id="dentist_id" name="dentist_id" class="w-full p-2 border rounded"  disabled>
+                <select id="dentist_id" name="dentist_id" class="dentist_id w-full p-2 border rounded"  disabled>
                   
                     <option value="">-- Choose Dentist --</option>
                     
@@ -249,7 +249,7 @@ $.get(`/branch/${storeId}/dentists`, function (response) {
             return;
         }
 
-        let selectHtml = `<select id="dentist_id" name="dentist_id" class="w-full p-2 border rounded" required>`;
+        let selectHtml = `<select id="dentist_id" name="dentist_id" class="dentist_id w-full p-2 border rounded" required>`;
         if (response.dentists && response.dentists.length > 0) {
             selectHtml += `<option value="">-- Choose Dentist --</option>`;
             response.dentists.forEach(d => {
@@ -327,6 +327,8 @@ $('button[type="submit"]').on('click', function () {
 $('#bookingForm').on('submit', function(e) {
     e.preventDefault();
 
+    console.log($('.dentist_id').val());
+
     if (clickedButton === 'normal') {
         const date = $('#appointment_date').val();
         const time = $('#appointment_time').val();
@@ -336,17 +338,13 @@ $('#bookingForm').on('submit', function(e) {
         }
     }
 
-    // 🔹 Disable submit buttons
     $('button[type="submit"]').prop('disabled', true);
 
-    // 🔹 Show loading
     Swal.fire({
         title: 'Processing...',
         text: 'Please wait while we save your appointment.',
         allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        didOpen: () => Swal.showLoading()
     });
 
     const formData = {
@@ -354,7 +352,7 @@ $('#bookingForm').on('submit', function(e) {
         user_id: $('#user_id').val(),
         store_id: $('#store_id').val(),
         service_id: $('#service_id').val(),
-        dentist_id: $('#selected_dentist').val(),
+        dentist_id: $('.dentist_id').val(), 
         appointment_date: $('#appointment_date').val(),
         appointment_time: $('#appointment_time').val(),
         desc: $('#desc').val(),
@@ -366,10 +364,7 @@ $('#bookingForm').on('submit', function(e) {
         method: 'POST',
         data: formData,
         success: function(response) {
-            
-            console.log(response);
-            
-            Swal.close(); // 🔹 close loading
+            Swal.close();
             $('button[type="submit"]').prop('disabled', false);
 
             if (response.status === 'redirect') {
@@ -377,34 +372,22 @@ $('#bookingForm').on('submit', function(e) {
                 return;
             }
 
-           if (response.status === 'success') {
-                Swal.fire('Success!', response.message, 'success').then(() => {
-                    location.reload(); // 🔹 reload page after closing the alert
-                });
+            if (response.status === 'success') {
+                Swal.fire('Success!', response.message, 'success').then(() => location.reload());
             } else {
-                // 🔹 Fix: Pass icon as third argument, message as second
-                Swal.fire(
-                    'Error!',
-                    'The branch must be logged in to process walk-in or emergency requests',
-                    'error'
-                );
+                Swal.fire('Error!', response.message || 'Unknown error', 'error');
             }
-
         },
         error: function(xhr) {
-            Swal.close(); // 🔹 close loading
+            Swal.close();
             $('button[type="submit"]').prop('disabled', false);
 
-            let message = 'Error booking appointment.';
-            if (xhr.responseJSON?.errors) {
-                message = Object.values(xhr.responseJSON.errors)
-                    .map(e => e.join(', '))
-                    .join(' ');
-            }
+            let message = xhr.responseJSON?.message || 'Error booking appointment.';
             Swal.fire('Error!', message, 'error');
         }
     });
 });
+
 
 
 </script>

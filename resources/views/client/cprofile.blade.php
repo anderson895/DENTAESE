@@ -301,21 +301,33 @@ document.querySelectorAll(".tab-button").forEach(button => {
         .then(response => response.json())
         .then(data => {
             console.log(data);
+
             // Hide loading spinner
             document.getElementById('loadingSpinner').classList.add('hidden');
 
-            // Show SweetAlert success
-            Swal.fire({
-                title: 'Success!',
-                text: data.message || 'Face registered!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                // Close modal (optional)
-               
-                document.getElementById('modal').classList.add('hidden');
-                location.reload();
-            });
+            // ✅ SUCCESS
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message || 'Face registered successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    document.getElementById('modal').classList.add('hidden');
+                    location.reload();
+                });
+            }
+
+            // ❌ DUPLICATE FACE / ERROR
+            else {
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message || 'Face registration failed.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+
         })
         .catch(error => {
             console.error('Error:', error);
