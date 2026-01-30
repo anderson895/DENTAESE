@@ -116,34 +116,41 @@ class AuthUi extends Controller
     // private $apiKey = 'd6oKAAzVLTtgRyeecdED4eHFi9wfmq3I';
     // private $apiSecret = 'qe_nYezzGtNwf4WN_drOcrxfeg0ryJ7S';
 
-      private $apiKey = '-2y7KYjX1JuFECsjI_ANCAM5pugEm5R0';
+    private $apiKey = '-2y7KYjX1JuFECsjI_ANCAM5pugEm5R0';
     private $apiSecret = 'QHRO96q2sagJUJ-4DAgVgmBDa2-H3n8v';
-    public function loginFace(Request $request)
-{   
-    
+
+
+
+public function loginFace(Request $request)
+{
     $request->validate([
-        'user' => 'required',
         'image_base64' => 'required',
     ]);
-    
-    $user = User::where('user', $request->user)->first();
 
-    if (!$user || !$user->face_token) {
-        return response()->json(['message' => 'User not found or face not registered.']);
-    }
-
-    // Decode the base64 image
+    // ===============================
+    // 1. Decode base64 image
+    // ===============================
     $imageData = $request->input('image_base64');
-    $imageData = str_replace('data:image/jpeg;base64,', '', $imageData);
+    $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $imageData);
     $imageData = base64_decode($imageData);
 
-    // Temporarily save the image
+    if (!$imageData) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid image data.'
+        ]);
+    }
+
     $tempImagePath = storage_path('app/temp_login_face.jpg');
     file_put_contents($tempImagePath, $imageData);
 
-    // Now send this to Face++ Detect
+    // ===============================
+    // 2. Detect face (Face++)
+    // ===============================
     $detectResponse = Http::attach(
-        'image_file', file_get_contents($tempImagePath), 'temp_login_face.jpg'
+        'image_file',
+        file_get_contents($tempImagePath),
+        'temp_login_face.jpg'
     )->post('https://api-us.faceplusplus.com/facepp/v3/detect', [
         'api_key' => $this->apiKey,
         'api_secret' => $this->apiSecret,
@@ -152,46 +159,81 @@ class AuthUi extends Controller
     $detectData = $detectResponse->json();
 
     if (empty($detectData['faces'][0]['face_token'])) {
-        return response()->json(['message' => 'No face detected.']);
+        return response()->json([
+            'status' => 'error',
+            'message' => 'No face detected.'
+        ]);
     }
 
-    $faceToken2 = $detectData['faces'][0]['face_token'];
+    $scannedFaceToken = $detectData['faces'][0]['face_token'];
 
-    // Compare face_token from DB and new one
-    $verifyResponse = Http::asForm()->post('https://api-us.faceplusplus.com/facepp/v3/compare', [
-        'api_key' => $this->apiKey,
-        'api_secret' => $this->apiSecret,
-        'face_token1' => $user->face_token,
-        'face_token2' => $faceToken2,
-    ]);
+    // ===============================
+    // 3. Compare with ALL users
+    // ===============================
+    $users = User::whereNotNull('face_token')->get();
 
-    $verifyData = $verifyResponse->json();
+    $matchedUser = null;
+    $highestConfidence = 0;
 
-    if (isset($verifyData['confidence']) && $verifyData['confidence'] > 80) {
-        Auth::login($user);
+    foreach ($users as $user) {
+        $verifyResponse = Http::asForm()->post(
+            'https://api-us.faceplusplus.com/facepp/v3/compare',
+            [
+                'api_key'      => $this->apiKey,
+                'api_secret'   => $this->apiSecret,
+                'face_token1'  => $user->face_token,
+                'face_token2'  => $scannedFaceToken,
+            ]
+        );
 
-        if ($user->position == 'admin') {
-                session(['active_branch_id' => 'admin']);
-                $redirectUrl = route('dashboard');
+        $verifyData = $verifyResponse->json();
 
-            } else { 
-                $redirectUrl = match ($user->account_type) {
-                'admin' => route('GetBranchLogin'),
-                'patient' => route('CDashboard'),
-                default => route('login')
+        if (
+            isset($verifyData['confidence']) &&
+            $verifyData['confidence'] > $highestConfidence
+        ) {
+            $highestConfidence = $verifyData['confidence'];
+            $matchedUser = $user;
+        }
+    }
 
-                 };
-            }
-        // $redirectUrl = match ($user->account_type) {
-        //     'admin' => route('dashboard'),
-        //     'patient' => route('CDashboard'),
-        //     default => route('login')
-        // };
-        return response()->json(['status'=> 'success','message' => 'Login successful!', 'verify_data' => $verifyData,'redirect' => $redirectUrl]);
+    // ===============================
+    // 4. Threshold check
+    // ===============================
+    if (!$matchedUser || $highestConfidence < 80) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Face not recognized.'
+        ]);
+    }
+
+    // ===============================
+    // 5. Login user
+    // ===============================
+    Auth::login($matchedUser);
+
+    // ===============================
+    // 6. Redirect logic
+    // ===============================
+    if ($matchedUser->position === 'admin') {
+        session(['active_branch_id' => 'admin']);
+        $redirectUrl = route('dashboard');
     } else {
-        return response()->json(['status'=> 'error','message' => 'Login failed. Face does not match.', 'verify_data' => $verifyData]);
+        $redirectUrl = match ($matchedUser->account_type) {
+            'admin'   => route('GetBranchLogin'),
+            'patient' => route('CProfile'),
+            default   => route('login'),
+        };
     }
+
+    return response()->json([
+        'status'     => 'success',
+        'message'    => 'Login successful!',
+        'confidence' => $highestConfidence,
+        'redirect'   => $redirectUrl
+    ]);
 }
+
 
 
 
