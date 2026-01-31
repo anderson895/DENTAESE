@@ -302,6 +302,37 @@ public function finalSignup(Request $request)
         'face_token' => 'required|string',
     ]);
 
+
+
+    // START SCRIP
+
+        $validated = $request->validate([
+            'name' => 'required',
+          
+            'email' => 'required|email',
+            'password' => 'required',
+            'contact_number' => 'required',
+            'account_type' => 'required',
+            'user' => 'required|unique:users,user',
+
+        ]);
+
+            // Hash password
+        $otp = rand(100000, 999999);
+
+        // Hash the password
+        $validated['password'] = bcrypt($validated['password']);
+        $validated['otp_code'] = $otp;
+        $validated['otp_expires_at'] = Carbon::now()->addMinutes(10); // OTP valid for 10 mins
+        $validated['is_verified'] = false;
+
+        // Create user
+        $user = newuser::create($validated);
+    //END SCRIPT
+
+
+    
+
     $user = User::create([
         'name' => $request->name,
         'middlename' => $request->middlename ?? null,
