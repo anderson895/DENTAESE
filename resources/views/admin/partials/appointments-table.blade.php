@@ -58,14 +58,16 @@
             Cancel
         </button>
 
-    @elseif ($appointment->status == 'approved')
-            <button type="button"
-            class="change-time-btn bg-green-500 text-white px-3 py-1 rounded"
-            data-id="{{ $appointment->id }}"
-            data-start="{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}"
-            data-end="{{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('H:i') }}">
-            Change Time
-        </button>
+    @elseif ($appointment->status == 'approved'||$appointment->status == 'arrived')
+           <button type="button"
+                class="change-time-btn bg-green-500 text-white px-3 py-1 rounded"
+                data-id="{{ $appointment->id }}"
+                data-date="{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d') }}"
+                data-start="{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}"
+                data-end="{{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('H:i') }}">
+                Change Time
+            </button>
+
 
         <a href="{{ route('appointments.view', $appointment->id) }}"
            class="bg-blue-500 text-white px-3 py-1 rounded">

@@ -35,7 +35,7 @@ public function showBookings(Request $request)
 
     $query = Appointment::with('user')
         ->where('store_id', session('active_branch_id'))
-        ->whereIn('status', ['pending', 'approved']);
+        ->whereIn('status', ['pending', 'approved','arrived']);
 
     if ($user->position === 'Dentist') {
         $query->where('dentist_id', $user->id);
@@ -237,7 +237,7 @@ public function fetch()
     $appointments = Appointment::with('user')
         ->where('store_id', session('active_branch_id'))
         ->where('dentist_id', auth()->id())
-        ->whereIn('status', ['pending', 'approved'])
+        ->whereIn('status', ['pending', 'approved','arrived'])
         ->get();
 
     return view('admin.partials.appointments-table', compact('appointments'));

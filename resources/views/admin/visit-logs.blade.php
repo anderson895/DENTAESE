@@ -78,93 +78,85 @@
     </div>
 
     <!-- Face Recognition Tab -->
-    <!-- Face Recognition Tab -->
-<div id="face-tab" class="tab-content hidden">
-    <div class="text-gray-700">
-        <h2 class="font-bold text-lg mb-4">Face Recognition to Log Visit</h2>
-        
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <p class="text-sm text-blue-800">
-                <strong>Instructions:</strong> Click the button below to start face recognition. 
-                The system will automatically identify you and log your visit.
-            </p>
-        </div>
+    <div id="face-tab" class="tab-content hidden">
+        <div class="text-gray-700">
+            <h2 class="font-bold text-lg mb-4">Face Recognition to Log Visit</h2>
 
-        <form id="faceLoginForm" method="post" class="flex flex-col gap-5 max-w-md">
-            @csrf
-            
-            <div class="flex justify-center">
-                <button type="button" onclick="openFaceModal()" class="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-8 py-3 transition duration-150 text-lg">
-                    Start Face Recognition
-                </button>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p class="text-sm text-blue-800">
+                    <strong>Instructions:</strong> Click the button below to start face recognition.
+                    The system will automatically identify you and log your visit.
+                </p>
             </div>
-        </form>
 
-        <!-- Face Recognition Modal -->
-        <div id="faceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-lg w-fit">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800 text-center">
-                    Face Recognition
-                </h3>
-
-                <div class="relative">
-                    <!-- Video with progress border -->
-                    <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
-                        <div class="relative inline-block">
-                            <video id="faceVideo" width="320" height="240" autoplay playsinline class="rounded-md block" style="width: 320px; height: 240px;"></video>
-                            <canvas id="overlayCanvas" width="320" height="240" class="absolute top-0 left-0 rounded-md pointer-events-none" style="width: 320px; height: 240px;"></canvas>
-                        </div>
-                    </div>
-                    <canvas id="faceCanvas" width="320" height="240" class="hidden"></canvas>
-                </div>
-
-                <div class="mt-4 space-y-2">
-                    <!-- Debug info -->
-                    <div class="text-center text-xs text-gray-500">
-                        <p id="faceDebugInfo">FPS: --</p>
-                    </div>
-
-                    <!-- Progress text -->
-                    <div class="text-center">
-                        <p id="faceInstructionText" class="text-sm font-semibold text-gray-700">
-                            Move your head left and right, then open your mouth
-                        </p>
-                        <p id="faceProgressText" class="text-xs text-gray-500 mt-1">
-                            Progress: 0%
-                        </p>
-                    </div>
-
-                    <!-- Status indicators -->
-                    <div class="flex justify-center gap-4 text-xs">
-                        <div class="flex items-center gap-1">
-                            <span id="faceLeftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                            <span>Left Turn</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <span id="faceRightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                            <span>Right Turn</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <span id="faceMouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                            <span>Open Mouth</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end mt-4">
-                    <button onclick="closeFaceModal()" type="button" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">
-                        Cancel
+            <form id="faceLoginForm" method="post" class="flex flex-col gap-5 max-w-md">
+                @csrf
+                <div class="flex justify-center">
+                    <button type="button" onclick="openFaceModal()" class="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-8 py-3 transition duration-150 text-lg">
+                        Start Face Recognition
                     </button>
                 </div>
+            </form>
+
+            <!-- Face Recognition Modal -->
+            <div id="faceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-lg w-fit">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 text-center">
+                        Face Recognition
+                    </h3>
+
+                    <div class="relative">
+                        <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
+                            <div class="relative inline-block">
+                                <video id="faceVideo" width="320" height="240" autoplay playsinline class="rounded-md block" style="width: 320px; height: 240px;"></video>
+                                <canvas id="overlayCanvas" width="320" height="240" class="absolute top-0 left-0 rounded-md pointer-events-none" style="width: 320px; height: 240px;"></canvas>
+                            </div>
+                        </div>
+                        <canvas id="faceCanvas" width="320" height="240" class="hidden"></canvas>
+                    </div>
+
+                    <div class="mt-4 space-y-2">
+                        <div class="text-center text-xs text-gray-500">
+                            <p id="faceDebugInfo">FPS: --</p>
+                        </div>
+                        <div class="text-center">
+                            <p id="faceInstructionText" class="text-sm font-semibold text-gray-700">
+                                Move your head left and right, then open your mouth
+                            </p>
+                            <p id="faceProgressText" class="text-xs text-gray-500 mt-1">
+                                Progress: 0%
+                            </p>
+                        </div>
+                        <div class="flex justify-center gap-4 text-xs">
+                            <div class="flex items-center gap-1">
+                                <span id="faceLeftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <span>Left Turn</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span id="faceRightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <span>Right Turn</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span id="faceMouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <span>Open Mouth</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end mt-4">
+                        <button onclick="closeFaceModal()" type="button" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loader -->
+            <div id="faceLoadingSpinner" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
             </div>
         </div>
-
-        <!-- Loader -->
-        <div id="faceLoadingSpinner" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
-            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-        </div>
     </div>
-</div>
 </div>
 
 <!-- Scripts -->
@@ -179,14 +171,14 @@
         width: 320px;
         height: 240px;
     }
-    
+
     #overlayCanvas {
         position: absolute;
         top: 0;
         left: 0;
         pointer-events: none;
     }
-    
+
     .w-3.h-3.rounded-full {
         transition: all 0.3s ease;
     }
@@ -229,9 +221,40 @@
         })
         .then(res => res.json())
         .then(data => {
+            if (data.status === 'warning') {
+                Swal.fire({
+                    title: 'Already Logged',
+                    text: data.message,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            if (data.status === 'error') {
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            const appointmentDetails = data.appointment
+                ? `
+                    <div class="text-left mt-2 text-sm">
+                        <p><strong>Name:</strong> ${data.appointment.name}</p>
+                        <p><strong>Branch:</strong> ${data.appointment.branch}</p>
+                        <p><strong>Time:</strong> ${data.appointment.time}</p>
+                        <p><strong>Status:</strong> <span style="color: #16a34a; font-weight: 600;">${data.appointment.status}</span></p>
+                    </div>
+                  `
+                : `<p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">No appointment found for today.</p>`;
+
             Swal.fire({
-                title: 'Scan Successful!',
-                text: data.message,
+                title: 'Visit Logged!',
+                html: `<p>${data.message}</p>${appointmentDetails}`,
                 icon: 'success',
                 confirmButtonText: 'OK'
             }).then((result) => {
@@ -257,18 +280,17 @@
 </script>
 
 <!-- Face Recognition Script -->
-<!-- Face Recognition Script -->
 <script>
     let faceModelsLoaded = false;
     let isFaceDetecting = false;
     let faceAnimationFrameId = null;
-    
+
     // Tracking variables
     let faceHeadMovementLeft = false;
     let faceHeadMovementRight = false;
     let faceMouthOpened = false;
     let faceCurrentProgress = 0;
-    
+
     // FPS tracking
     let faceLastFrameTime = Date.now();
     let faceFrameCount = 0;
@@ -276,7 +298,7 @@
 
     async function loadFaceModels() {
         if (faceModelsLoaded) return;
-        
+
         try {
             await faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector');
             await faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68');
@@ -290,20 +312,18 @@
 
     function updateFaceProgress() {
         let progress = 0;
-        
+
         if (faceHeadMovementLeft) progress += 33.33;
         if (faceHeadMovementRight) progress += 33.33;
         if (faceMouthOpened) progress += 33.34;
-        
+
         faceCurrentProgress = Math.min(100, Math.round(progress));
-        
-        // Update visual progress
+
         const videoContainer = document.querySelector('#faceVideo').parentElement;
         videoContainer.style.setProperty('--progress', faceCurrentProgress + '%');
-        
+
         document.getElementById('faceProgressText').textContent = `Progress: ${faceCurrentProgress}%`;
-        
-        // Update instruction text
+
         if (!faceHeadMovementLeft && !faceHeadMovementRight && !faceMouthOpened) {
             document.getElementById('faceInstructionText').textContent = 'Move your head left and right, then open your mouth';
         } else if (faceHeadMovementLeft && !faceHeadMovementRight && !faceMouthOpened) {
@@ -323,21 +343,19 @@
         } else {
             document.getElementById('faceInstructionText').textContent = 'Verification complete! Identifying...';
         }
-        
-        // Update indicators
-        document.getElementById('faceLeftIndicator').className = faceHeadMovementLeft 
-            ? 'w-3 h-3 rounded-full bg-green-500' 
+
+        document.getElementById('faceLeftIndicator').className = faceHeadMovementLeft
+            ? 'w-3 h-3 rounded-full bg-green-500'
             : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-        
-        document.getElementById('faceRightIndicator').className = faceHeadMovementRight 
-            ? 'w-3 h-3 rounded-full bg-green-500' 
+
+        document.getElementById('faceRightIndicator').className = faceHeadMovementRight
+            ? 'w-3 h-3 rounded-full bg-green-500'
             : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-        
-        document.getElementById('faceMouthIndicator').className = faceMouthOpened 
-            ? 'w-3 h-3 rounded-full bg-green-500' 
+
+        document.getElementById('faceMouthIndicator').className = faceMouthOpened
+            ? 'w-3 h-3 rounded-full bg-green-500'
             : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-        
-        // Auto-submit when complete
+
         if (faceCurrentProgress === 100) {
             setTimeout(() => {
                 submitFaceRecognition();
@@ -350,14 +368,14 @@
         const upperLip = mouth[13];
         const lowerLip = mouth[19];
         const mouthOpenDistance = Math.abs(lowerLip.y - upperLip.y);
-        
+
         const leftMouthCorner = mouth[0];
         const rightMouthCorner = mouth[6];
         const mouthWidth = Math.abs(rightMouthCorner.x - leftMouthCorner.x);
-        
+
         const mouthAspectRatio = mouthOpenDistance / mouthWidth;
         const MOUTH_OPEN_THRESHOLD = 0.35;
-        
+
         if (mouthAspectRatio > MOUTH_OPEN_THRESHOLD && !faceMouthOpened) {
             faceMouthOpened = true;
             console.log('✅ MOUTH OPENED | Ratio:', mouthAspectRatio.toFixed(3));
@@ -368,21 +386,21 @@
     function detectFaceHeadMovement(landmarks) {
         const nose = landmarks.getNose();
         const jawline = landmarks.getJawOutline();
-        
+
         const noseTip = nose[3];
         const leftJaw = jawline[0];
         const rightJaw = jawline[16];
-        
+
         const faceWidth = rightJaw.x - leftJaw.x;
         const noseOffset = noseTip.x - leftJaw.x;
         const noseRatio = noseOffset / faceWidth;
-        
+
         if (noseRatio < 0.38 && !faceHeadMovementLeft) {
             faceHeadMovementLeft = true;
             console.log('✅ HEAD TURNED LEFT | Ratio:', noseRatio.toFixed(3));
             updateFaceProgress();
         }
-        
+
         if (noseRatio > 0.62 && !faceHeadMovementRight) {
             faceHeadMovementRight = true;
             console.log('✅ HEAD TURNED RIGHT | Ratio:', noseRatio.toFixed(3));
@@ -393,13 +411,13 @@
     function drawFaceBoundingBoxes(detection, video, canvas) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         if (!detection) return;
-        
+
         const { detection: faceDetection } = detection;
         const scaleX = canvas.width / video.videoWidth;
         const scaleY = canvas.height / video.videoHeight;
-        
+
         const box = faceDetection.box;
         const scaledBox = {
             x: box.x * scaleX,
@@ -407,11 +425,11 @@
             width: box.width * scaleX,
             height: box.height * scaleY
         };
-        
+
         ctx.strokeStyle = '#10b981';
         ctx.lineWidth = 3;
         ctx.strokeRect(scaledBox.x, scaledBox.y, scaledBox.width, scaledBox.height);
-        
+
         ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
         ctx.fillRect(scaledBox.x, scaledBox.y - 25, 60, 23);
         ctx.fillStyle = '#ffffff';
@@ -421,10 +439,10 @@
 
     async function detectFaceLoop() {
         if (!isFaceDetecting) return;
-        
+
         const video = document.getElementById('faceVideo');
         const canvas = document.getElementById('overlayCanvas');
-        
+
         faceFrameCount++;
         const now = Date.now();
         if (now - faceLastFrameTime > 1000) {
@@ -432,15 +450,15 @@
             faceFrameCount = 0;
             faceLastFrameTime = now;
         }
-        
+
         document.getElementById('faceDebugInfo').textContent = `FPS: ${faceFps}`;
-        
+
         if (video && !video.paused && !video.ended && video.readyState === video.HAVE_ENOUGH_DATA) {
             if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
             }
-            
+
             try {
                 const detection = await faceapi
                     .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
@@ -448,7 +466,7 @@
                         scoreThreshold: 0.5
                     }))
                     .withFaceLandmarks();
-                
+
                 if (detection) {
                     drawFaceBoundingBoxes(detection, video, canvas);
                     detectFaceHeadMovement(detection.landmarks);
@@ -461,7 +479,7 @@
                 console.error('Detection error:', err);
             }
         }
-        
+
         faceAnimationFrameId = requestAnimationFrame(detectFaceLoop);
     }
 
@@ -487,50 +505,49 @@
         faceCurrentProgress = 0;
         faceFps = 0;
         faceFrameCount = 0;
-        
+
         document.getElementById('faceInstructionText').textContent = 'Move your head left and right, then open your mouth';
         document.getElementById('faceProgressText').textContent = 'Progress: 0%';
         document.getElementById('faceDebugInfo').textContent = 'FPS: --';
         document.getElementById('faceLeftIndicator').className = 'w-3 h-3 rounded-full bg-gray-300';
         document.getElementById('faceRightIndicator').className = 'w-3 h-3 rounded-full bg-gray-300';
         document.getElementById('faceMouthIndicator').className = 'w-3 h-3 rounded-full bg-gray-300';
-        
+
         const videoContainer = document.querySelector('#faceVideo').parentElement;
         videoContainer.style.setProperty('--progress', '0%');
     }
 
     async function openFaceModal() {
-        // REMOVED: User selection validation
         document.getElementById('faceModal').classList.remove('hidden');
         resetFaceTracking();
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
+            const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 640 },
                     height: { ideal: 480 },
                     frameRate: { ideal: 30 }
                 }
             });
-            
+
             const video = document.getElementById('faceVideo');
             video.srcObject = stream;
-            
+
             await new Promise((resolve) => {
                 video.onloadedmetadata = () => {
                     video.play();
                     resolve();
                 };
             });
-            
+
             console.log('📹 Camera started - resolution:', video.videoWidth, 'x', video.videoHeight);
-            
+
             await loadFaceModels();
-            
+
             setTimeout(() => {
                 startFaceDetection();
             }, 500);
-            
+
         } catch (err) {
             console.error("❌ Webcam error:", err);
             Swal.fire('Error', 'Unable to access webcam', 'error');
@@ -547,13 +564,13 @@
             video.srcObject.getTracks().forEach(track => track.stop());
             video.srcObject = null;
         }
-        
+
         resetFaceTracking();
     }
 
     function submitFaceRecognition() {
         stopFaceDetection();
-        
+
         const video = document.getElementById('faceVideo');
         const canvas = document.getElementById('faceCanvas');
         const context = canvas.getContext('2d');
@@ -575,24 +592,48 @@
             success: function (response) {
                 document.getElementById('faceLoadingSpinner').classList.add('hidden');
 
-                if (response.status === "success") {
+                if (response.status === 'warning') {
                     Swal.fire({
-                        title: 'Success!',
-                        html: `<strong>${response.user_name}</strong><br>${response.message}`,
-                        icon: 'success',
+                        title: 'Already Logged',
+                        text: response.message,
+                        icon: 'warning',
                         confirmButtonText: 'OK'
                     }).then(() => {
-                        window.location.href = response.redirect;
+                        window.location.href = response.redirect ?? "{{ route('logs') }}";
                     });
-                } else {
+                    return;
+                }
+
+                if (response.status === 'error') {
                     Swal.fire('Error', response.message, 'error');
                     closeFaceModal();
+                    return;
                 }
+
+                // success
+                const appointmentDetails = response.appointment
+                    ? `
+                        <div style="text-align: left; margin-top: 0.5rem; font-size: 0.875rem;">
+                            <p><strong>Branch:</strong> ${response.appointment.branch}</p>
+                            <p><strong>Time:</strong> ${response.appointment.time}</p>
+                            <p><strong>Status:</strong> <span style="color: #16a34a; font-weight: 600;">${response.appointment.status}</span></p>
+                        </div>
+                      `
+                    : `<p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">No appointment found for today.</p>`;
+
+                Swal.fire({
+                    title: 'Visit Logged!',
+                    html: `<strong>${response.user_name}</strong><br><p>${response.message}</p>${appointmentDetails}`,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = response.redirect;
+                });
             },
             error: function (xhr) {
                 console.error(xhr.responseText);
                 document.getElementById('faceLoadingSpinner').classList.add('hidden');
-                Swal.fire('Error', 'Face recognition failed', 'error');
+                Swal.fire('Error', 'No face detected in the image. Please try again.', 'error');
                 closeFaceModal();
             }
         });

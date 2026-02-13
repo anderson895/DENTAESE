@@ -21,17 +21,20 @@ class AppointmentController extends Controller
 public function changeTime(Request $request, Appointment $appointment)
 {
     $request->validate([
+        'appointment_date' => 'required|date',
         'appointment_time' => 'required',
         'booking_end_time' => 'required|after:appointment_time',
     ]);
 
     $appointment->update([
+        'appointment_date' => $request->appointment_date,
         'appointment_time' => $request->appointment_time,
         'booking_end_time' => $request->booking_end_time,
     ]);
 
-    return response()->json(['message' => 'Time updated']);
+    return response()->json(['message' => 'Date & time updated']);
 }
+
 
 
 
@@ -398,7 +401,12 @@ public function appointmentadmin(Request $request)
     $service_ids = [$service->id];
 
     // Create the appointment
-    $status = ($type === 'normal') ? 'pending' : 'approved';
+    $status = match($type) {
+        'normal'    => 'pending',
+        'walkin'    => 'arrived',
+        'emergency'    => 'arrived',
+        default     => 'approved',
+    };
 
     $appointment = Appointment::create([
         'store_id' => $store->id,
