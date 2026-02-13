@@ -70,9 +70,9 @@
 <!-- ================= STEP 2 ================= -->
 <div class="step hidden" id="step-2">
     <div class="space-y-4">
-        <div>
+        <div hidden>
             <label>Valid ID</label>
-            <input type="file" name="verification_id" class="w-full border p-2 rounded" required>
+            <input type="file" name="verification_id" class="w-full border p-2 rounded" >
         </div>
 
         <div>

@@ -39,7 +39,6 @@ class AuthUi extends Controller
     public function SignUpForm(Request $request){
       $validated = $request->validate([
             'name' => 'required',
-          
             'email' => 'required|email',
             'password' => 'required',
             'contact_number' => 'required',
@@ -238,40 +237,50 @@ public function loginFace(Request $request)
 
 
 
-
 public function sendOtp(Request $request)
 {
-        $request->validate([
-                'name' => 'required',
-                'middlename' => 'nullable|string',
-                'lastname' => 'required|string',
-                'suffix' => 'nullable|string|max:10',
-                'birth_date' => 'required|date',
-                'birthplace' => 'required|string',
-                'current_address' => 'required|string',
-                'email' => 'required|email|unique:users,email|unique:newusers,email',
-                'password' => 'required',
-                'contact_number' => 'required',
-                'account_type' => 'required',
-                'user' => 'required|unique:users,user|unique:newusers,user',
-                'verification_id' => 'required|image|mimes:jpg,jpeg,png|max:2048', // max 2MB
-            
-            ]);
+    $request->validate([
+        'name' => 'required',
+        'middlename' => 'nullable|string',
+        'lastname' => 'required|string',
+        'suffix' => 'nullable|string|max:10',
+        'birth_date' => 'required|date',
+        'birthplace' => 'required|string',
+        'current_address' => 'required|string',
+        'email' => 'required|email|unique:users,email|unique:newusers,email',
+        'password' => 'required',
+        'contact_number' => 'required',
+        'account_type' => 'required',
+        'user' => 'required|unique:users,user|unique:newusers,user',
+
+        // 👉 optional na
+        'verification_id' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
 
     $otp = rand(100000, 999999);
 
-    $uploadedFile = $request->file('verification_id');
-    $filename = uniqid('verify_') . '.' . $uploadedFile->getClientOriginalExtension();
-    $uploadedFile->storeAs('temp_verifications', $filename, 'public'); // Store in `storage/app/temp_verifications`
+    $filename = null;
 
-    // Save both file name and user info
-    Session::put('pending_user', array_merge($request->except('verification_id'), ['verification_id' => $filename]));
+    // 👉 check muna kung may upload
+    if ($request->hasFile('verification_id')) {
+        $uploadedFile = $request->file('verification_id');
+        $filename = uniqid('verify_') . '.' . $uploadedFile->getClientOriginalExtension();
+        $uploadedFile->storeAs('temp_verifications', $filename, 'public');
+    }
+
+    // Save user info (kahit null ang verification_id)
+    Session::put('pending_user', array_merge(
+        $request->except('verification_id'),
+        ['verification_id' => $filename]
+    ));
+
     Session::put('signup_otp', $otp);
 
     Mail::to($request->email)->send(new SendOtp($otp));
 
     return response()->json(['message' => 'OTP sent to your email.']);
 }
+
 
 public function verifyOtp(Request $request)
 {
