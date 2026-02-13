@@ -67,20 +67,29 @@
 
 
 
-<!-- Modal for Time Editing -->
+<!-- Modal for Time & Date Editing -->
 <div id="changeTimeModal"
      class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded shadow-lg w-96">
-        <h2 class="text-xl font-bold mb-4">Change Appointment Time</h2>
+        <h2 class="text-xl font-bold mb-4">Change Appointment Date & Time</h2>
 
         <input type="hidden" id="changeAppointmentId">
 
+        <!-- Change Date -->
+        <div class="mb-3">
+            <label class="block font-semibold mb-1">Appointment Date</label>
+            <input type="date" id="newDate"
+                   class="w-full border rounded p-2">
+        </div>
+
+        <!-- Start Time -->
         <div class="mb-3">
             <label class="block font-semibold mb-1">Start Time</label>
             <input type="time" id="newStartTime"
                    class="w-full border rounded p-2">
         </div>
 
+        <!-- End Time -->
         <div class="mb-4">
             <label class="block font-semibold mb-1">End Time</label>
             <input type="time" id="newEndTime"
@@ -99,6 +108,7 @@
         </div>
     </div>
 </div>
+
 
 
 
@@ -188,8 +198,9 @@
 
 $(document).on('click', '.change-time-btn', function () {
     $('#changeAppointmentId').val($(this).data('id'));
+    $('#newDate').val($(this).data('date'));
     $('#newStartTime').val($(this).data('start'));
-    $('#newEndTime').val($(this).data('end'));
+    $('#newEndTime').val($(this).data('end')); 
 
     $('#changeTimeModal').removeClass('hidden');
 });
@@ -198,17 +209,18 @@ $(document).on('click', '.change-time-btn', function () {
 
 $('#saveChangeTime').on('click', function () {
     const appointmentId = $('#changeAppointmentId').val();
+    const newDate = $('#newDate').val();
     const startTime = $('#newStartTime').val();
     const endTime = $('#newEndTime').val();
 
-    if (!startTime || !endTime) {
+    if (!newDate || !startTime || !endTime) {
         Swal.fire('Error', 'Please fill all fields', 'error');
         return;
     }
 
     Swal.fire({
         title: 'Confirm Change?',
-        text: 'Update appointment time?',
+        text: 'Update appointment date & time?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, update'
@@ -230,6 +242,7 @@ $('#saveChangeTime').on('click', function () {
             type: 'PUT',
             data: {
                 _token: '{{ csrf_token() }}',
+                appointment_date: newDate,
                 appointment_time: startTime,
                 booking_end_time: endTime
             },

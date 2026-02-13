@@ -24,8 +24,7 @@ use Illuminate\Support\Facades\Auth;
 
 
 
-Route::put('/appointments/{appointment}/change-time',
-    [AppointmentController::class, 'changeTime']);
+Route::put('/appointments/{appointment}/change-time', [AppointmentController::class, 'changeTime']);
 
 
 
