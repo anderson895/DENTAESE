@@ -94,7 +94,7 @@ class AuthUi extends Controller
     }
 
     // ===============================
-    // FACE LOGIN (no Face++ API)
+    // FACE LOGIN
     // ===============================
     public function loginFace(Request $request)
     {
@@ -111,9 +111,7 @@ class AuthUi extends Controller
             ]);
         }
 
-        // Compare scanned descriptor with all users
-        $users = User::whereNotNull('face_descriptor')->get();
-
+        $users          = User::whereNotNull('face_descriptor')->get();
         $matchedUser    = null;
         $lowestDistance = PHP_FLOAT_MAX;
 
@@ -129,7 +127,6 @@ class AuthUi extends Controller
             }
         }
 
-        // Threshold: 0.5 (lower = stricter)
         if (!$matchedUser || $lowestDistance > 0.5) {
             return response()->json([
                 'status'          => 'error',
@@ -140,7 +137,6 @@ class AuthUi extends Controller
 
         Auth::login($matchedUser);
 
-        // Redirect logic
         if ($matchedUser->position === 'admin') {
             session(['active_branch_id' => 'admin']);
             $redirectUrl = route('dashboard');
@@ -166,6 +162,10 @@ class AuthUi extends Controller
 
     // ===============================
     // SIGNUP - Send OTP
+    // FIX: Added face_descriptor validation rule so it
+    //      passes through validation without being stripped.
+    //      Also stored in session so finalSignup() can
+    //      use it as fallback if request body is missing it.
     // ===============================
     public function sendOtp(Request $request)
     {
@@ -183,6 +183,9 @@ class AuthUi extends Controller
             'account_type'    => 'required',
             'user'            => 'required|unique:users,user|unique:newusers,user',
             'verification_id' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            // FIX: face_descriptor must be declared here or Laravel's
+            //      validated() will silently drop it from the session data
+            'face_descriptor' => 'required|string',
         ]);
 
         $otp      = rand(100000, 999999);
@@ -194,8 +197,10 @@ class AuthUi extends Controller
             $uploadedFile->storeAs('temp_verifications', $filename, 'public');
         }
 
+        // FIX: explicitly include face_descriptor in the session
+        //      so it's available as a fallback in finalSignup()
         Session::put('pending_user', array_merge(
-            $request->except('verification_id'),
+            $request->except(['verification_id', '_token']),
             ['verification_id' => $filename]
         ));
         Session::put('signup_otp', $otp);
@@ -222,6 +227,9 @@ class AuthUi extends Controller
 
     // ===============================
     // SIGNUP - Final (save user)
+    // FIX: face_descriptor is read from $request first.
+    //      If missing (edge case), falls back to session.
+    //      Either way it must be a valid 128-value descriptor.
     // ===============================
     public function finalSignup(Request $request)
     {
@@ -238,16 +246,28 @@ class AuthUi extends Controller
             'user'            => 'required|string|unique:users,user',
             'password'        => 'required|string|min:6',
             'account_type'    => 'required|string',
+            // FIX: face_descriptor comes from the form (hidden input).
+            //      It was captured client-side and submitted with the form.
             'face_descriptor' => 'required|string',
         ]);
 
-        // Validate descriptor format
-        $descriptorArray = json_decode($request->face_descriptor, true);
+        // FIX: prefer $request value; fall back to session if somehow missing
+        $faceDescriptorRaw = $request->face_descriptor
+            ?? Session::get('pending_user.face_descriptor');
+
+        if (!$faceDescriptorRaw) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Face descriptor is missing. Please go back and capture your face again.',
+            ], 422);
+        }
+
+        $descriptorArray = json_decode($faceDescriptorRaw, true);
 
         if (!$descriptorArray || count($descriptorArray) !== 128) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Invalid face descriptor.',
+                'message' => 'Invalid face descriptor. Please go back and capture your face again.',
             ], 400);
         }
 
@@ -256,7 +276,7 @@ class AuthUi extends Controller
 
         foreach ($existingUsers as $existingUser) {
             $storedDescriptor = json_decode($existingUser->face_descriptor, true);
-            if (!$storedDescriptor) continue;
+            if (!$storedDescriptor || count($storedDescriptor) !== 128) continue;
 
             $distance = $this->euclideanDistance($descriptorArray, $storedDescriptor);
 
@@ -268,7 +288,7 @@ class AuthUi extends Controller
             }
         }
 
-        // Create user
+        // Create user — face_descriptor saved here
         $user = User::create([
             'name'            => $request->name,
             'middlename'      => $request->middlename ?? null,
@@ -282,8 +302,12 @@ class AuthUi extends Controller
             'user'            => $request->user,
             'password'        => bcrypt($request->password),
             'account_type'    => $request->account_type,
-            'face_descriptor' => $request->face_descriptor,
+            // FIX: save the raw JSON string (not the decoded array)
+            'face_descriptor' => $faceDescriptorRaw,
         ]);
+
+        // Clear signup session data
+        Session::forget(['pending_user', 'signup_otp']);
 
         return response()->json([
             'status'  => 'success',
