@@ -31,11 +31,8 @@ Route::middleware(['auth', Client::class])->group(function(){
 
 
     Route::post('/cremove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
-    Route::get('/cprofile', [ProfileController::class, 'showProfile'])->name('CProfile');
-   
 
-   
-//medical form
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/medical-form', [MedicalFormController::class, 'store'])->name('medical-form.store');
@@ -51,6 +48,8 @@ Route::middleware(['auth'])->group(function () {
 
 
 Route::post('/profile/upload', [ProfileController::class, 'uploadprofileimage'])->name('profile.upload');
+
+Route::get('/cprofile', [ProfileController::class, 'showProfile'])->name('CProfile')->middleware('auth');
 
 
 
