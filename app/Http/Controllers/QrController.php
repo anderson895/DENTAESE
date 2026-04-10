@@ -21,7 +21,7 @@ public function generateUserQr(User $user)
     }
 
     //  Generate the filename
-    $filename = 'qr_' . $user->id . '.svg';
+    $filename = 'qr_' . $user->id . '.png';
 
    
     if (!Storage::disk('public')->exists('qr_codes')) {
@@ -29,7 +29,7 @@ public function generateUserQr(User $user)
     }
 
     
-    $qrImage = QrCode::format('svg')->size(200)->generate($user->qr_token);
+    $qrImage = QrCode::format('png')->size(200)->generate($user->qr_token);
     Storage::disk('public')->put("qr_codes/{$filename}", $qrImage);
 
    
