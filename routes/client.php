@@ -43,9 +43,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/consentstore', [DentalChartController::class, 'store'])->name('consent.store');
 });
 
-});
-
-
 
 Route::post('/profile/upload', [ProfileController::class, 'uploadprofileimage'])->name('profile.upload');
 
