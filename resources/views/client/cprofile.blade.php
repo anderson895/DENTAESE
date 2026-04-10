@@ -101,9 +101,9 @@
                 <div class="flex flex-col justify-center m-3 items-center">
                     <img src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="User QR Code"
                         class="mx-auto w-40 h-40 object-contain border p-2 rounded" />
-                    <a href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="my-qr-code.png"
+                    <a href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="my-qr-code.svg"
                         class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200">
-                        Download QR Code (.png)
+                        Download QR Code (.svg)
                     </a>
                 </div>
             </div>
