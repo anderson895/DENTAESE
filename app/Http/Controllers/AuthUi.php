@@ -175,16 +175,20 @@ class AuthUi extends Controller
             'lastname'        => 'required|string',
             'suffix'          => 'nullable|string|max:10',
             'birth_date'      => 'required|date',
-            'birthplace'      => 'required|string',
-            'current_address' => 'required|string',
+            'birthplace_municipality' => 'required|string',
+            'birthplace_province'     => 'required|string',
+            'address_street'          => 'required|string',
+            'address_barangay'        => 'required|string',
+            'address_municipality'    => 'required|string',
+            'address_province'        => 'required|string',
+            'address_house_number'    => 'nullable|string',
+            'address_other_details'   => 'nullable|string',
             'email'           => 'required|email|unique:users,email|unique:newusers,email',
             'password'        => 'required',
             'contact_number'  => 'required',
             'account_type'    => 'required',
             'user'            => 'required|unique:users,user|unique:newusers,user',
             'verification_id' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            // FIX: face_descriptor must be declared here or Laravel's
-            //      validated() will silently drop it from the session data
             'face_descriptor' => 'required|string',
         ]);
 
@@ -239,17 +243,32 @@ class AuthUi extends Controller
             'lastname'        => 'required|string',
             'suffix'          => 'nullable|string|max:10',
             'birth_date'      => 'required|date',
-            'birthplace'      => 'required|string',
-            'current_address' => 'required|string',
+            'birthplace_municipality' => 'required|string',
+            'birthplace_province'     => 'required|string',
+            'address_house_number'    => 'nullable|string',
+            'address_street'          => 'required|string',
+            'address_barangay'        => 'required|string',
+            'address_municipality'    => 'required|string',
+            'address_province'        => 'required|string',
+            'address_other_details'   => 'nullable|string',
             'email'           => 'required|email|unique:users,email',
             'contact_number'  => 'nullable|string',
             'user'            => 'required|string|unique:users,user',
             'password'        => 'required|string|min:6',
             'account_type'    => 'required|string',
-            // FIX: face_descriptor comes from the form (hidden input).
-            //      It was captured client-side and submitted with the form.
             'face_descriptor' => 'required|string',
         ]);
+
+        // Build combined fields for backward compatibility
+        $birthplace = $request->birthplace_municipality . ', ' . $request->birthplace_province;
+        $currentAddress = implode(', ', array_filter([
+            $request->address_other_details,
+            $request->address_house_number,
+            $request->address_street,
+            $request->address_barangay,
+            $request->address_municipality,
+            $request->address_province,
+        ]));
 
         // FIX: prefer $request value; fall back to session if somehow missing
         $faceDescriptorRaw = $request->face_descriptor
@@ -295,8 +314,16 @@ class AuthUi extends Controller
             'lastname'        => $request->lastname,
             'suffix'          => $request->suffix ?? null,
             'birth_date'      => $request->birth_date,
-            'birthplace'      => $request->birthplace,
-            'current_address' => $request->current_address,
+            'birthplace'      => $birthplace,
+            'birthplace_municipality' => $request->birthplace_municipality,
+            'birthplace_province'     => $request->birthplace_province,
+            'current_address' => $currentAddress,
+            'address_other_details'   => $request->address_other_details,
+            'address_house_number'    => $request->address_house_number,
+            'address_street'          => $request->address_street,
+            'address_barangay'        => $request->address_barangay,
+            'address_municipality'    => $request->address_municipality,
+            'address_province'        => $request->address_province,
             'email'           => $request->email,
             'contact_number'  => $request->contact_number ?? null,
             'user'            => $request->user,

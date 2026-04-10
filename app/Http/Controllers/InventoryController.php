@@ -65,9 +65,27 @@ public function store(Request $request)
         'unit' => 'required|string',
         'price' => 'required|numeric',
         'description' => 'nullable|string',
+        'batch_quantity' => 'nullable|integer|min:1',
+        'batch_expiration_date' => 'nullable|date',
     ]);
 
-    medicines::create($request->all());
+    $medicine = medicines::create([
+        'name' => $request->name,
+        'unit' => $request->unit,
+        'price' => $request->price,
+        'description' => $request->description,
+    ]);
+
+    // Create initial batch if quantity and expiration provided
+    if ($request->filled('batch_quantity') && $request->filled('batch_expiration_date')) {
+        \App\Models\medicine_batches::create([
+            'medicine_id' => $medicine->id,
+            'store_id' => session('active_branch_id'),
+            'quantity' => $request->batch_quantity,
+            'expiration_date' => $request->batch_expiration_date,
+            'status' => 'active',
+        ]);
+    }
 
     return response()->json(['status' => 'success','message'=>'Medicine added']);
 }

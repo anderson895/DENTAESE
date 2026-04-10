@@ -94,29 +94,9 @@
             <strong>Clinic Policies & Appointment Guidelines</strong>
 
             <ul class="list-disc ml-6 mt-3 space-y-3 text-sm text-justify">
-                <li>
-                    All patients must use the clinic's official appointment system to make appointments in advance.
-                    Patients who walk in are dependent on availability.
-                </li>
+                
 
-                <li>
-                    Patients are unable to set a new appointment unless it is an emergency or urgent.
-                </li>
-
-                <li>
-                    Patients are expected to arrive at least 10 minutes before their scheduled appointment.
-                    If you are more than fifteen minutes late, the clinic may decide to reschedule or cancel.
-                </li>
-
-                <li>
-                    Cancellations of appointments must be made at least 48 hours before the scheduled time.
-                    Penalties or limitations on future reservations may be imposed for failure to notify the clinic.
-                </li>
-
-                <li>
-                    All dental services must be paid for in full right after treatment,
-                    unless the clinic management specifies.
-                </li>
+                
 
                 <li>
                     Payments for completed services are nonrefundable.

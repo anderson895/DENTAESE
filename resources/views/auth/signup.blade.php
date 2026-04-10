@@ -50,13 +50,41 @@
             <input type="date" name="birth_date" class="w-full border p-2 rounded" required>
         </div>
         <div>
-            <label>Birthplace</label>
-            <input type="text" name="birthplace" class="w-full border p-2 rounded" required>
+            <label>Birthplace - Municipality</label>
+            <input type="text" name="birthplace_municipality" class="w-full border p-2 rounded" required placeholder="Municipality">
+        </div>
+        <div>
+            <label>Birthplace - Province</label>
+            <input type="text" name="birthplace_province" class="w-full border p-2 rounded" required placeholder="Province">
         </div>
     </div>
-    <div class="mt-4">
-        <label>Current Address</label>
-        <input type="text" name="current_address" class="w-full border p-2 rounded" required>
+
+    <h3 class="mt-4 font-semibold text-gray-700">Current Address</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+        <div>
+            <label>House Number</label>
+            <input type="text" name="address_house_number" class="w-full border p-2 rounded" placeholder="House Number">
+        </div>
+        <div>
+            <label>Street</label>
+            <input type="text" name="address_street" class="w-full border p-2 rounded" required placeholder="Street">
+        </div>
+        <div>
+            <label>Barangay</label>
+            <input type="text" name="address_barangay" class="w-full border p-2 rounded" required placeholder="Barangay">
+        </div>
+        <div>
+            <label>Municipality</label>
+            <input type="text" name="address_municipality" class="w-full border p-2 rounded" required placeholder="Municipality">
+        </div>
+        <div>
+            <label>Province</label>
+            <input type="text" name="address_province" class="w-full border p-2 rounded" required placeholder="Province">
+        </div>
+        <div>
+            <label>Other Details</label>
+            <input type="text" name="address_other_details" class="w-full border p-2 rounded" placeholder="Apartment, Unit, Landmark, etc.">
+        </div>
     </div>
 </div>
 
@@ -80,11 +108,17 @@
         </div>
         <div>
             <label>Password</label>
-            <input type="password" id="password" name="password" class="w-full border p-2 rounded" required>
+            <div class="relative">
+                <input type="password" id="password" name="password" class="w-full border p-2 rounded pr-16" required>
+                <button type="button" onclick="togglePass('password', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 text-sm">Show</button>
+            </div>
         </div>
         <div>
             <label>Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password" class="w-full border p-2 rounded" required>
+            <div class="relative">
+                <input type="password" id="confirm_password" name="confirm_password" class="w-full border p-2 rounded pr-16" required>
+                <button type="button" onclick="togglePass('confirm_password', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 text-sm">Show</button>
+            </div>
         </div>
     </div>
 </div>
@@ -152,7 +186,7 @@
             <div class="text-center text-xs text-gray-500"><p id="debugInfo">FPS: --</p></div>
             <div class="text-center">
                 <p id="instructionText" class="text-sm font-semibold text-gray-700">
-                    Move your head left and right, then open your mouth
+                    Move your head left and right
                 </p>
                 <p id="progressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
             </div>
@@ -162,9 +196,6 @@
                 </div>
                 <div class="flex items-center gap-1">
                     <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Right Turn</span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <span id="mouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Open Mouth</span>
                 </div>
             </div>
         </div>
@@ -188,6 +219,12 @@
 
 {{-- ================= STEP NAVIGATION ================= --}}
 <script>
+function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+    else { input.type = 'password'; btn.textContent = 'Show'; }
+}
+
 let currentStep    = 1;
 const totalSteps   = 4;
 let faceRegistered = false;
@@ -297,7 +334,6 @@ let captureTriggered = false;
 
 let headMovementLeft  = false;
 let headMovementRight = false;
-let mouthOpened       = false;
 let currentProgress   = 0;
 let lastFrameTime     = Date.now();
 let frameCount        = 0;
@@ -325,44 +361,30 @@ async function loadModels() {
 
 function updateProgress() {
     let p = 0;
-    if (headMovementLeft)  p += 33.33;
-    if (headMovementRight) p += 33.33;
-    if (mouthOpened)       p += 33.34;
+    if (headMovementLeft)  p += 50;
+    if (headMovementRight) p += 50;
     currentProgress = Math.min(100, Math.round(p));
 
     document.querySelector('#video').parentElement.style.setProperty('--progress', currentProgress + '%');
     document.getElementById('progressText').textContent = `Progress: ${currentProgress}%`;
 
-    if (!headMovementLeft && !headMovementRight && !mouthOpened) {
-        document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
-    } else if (headMovementLeft && !headMovementRight && !mouthOpened) {
+    if (!headMovementLeft && !headMovementRight) {
+        document.getElementById('instructionText').textContent = 'Move your head left and right';
+    } else if (headMovementLeft && !headMovementRight) {
         document.getElementById('instructionText').textContent = 'Now turn your head to the right';
-    } else if (!headMovementLeft && headMovementRight && !mouthOpened) {
+    } else if (!headMovementLeft && headMovementRight) {
         document.getElementById('instructionText').textContent = 'Now turn your head to the left';
-    } else if (headMovementLeft && headMovementRight && !mouthOpened) {
-        document.getElementById('instructionText').textContent = 'Great! Now open your mouth wide';
-    } else if (mouthOpened && (!headMovementLeft || !headMovementRight)) {
-        document.getElementById('instructionText').textContent = !headMovementLeft
-            ? 'Now turn your head to the left'
-            : 'Now turn your head to the right';
     } else {
         document.getElementById('instructionText').textContent = 'Verification complete!';
     }
 
     document.getElementById('leftIndicator').className  = headMovementLeft  ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
     document.getElementById('rightIndicator').className = headMovementRight ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-    document.getElementById('mouthIndicator').className = mouthOpened       ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
 
     if (currentProgress === 100 && !captureTriggered) {
         captureTriggered = true;
         setTimeout(() => captureFaceLocally(), 500);
     }
-}
-
-function detectMouthOpening(landmarks) {
-    const mouth = landmarks.getMouth();
-    const mar   = Math.abs(mouth[19].y - mouth[13].y) / Math.abs(mouth[6].x - mouth[0].x);
-    if (mar > 0.35 && !mouthOpened) { mouthOpened = true; updateProgress(); }
 }
 
 function detectHeadMovement(landmarks) {
@@ -405,7 +427,6 @@ async function detectFaceLoop() {
             if (det) {
                 drawBoundingBox(det, overlay);
                 detectHeadMovement(det.landmarks);
-                detectMouthOpening(det.landmarks);
             } else {
                 overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
             }
@@ -423,15 +444,14 @@ function stopCamera() {
     if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
 }
 function resetTracking() {
-    headMovementLeft = headMovementRight = mouthOpened = false;
+    headMovementLeft = headMovementRight = false;
     currentProgress = fps = frameCount = 0;
     captureTriggered = false;
-    document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
+    document.getElementById('instructionText').textContent = 'Move your head left and right';
     document.getElementById('progressText').textContent    = 'Progress: 0%';
     document.getElementById('debugInfo').textContent       = 'FPS: --';
     document.getElementById('leftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
     document.getElementById('rightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
-    document.getElementById('mouthIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
     document.querySelector('#video').parentElement.style.setProperty('--progress', '0%');
 }
 

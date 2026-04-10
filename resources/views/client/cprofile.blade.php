@@ -101,9 +101,9 @@
                 <div class="flex flex-col justify-center m-3 items-center">
                     <img src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="User QR Code"
                         class="mx-auto w-40 h-40 object-contain border p-2 rounded" />
-                    <a href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download
+                    <a href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="my-qr-code.png"
                         class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200">
-                        Download QR Code
+                        Download QR Code (.png)
                     </a>
                 </div>
             </div>
@@ -156,7 +156,7 @@
                             </div>
                             <div class="text-center">
                                 <p id="instructionText" class="text-sm font-semibold text-gray-700">
-                                    Move your head left and right, then open your mouth
+                                    Move your head left and right
                                 </p>
                                 <p id="progressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
                             </div>
@@ -170,9 +170,6 @@
                                     <span>Right Turn</span>
                                 </div>
                                 <div class="flex items-center gap-1">
-                                    <span id="mouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                                    <span>Open Mouth</span>
-                                </div>
                             </div>
                         </div>
 
@@ -199,7 +196,10 @@
                     <label for="user">User</label>
                     <input type="text" name="user" id="user" value="{{ Auth::user()->user }}">
                     <label for="password">Password</label>
-                    <input type="password" name="password" id="password">
+                    <div class="relative">
+                        <input type="password" name="password" id="password" class="w-full pr-16">
+                        <button type="button" onclick="toggleProfilePass()" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 text-sm">Show</button>
+                    </div>
                     <input type="hidden" name="oldpassword" id="oldpassword" value="{{ Auth::user()->password }}">
                     <button class="border rounded-md p-3" type="submit">Update</button>
                 </form>
@@ -229,6 +229,14 @@
 
 
 {{-- ===================== SCRIPTS ===================== --}}
+<script>
+function toggleProfilePass() {
+    const input = document.getElementById('password');
+    const btn = event.currentTarget;
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+    else { input.type = 'password'; btn.textContent = 'Show'; }
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
@@ -259,7 +267,6 @@ let animationFrameId = null;
 // Liveness tracking
 let headMovementLeft  = false;
 let headMovementRight = false;
-let mouthOpened       = false;
 let currentProgress   = 0;
 
 // FPS tracking
@@ -295,60 +302,30 @@ async function loadModels() {
 // ─────────────────────────────────────────────
 function updateProgress() {
     let progress = 0;
-    if (headMovementLeft)  progress += 33.33;
-    if (headMovementRight) progress += 33.33;
-    if (mouthOpened)       progress += 33.34;
+    if (headMovementLeft)  progress += 50;
+    if (headMovementRight) progress += 50;
     currentProgress = Math.min(100, Math.round(progress));
 
     const videoContainer = document.querySelector('#video').parentElement;
     videoContainer.style.setProperty('--progress', currentProgress + '%');
     document.getElementById('progressText').textContent = `Progress: ${currentProgress}%`;
 
-    // Instructions
-    if (!headMovementLeft && !headMovementRight && !mouthOpened) {
-        document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
-    } else if (headMovementLeft && !headMovementRight && !mouthOpened) {
+    if (!headMovementLeft && !headMovementRight) {
+        document.getElementById('instructionText').textContent = 'Move your head left and right';
+    } else if (headMovementLeft && !headMovementRight) {
         document.getElementById('instructionText').textContent = 'Now turn your head to the right';
-    } else if (!headMovementLeft && headMovementRight && !mouthOpened) {
+    } else if (!headMovementLeft && headMovementRight) {
         document.getElementById('instructionText').textContent = 'Now turn your head to the left';
-    } else if (headMovementLeft && headMovementRight && !mouthOpened) {
-        document.getElementById('instructionText').textContent = 'Great! Now open your mouth wide';
-    } else if (mouthOpened && (!headMovementLeft || !headMovementRight)) {
-        if (!headMovementLeft && !headMovementRight) {
-            document.getElementById('instructionText').textContent = 'Now turn your head left and right';
-        } else if (!headMovementLeft) {
-            document.getElementById('instructionText').textContent = 'Now turn your head to the left';
-        } else {
-            document.getElementById('instructionText').textContent = 'Now turn your head to the right';
-        }
     } else {
         document.getElementById('instructionText').textContent = 'Verification complete!';
     }
 
-    // Indicator colors
     document.getElementById('leftIndicator').className  = headMovementLeft  ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
     document.getElementById('rightIndicator').className = headMovementRight ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-    document.getElementById('mouthIndicator').className = mouthOpened       ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
 
     // Auto-capture when 100%
     if (currentProgress === 100) {
         setTimeout(() => captureFaceAndRegister(), 500);
-    }
-}
-
-function detectMouthOpening(landmarks) {
-    const mouth           = landmarks.getMouth();
-    const upperLip        = mouth[13];
-    const lowerLip        = mouth[19];
-    const leftMouthCorner = mouth[0];
-    const rightMouthCorner= mouth[6];
-    const mouthWidth      = Math.abs(rightMouthCorner.x - leftMouthCorner.x);
-    const mouthAspectRatio= Math.abs(lowerLip.y - upperLip.y) / mouthWidth;
-
-    if (mouthAspectRatio > 0.35 && !mouthOpened) {
-        mouthOpened = true;
-        console.log('✅ MOUTH OPENED | Ratio:', mouthAspectRatio.toFixed(3));
-        updateProgress();
     }
 }
 
@@ -424,7 +401,6 @@ async function detectFaceLoop() {
             if (detection) {
                 drawBoundingBox(detection, overlayCanvas);
                 detectHeadMovement(detection.landmarks);
-                detectMouthOpening(detection.landmarks);
             } else {
                 overlayCanvas.getContext('2d').clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
             }
@@ -447,14 +423,13 @@ function stopCamera() {
 }
 
 function resetTracking() {
-    headMovementLeft = headMovementRight = mouthOpened = false;
+    headMovementLeft = headMovementRight = false;
     currentProgress  = fps = frameCount = 0;
-    document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
+    document.getElementById('instructionText').textContent = 'Move your head left and right';
     document.getElementById('progressText').textContent    = 'Progress: 0%';
     document.getElementById('debugInfo').textContent       = 'FPS: --';
     document.getElementById('leftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
     document.getElementById('rightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
-    document.getElementById('mouthIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
     document.querySelector('#video').parentElement.style.setProperty('--progress', '0%');
 }
 

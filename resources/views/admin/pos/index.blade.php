@@ -8,15 +8,18 @@
 <div class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Medicines List (Left Side) -->
     <div class="lg:col-span-2 space-y-4">
-        <div class="flex flex-row justify-between">
+        <div class="flex flex-row justify-between items-center flex-wrap gap-3">
             <h1 class="text-3xl font-bold text-sky-600 mb-4">Point of Sale</h1>
-            <button 
-            onclick="window.location='{{ route('transactions.index', ['storeId' => session('active_branch_id')]) }}'" 
-            class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition">
-            Transaction History
-        </button>
-        
-        
+            <div class="flex gap-2 items-center">
+                <input type="text" id="posSearch" placeholder="Search medicine..." 
+                    class="border rounded-lg p-2 w-60 focus:ring-2 focus:ring-sky-400"
+                    onkeyup="filterMedicines()">
+                <button 
+                onclick="window.location='{{ route('transactions.index', ['storeId' => session('active_branch_id')]) }}'" 
+                class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition">
+                Transaction History
+                </button>
+            </div>
         </div>
        
 
@@ -33,7 +36,7 @@
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach($medicines as $medicine)
-                <div class="bg-white rounded-xl shadow border p-4 flex flex-col justify-between">
+                <div class="bg-white rounded-xl shadow border p-4 flex flex-col justify-between medicine-card" data-name="{{ strtolower($medicine['name']) }}">
                     <div>
                         <h2 class="text-lg font-semibold text-sky-700">{{ $medicine['name'] }}</h2>
                         <p class="text-sm text-gray-600">{{ $medicine['unit'] }}</p>
@@ -108,9 +111,26 @@
                 <select name="patient_id" id="patient_id" class="border rounded p-2 w-full">
                     <option value="">Walk-in</option>
                     @foreach(\App\Models\User::where('account_type', 'patient')->get() as $patient)
-                        <option value="{{ $patient->id }}">{{ $patient->name }}</option>
+                        <option value="{{ $patient->id }}">{{ $patient->name }} {{ $patient->lastname }}</option>
                     @endforeach
                 </select>
+
+                <label for="payment_method" class="block text-sm font-medium">Payment Method</label>
+                <select name="payment_method" id="payment_method" class="border rounded p-2 w-full">
+                    <option value="cash">Cash</option>
+                    <option value="gcash">GCash</option>
+                    <option value="card">Card</option>
+                </select>
+
+                <label for="amount_given" class="block text-sm font-medium">Amount Given</label>
+                <input type="number" step="0.01" name="amount_given" id="amount_given" 
+                    class="border rounded p-2 w-full" placeholder="₱0.00"
+                    oninput="calcChange()">
+
+                <div id="changeDisplay" class="text-sm font-semibold text-green-700 hidden">
+                    Change: ₱<span id="changeAmount">0.00</span>
+                </div>
+
                 <button class="w-full px-6 py-3 bg-sky-600 text-white rounded-2xl hover:bg-sky-700 transition">
                     Checkout
                 </button>
@@ -166,6 +186,12 @@
                 <!-- Total -->
                 <div class="text-right font-bold text-lg border-t pt-2 foot">
                     <span>Total: ₱<span x-text="receipt.total_amount.toFixed(2)"></span></span>
+                    <template x-if="receipt.amount_given">
+                        <div class="text-sm font-normal mt-1">
+                            <p>Amount Given: ₱<span x-text="parseFloat(receipt.amount_given).toFixed(2)"></span></p>
+                            <p>Change: ₱<span x-text="parseFloat(receipt.change_amount || 0).toFixed(2)"></span></p>
+                        </div>
+                    </template>
                 </div>
                 <!-- Seller -->
                 <div class="text-right mt-8 foot">
@@ -207,6 +233,32 @@ function printReceipt() {
     printWindow.focus();
     printWindow.print();
     printWindow.close();
+}
+
+function filterMedicines() {
+    const query = document.getElementById('posSearch').value.toLowerCase();
+    document.querySelectorAll('.medicine-card').forEach(card => {
+        const name = card.getAttribute('data-name');
+        card.style.display = name.includes(query) ? '' : 'none';
+    });
+}
+
+function calcChange() {
+    const total = {{ collect($cart)->sum('subtotal') }};
+    const given = parseFloat(document.getElementById('amount_given').value) || 0;
+    const changeEl = document.getElementById('changeDisplay');
+    const changeAmt = document.getElementById('changeAmount');
+    if (given > 0) {
+        changeEl.classList.remove('hidden');
+        const change = given - total;
+        changeAmt.textContent = change >= 0 ? change.toFixed(2) : '0.00';
+        changeEl.className = change >= 0 
+            ? 'text-sm font-semibold text-green-700' 
+            : 'text-sm font-semibold text-red-600';
+        if (change < 0) changeAmt.textContent = 'Insufficient (' + Math.abs(change).toFixed(2) + ' short)';
+    } else {
+        changeEl.classList.add('hidden');
+    }
 }
 </script>
 @endsection

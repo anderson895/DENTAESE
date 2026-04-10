@@ -53,16 +53,10 @@
 </td>
                                     <td class="border px-2 py-1">{{ ucfirst($appt->status) }}</td>
                                     <td>
-                                        @if ($appt->status !== 'approved' && \Carbon\Carbon::parse($appt->appointment_date)->gt(\Carbon\Carbon::now()->addDays(1)))
+                                        @if ($appt->status !== 'completed' && $appt->status !== 'cancelled')
                                             <button type="button"
                                                 class="cancel-btn bg-red-500 text-white px-3 py-1 rounded ml-2"
                                                 data-id="{{ $appt->id }}">
-                                                Cancel
-                                            </button>
-                                        @elseif($appt->status == 'approved')
-                                              <button type="button"
-                                                class="cancel-btn bg-red-200 text-white px-3 py-1 rounded ml-2"
-                                                data-id="{{ $appt->id }}" disabled>
                                                 Cancel
                                             </button>
                                         @endif

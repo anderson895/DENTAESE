@@ -478,12 +478,25 @@ $('#appointment_date').on('change', function () {
             const booked = resp.booked_slots || [];
             const allTimes = [...new Set([...resp.slots, ...booked])].sort();
 
-            // Populate dropdown
+            // Populate dropdown — hide past times if selected date is today
+            const now = new Date();
+            const isToday = date === now.toISOString().split('T')[0];
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
             allTimes.forEach(time => {
+                // Parse time to minutes
+                const [h, m] = time.split(':').map(Number);
+                const slotMinutes = h * 60 + m;
+                const isPast = isToday && slotMinutes <= currentMinutes + 30; // 30 min buffer
+
                 const label = formatTimeToAMPM(time);
-                options += booked.includes(time)
-                    ? `<option disabled>${label} (Booked)</option>`
-                    : `<option value="${time}">${label}</option>`;
+                if (booked.includes(time)) {
+                    options += `<option disabled>${label} (Booked)</option>`;
+                } else if (isPast) {
+                    // Don't show past time slots at all
+                } else {
+                    options += `<option value="${time}">${label}</option>`;
+                }
             });
 
             $('#appointment_time').html(options);

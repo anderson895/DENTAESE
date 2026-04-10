@@ -22,8 +22,9 @@ class Appointment extends Model
         'payment_type',
         'payment_image',
         'desc',
-        'status', // pending, approved, cancelled
+        'status',
         'service_ids',
+        'arrived_at',
     ];
 
     protected $casts = [

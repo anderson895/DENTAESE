@@ -34,14 +34,20 @@ public function showBookings(Request $request)
     $clients = User::where('account_type', 'patient')->orderBy('name')->get();
 
     $query = Appointment::with('user')
-        ->where('store_id', session('active_branch_id'))
-        ->whereIn('status', ['pending', 'approved','arrived']);
+        ->where('store_id', session('active_branch_id'));
+
+    // Status filter - default to active statuses if no filter
+    if ($request->filled('status')) {
+        $query->where('status', $request->input('status'));
+    } else {
+        $query->whereIn('status', ['pending', 'approved','arrived']);
+    }
 
     if ($user->position === 'Dentist') {
         $query->where('dentist_id', $user->id);
     }
 
-    if ($user->position === 'Receptionist' && $request->filled('dentist_id')) {
+    if (($user->position === 'Receptionist' || $user->position === 'admin') && $request->filled('dentist_id')) {
         $query->where('dentist_id', $request->input('dentist_id'));
     }
 
@@ -67,13 +73,15 @@ public function showBookings(Request $request)
 
     $appointments = $query->get();
 
-    // dentist list for receptionist
+    // dentist list for receptionist and admin
     $dentists = [];
-    if ($user->position === 'Receptionist') {
+    if ($user->position === 'Receptionist' || $user->position === 'admin') {
         $store = Store::find(session('active_branch_id'));
-        $dentists = $store->staff()
-            ->wherePivot('position', 'dentist')
-            ->get(['users.id', 'users.name']);
+        if ($store) {
+            $dentists = $store->staff()
+                ->wherePivot('position', 'dentist')
+                ->get(['users.id', 'users.name']);
+        }
     }
 
 

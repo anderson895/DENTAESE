@@ -18,7 +18,7 @@
         <option value="Admin">Admin</option>
       </select> --}}
       <input type="text" id="searchInput" placeholder="Search..." class="border rounded p-2 w-full sm:w-60" />
-      <button onclick="stafflist(1)" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded">
+      <button onclick="InventoryList(1)" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded">
         Search
       </button>
     </div>
@@ -74,8 +74,23 @@
             <option value="mL">mL</option>
             <option value="G">G</option>
             <option value="MG">MG</option>
-            
+            <option value="pcs">pcs</option>
+            <option value="bottle">bottle</option>
+            <option value="box">box</option>
           </select>
+        </div>
+      </div>
+
+      <hr class="my-3">
+      <h4 class="font-semibold text-gray-700">Initial Batch (Optional)</h4>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label class="font-semibold">Quantity</label>
+          <input type="number" name="batch_quantity" min="0" class="w-full border p-2 rounded" placeholder="Initial stock quantity" />
+        </div>
+        <div>
+          <label class="font-semibold">Expiration Date</label>
+          <input type="date" name="batch_expiration_date" class="w-full border p-2 rounded" />
         </div>
       </div>
 
@@ -153,10 +168,10 @@
 
           let paginationHTML = '';
           if (response.pagination.prev_page_url) {
-            paginationHTML += `<button onclick="stafflist(${parseInt(currentPage) - 1})" class="px-3 py-1 bg-gray-200 rounded">Previous</button>`;
+            paginationHTML += `<button onclick="InventoryList(${parseInt(currentPage) - 1})" class="px-3 py-1 bg-gray-200 rounded">Previous</button>`;
           }
           if (response.pagination.next_page_url) {
-            paginationHTML += `<button onclick="stafflist(${parseInt(currentPage) + 1})" class="px-3 py-1 bg-gray-200 rounded">Next</button>`;
+            paginationHTML += `<button onclick="InventoryList(${parseInt(currentPage) + 1})" class="px-3 py-1 bg-gray-200 rounded">Next</button>`;
           }
           $('#pagination').html(paginationHTML);
         }
@@ -197,6 +212,8 @@
         unit: $('select[name="unit"]').val(),
         description: $('input[name="description"]').val(),
         price: $('input[name="price"]').val(),
+        batch_quantity: $('input[name="batch_quantity"]').val(),
+        batch_expiration_date: $('input[name="batch_expiration_date"]').val(),
       
         _token: '{{ csrf_token() }}'
       };

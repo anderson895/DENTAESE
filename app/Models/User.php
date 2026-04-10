@@ -41,7 +41,15 @@ class User extends Authenticatable
         'suffix',
         'birth_date',
         'birthplace',
+        'birthplace_municipality',
+        'birthplace_province',
         'current_address',
+        'address_other_details',
+        'address_house_number',
+        'address_street',
+        'address_barangay',
+        'address_municipality',
+        'address_province',
         'email',
         'contact_number',
         'user',
@@ -54,7 +62,7 @@ class User extends Authenticatable
         'qr_code',
         'qr_token',
         'is_consent',
-        'face_descriptor', // FIX: was 'face_token' — changed to match the actual DB column
+        'face_descriptor',
     ];
 
     protected $hidden = [

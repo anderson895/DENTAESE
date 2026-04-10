@@ -10,6 +10,8 @@ class Sale extends Model
         'store_id',
         'user_id',
         'total_amount',
+        'amount_given',
+        'change_amount',
         'status',
         'remarks',
         'patient_id',

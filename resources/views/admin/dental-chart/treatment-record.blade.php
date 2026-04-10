@@ -23,7 +23,9 @@
                         <th class="py-2 px-4 text-left">Notes</th>
                         <th class="py-2 px-4 text-left">Dentist</th>
                         <th class="py-2 px-4 text-left">Branch</th>
-                        <th class="py-2 px-4 text-left">Amount Charged</th>
+                        <th class="py-2 px-4 text-left">Treatment Fee</th>
+                        <th class="py-2 px-4 text-left">Medicine Cost</th>
+                        <th class="py-2 px-4 text-left">Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,12 +67,26 @@
                         {{-- Branch / Store --}}
                         <td class="py-2 px-4">{{ $r->store->name ?? '-' }}</td>
 
-                        {{-- Amount Charged --}}
-                        <td class="py-2 px-4">{{ $r->total_price ?? '-' }}</td>
+                        {{-- Treatment Fee --}}
+                        <td class="py-2 px-4">{{ $r->total_price ? '₱' . number_format($r->total_price, 2) : '-' }}</td>
+
+                        {{-- Medicine Cost (from POS sales on same date for same patient) --}}
+                        @php
+                            $medicineCost = \App\Models\Sale::where('patient_id', $r->user_id)
+                                ->where('store_id', $r->store_id)
+                                ->whereDate('created_at', $r->appointment_date)
+                                ->sum('total_amount');
+                        @endphp
+                        <td class="py-2 px-4">{{ $medicineCost > 0 ? '₱' . number_format($medicineCost, 2) : '-' }}</td>
+
+                        {{-- Total --}}
+                        <td class="py-2 px-4 font-semibold">
+                            ₱{{ number_format(($r->total_price ?? 0) + $medicineCost, 2) }}
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                             No treatment records found.
                         </td>
                     </tr>

@@ -59,7 +59,7 @@
                     </div>
                     <div class="text-center">
                         <p id="instructionText" class="text-sm font-semibold text-gray-700">
-                            Move your head left and right, then open your mouth
+                            Move your head left and right
                         </p>
                         <p id="progressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
                     </div>
@@ -71,10 +71,6 @@
                         <div class="flex items-center gap-1">
                             <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
                             <span>Right Turn</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <span id="mouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                            <span>Open Mouth</span>
                         </div>
                     </div>
                 </div>
@@ -124,7 +120,6 @@ let animationFrameId = null;
 // Liveness tracking
 let headMovementLeft  = false;
 let headMovementRight = false;
-let mouthOpened       = false;
 let currentProgress   = 0;
 
 // FPS tracking
@@ -154,58 +149,30 @@ async function loadModels() {
 // ─────────────────────────────────────────────
 function updateProgress() {
     let progress = 0;
-    if (headMovementLeft)  progress += 33.33;
-    if (headMovementRight) progress += 33.33;
-    if (mouthOpened)       progress += 33.34;
+    if (headMovementLeft)  progress += 50;
+    if (headMovementRight) progress += 50;
     currentProgress = Math.min(100, Math.round(progress));
 
     const videoContainer = document.querySelector('#video').parentElement;
     videoContainer.style.setProperty('--progress', currentProgress + '%');
     document.getElementById('progressText').textContent = `Progress: ${currentProgress}%`;
 
-    if (!headMovementLeft && !headMovementRight && !mouthOpened) {
-        document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
-    } else if (headMovementLeft && !headMovementRight && !mouthOpened) {
+    if (!headMovementLeft && !headMovementRight) {
+        document.getElementById('instructionText').textContent = 'Move your head left and right';
+    } else if (headMovementLeft && !headMovementRight) {
         document.getElementById('instructionText').textContent = 'Now turn your head to the right';
-    } else if (!headMovementLeft && headMovementRight && !mouthOpened) {
+    } else if (!headMovementLeft && headMovementRight) {
         document.getElementById('instructionText').textContent = 'Now turn your head to the left';
-    } else if (headMovementLeft && headMovementRight && !mouthOpened) {
-        document.getElementById('instructionText').textContent = 'Great! Now open your mouth wide';
-    } else if (mouthOpened && (!headMovementLeft || !headMovementRight)) {
-        if (!headMovementLeft && !headMovementRight) {
-            document.getElementById('instructionText').textContent = 'Now turn your head left and right';
-        } else if (!headMovementLeft) {
-            document.getElementById('instructionText').textContent = 'Now turn your head to the left';
-        } else {
-            document.getElementById('instructionText').textContent = 'Now turn your head to the right';
-        }
     } else {
         document.getElementById('instructionText').textContent = 'Verification complete!';
     }
 
     document.getElementById('leftIndicator').className  = headMovementLeft  ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
     document.getElementById('rightIndicator').className = headMovementRight ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-    document.getElementById('mouthIndicator').className = mouthOpened       ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
 
     // Auto-submit when liveness complete
     if (currentProgress === 100) {
         setTimeout(() => submitFaceRecognition(), 500);
-    }
-}
-
-function detectMouthOpening(landmarks) {
-    const mouth            = landmarks.getMouth();
-    const upperLip         = mouth[13];
-    const lowerLip         = mouth[19];
-    const leftMouthCorner  = mouth[0];
-    const rightMouthCorner = mouth[6];
-    const mouthWidth       = Math.abs(rightMouthCorner.x - leftMouthCorner.x);
-    const mouthAspectRatio = Math.abs(lowerLip.y - upperLip.y) / mouthWidth;
-
-    if (mouthAspectRatio > 0.35 && !mouthOpened) {
-        mouthOpened = true;
-        console.log('✅ MOUTH OPENED | Ratio:', mouthAspectRatio.toFixed(3));
-        updateProgress();
     }
 }
 
@@ -278,7 +245,6 @@ async function detectFaceLoop() {
             if (detection) {
                 drawBoundingBox(detection, canvas);
                 detectHeadMovement(detection.landmarks);
-                detectMouthOpening(detection.landmarks);
             } else {
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
             }
@@ -297,14 +263,13 @@ function stopDetection() {
 }
 
 function resetTracking() {
-    headMovementLeft = headMovementRight = mouthOpened = false;
+    headMovementLeft = headMovementRight = false;
     currentProgress = fps = frameCount = 0;
-    document.getElementById('instructionText').textContent = 'Move your head left and right, then open your mouth';
+    document.getElementById('instructionText').textContent = 'Move your head left and right';
     document.getElementById('progressText').textContent    = 'Progress: 0%';
     document.getElementById('debugInfo').textContent       = 'FPS: --';
     document.getElementById('leftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
     document.getElementById('rightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
-    document.getElementById('mouthIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
     document.querySelector('#video').parentElement.style.setProperty('--progress', '0%');
 }
 

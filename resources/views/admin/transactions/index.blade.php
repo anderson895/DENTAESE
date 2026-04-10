@@ -16,10 +16,20 @@
     </div>
    
     <!-- Filter -->
-    <form method="GET" class="mb-4 flex gap-2">
-        <input type="date" name="from" value="{{ request('from') }}" class="border rounded p-2">
-        <input type="date" name="to" value="{{ request('to') }}" class="border rounded p-2">
+    <form method="GET" class="mb-4 flex flex-wrap gap-2 bg-white p-4 rounded shadow">
+        <input type="date" name="from" value="{{ request('from') }}" class="border rounded p-2" placeholder="From">
+        <input type="date" name="to" value="{{ request('to') }}" class="border rounded p-2" placeholder="To">
+        <input type="text" name="patient" value="{{ request('patient') }}" class="border rounded p-2" placeholder="Patient name">
+        <input type="text" name="cashier" value="{{ request('cashier') }}" class="border rounded p-2" placeholder="Cashier name">
+        <input type="text" name="medicine" value="{{ request('medicine') }}" class="border rounded p-2" placeholder="Medicine name">
+        <select name="payment_method" class="border rounded p-2">
+            <option value="">-- Payment Method --</option>
+            <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
+            <option value="gcash" {{ request('payment_method') == 'gcash' ? 'selected' : '' }}>GCash</option>
+            <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Card</option>
+        </select>
         <button class="px-4 py-2 bg-sky-600 text-white rounded">Filter</button>
+        <a href="{{ route('transactions.index', ['storeId' => $storeId]) }}" class="px-4 py-2 bg-gray-300 rounded">Reset</a>
     </form>
 
     <!-- Transactions Table -->
@@ -29,6 +39,7 @@
                 <th class="border px-3 py-2">ID</th>
                 <th class="border px-3 py-2">Date</th>
                 <th class="border px-3 py-2">Patient</th>
+                <th class="border px-3 py-2">Cashier</th>
                 <th class="border px-3 py-2">Total</th>
                 <th class="border px-3 py-2">Actions</th>
             </tr>
@@ -38,7 +49,8 @@
                 <tr>
                     <td class="border px-3 py-2">{{ $sale->id }}</td>
                     <td class="border px-3 py-2">{{ $sale->created_at->format('Y-m-d H:i') }}</td>
-                    <td class="border px-3 py-2">{{ $sale->patient->name ?? 'Walk-in' }}</td>
+                    <td class="border px-3 py-2">{{ $sale->patient->name ?? 'Walk-in' }} {{ $sale->patient->lastname ?? '' }}</td>
+                    <td class="border px-3 py-2">{{ $sale->user->name ?? 'N/A' }}</td>
                     <td class="border px-3 py-2">₱{{ number_format($sale->total_amount, 2) }}</td>
                     <td class="border px-3 py-2 text-center">
                         <button 
@@ -112,6 +124,12 @@
                         Total: ₱
                         <span x-text="Number(receipt?.total_amount ?? 0).toFixed(2)"></span>
                     </span>
+                    <template x-if="receipt?.amount_given">
+                        <div class="text-sm font-normal mt-1">
+                            <p>Amount Given: ₱<span x-text="Number(receipt?.amount_given ?? 0).toFixed(2)"></span></p>
+                            <p>Change: ₱<span x-text="Number(receipt?.change_amount ?? 0).toFixed(2)"></span></p>
+                        </div>
+                    </template>
                 </div>
                 
 

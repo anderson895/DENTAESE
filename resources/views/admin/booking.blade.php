@@ -10,7 +10,7 @@
 
 @if(auth()->user()->position === 'Receptionist' || auth()->user()->position === 'admin')
 <form method="GET" action="{{ route('admin.booking') }}" class="flex flex-wrap md:flex-row gap-4 mb-6 bg-white p-4 rounded shadow">
-    <div class="flex flex-col w-full md:w-1/3">
+    <div class="flex flex-col w-full md:w-1/4">
         <label for="dentist_id" class="font-semibold mb-1">Filter by Dentist:</label>
         <select name="dentist_id" id="dentist_id" class="border border-gray-300 rounded p-2">
             <option value="">-- All Dentists --</option>
@@ -22,22 +22,45 @@
         </select>
     </div>
 
-    <div class="flex flex-col w-full md:w-1/3">
+    <div class="flex flex-col w-full md:w-1/4">
         <label for="date" class="font-semibold mb-1">Filter by Date:</label>
         <input type="date" name="date" id="date" value="{{ request('date') }}" class="border border-gray-300 rounded p-2">
     </div>
 
-    <div class="flex items-end w-full md:w-1/3">
+    <div class="flex flex-col w-full md:w-1/4">
+        <label for="status" class="font-semibold mb-1">Filter by Status:</label>
+        <select name="status" id="statusFilter" class="border border-gray-300 rounded p-2">
+            <option value="">-- All Status --</option>
+            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+            <option value="arrived" {{ request('status') == 'arrived' ? 'selected' : '' }}>Arrived</option>
+            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+        </select>
+    </div>
+
+    <div class="flex items-end w-full md:w-auto">
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full md:w-auto">Filter</button>
     </div>
 </form>
 @endif
 
 @if(auth()->user()->position == 'Dentist')
-<form method="GET" action="{{ route('admin.booking') }}" class="flex gap-4 mb-6 bg-white p-4 rounded shadow">
-    <div class="flex flex-col w-full md:w-1/3">
+<form method="GET" action="{{ route('admin.booking') }}" class="flex flex-wrap gap-4 mb-6 bg-white p-4 rounded shadow">
+    <div class="flex flex-col w-full md:w-1/4">
         <label for="date" class="font-semibold mb-1">Filter by Date:</label>
         <input type="date" id="date" name="date" value="{{ request('date') }}" class="border border-gray-300 rounded p-2">
+    </div>
+    <div class="flex flex-col w-full md:w-1/4">
+        <label for="status" class="font-semibold mb-1">Filter by Status:</label>
+        <select name="status" class="border border-gray-300 rounded p-2">
+            <option value="">-- All Status --</option>
+            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+            <option value="arrived" {{ request('status') == 'arrived' ? 'selected' : '' }}>Arrived</option>
+            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+        </select>
     </div>
     <div class="flex items-end">
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Filter</button>
@@ -129,6 +152,7 @@
                 <th class="px-4 py-2 border">End</th>
                 <th class="px-4 py-2 border">Description</th>
                 <th class="px-4 py-2 border">Status</th>
+                <th class="px-4 py-2 border">Arrived</th>
                 <th class="px-4 py-2 border">Action</th>
             </tr>
         </thead>

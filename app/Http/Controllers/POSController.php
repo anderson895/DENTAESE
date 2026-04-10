@@ -94,11 +94,17 @@ class POSController extends Controller
     $sale = null;
 
     DB::transaction(function () use ($cart, $storeId, $request, &$sale) {
+        $totalAmount = collect($cart)->sum('subtotal');
+        $amountGiven = $request->amount_given ? floatval($request->amount_given) : null;
+        $changeAmount = $amountGiven ? max(0, $amountGiven - $totalAmount) : null;
+
         $sale = Sale::create([
             'store_id'     => $storeId,
             'user_id'      => auth()->id(),   
             'patient_id'   => $request->patient_id, 
-            'total_amount' => collect($cart)->sum('subtotal'),
+            'total_amount' => $totalAmount,
+            'amount_given' => $amountGiven,
+            'change_amount'=> $changeAmount,
             'status'       => 'completed',
         ]);
 

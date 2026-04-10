@@ -42,13 +42,16 @@ class ReportController extends Controller
         $totalCash      = $appointments->where('payment_type', 'CASH')->sum('amount');
         $totalGcash     = $appointments->where('payment_type', 'GCASH')->sum('amount');
 
+        $store = \App\Models\Store::find($branchId);
+
         return view('admin.reports.daily-appointments', compact(
             'appointments', 
             'startDate', 
             'endDate', 
             'totalCompleted',
             'totalCash',
-            'totalGcash'
+            'totalGcash',
+            'store'
         ));
     }
 }
