@@ -80,9 +80,9 @@ class AdminController extends Controller
 
     // DASHBOARD COUNTS
     $adminCount = User::where('position', 'admin')->count();
-    $doctorCount = User::where('position', 'dentist')->count();
-    $receptionistCount = User::where('position', 'receptionist')->count();
-    $patientCount = User::where('position', 'patient')->count();
+    $doctorCount = User::where('position', 'Dentist')->count();
+    $receptionistCount = User::where('position', 'Receptionist')->count();
+    $patientCount = User::where('account_type', 'patient')->count();
     $staffTotal = $adminCount + $doctorCount + $receptionistCount;
     $branchCount = Store::count();
 

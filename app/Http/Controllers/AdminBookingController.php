@@ -278,7 +278,7 @@ public function showHistory(Request $request)
         ->whereIn('status', ['completed', 'cancelled', 'no_show']);
 
     // Dentist can only see their own appointments
-    if (auth()->user()->position === 'dentist') {
+    if (auth()->user()->position === 'Dentist') {
         $query->where('dentist_id', auth()->id());
     }
 
