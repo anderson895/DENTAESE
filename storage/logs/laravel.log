@@ -21,3 +21,6 @@
 "} 
 [2026-04-10 13:29:03] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
 [2026-04-10 13:29:17] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-04-10 13:31:10] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-04-10 13:31:13] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-04-10 13:40:35] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
