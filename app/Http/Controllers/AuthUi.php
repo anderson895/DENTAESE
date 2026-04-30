@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\newuser;
+use App\Models\PatientRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\SendOtp;
@@ -23,6 +24,29 @@ class AuthUi extends Controller
             $sum += pow($val - ($b[$i] ?? 0), 2);
         }
         return sqrt($sum);
+    }
+
+    /**
+     * Patient login redirect:
+     *  - No consent yet  → consent page
+     *  - Has consent but no completed PDA profile → PDA form (cforms)
+     *  - Otherwise → booking dashboard
+     */
+    private function patientLoginRedirect(User $user): string
+    {
+        if (empty($user->is_consent)) {
+            return route('CConsent');
+        }
+
+        $hasCompletedProfile = PatientRecord::where('user_id', $user->id)
+            ->where('profile_completed', true)
+            ->exists();
+
+        if (!$hasCompletedProfile) {
+            return route('CForms');
+        }
+
+        return route('CBookingo');
     }
 
     // ===============================
@@ -76,9 +100,7 @@ class AuthUi extends Controller
                 session(['active_branch_id' => 'admin']);
                 $redirectUrl = route('dashboard');
             } elseif ($user->account_type == 'patient') {
-                $redirectUrl = $user->is_consent == 0
-                    ? route('CConsent')
-                    : route('CBookingo');
+                $redirectUrl = $this->patientLoginRedirect($user);
             } else {
                 $redirectUrl = match ($user->account_type) {
                     'admin'   => route('GetBranchLogin'),
@@ -141,9 +163,7 @@ class AuthUi extends Controller
             session(['active_branch_id' => 'admin']);
             $redirectUrl = route('dashboard');
         } elseif ($matchedUser->account_type === 'patient') {
-            $redirectUrl = $matchedUser->is_consent == 0
-                ? route('CConsent')
-                : route('CBookingo');
+            $redirectUrl = $this->patientLoginRedirect($matchedUser);
         } else {
             $redirectUrl = match ($matchedUser->account_type) {
                 'admin'   => route('GetBranchLogin'),

@@ -1,5 +1,12 @@
+@php
+    $authUser       = auth()->user();
+    $isPatient      = $authUser && $authUser->account_type === 'patient';
+    $isReceptionist = $authUser && $authUser->position === 'Receptionist';
+    $chartReadonly  = $isPatient || $isReceptionist;
+@endphp
+
 <div class="space-y-6">
-     @if (auth()->user()->account_type == 'admin')
+     @if ($authUser && $authUser->account_type == 'admin')
     <div class="flex items-center mt-2">
         <!-- Print button (left) -->
         <button
@@ -9,6 +16,7 @@
             Print Dental Chart
         </button>
 
+        @if(!$isReceptionist)
         <!-- Next button (right) -->
         <button
             @click="tab='checkin'"
@@ -16,6 +24,7 @@
         >
             Next
         </button>
+        @endif
     </div>
 @endif
 
@@ -180,16 +189,16 @@ HTML;
         <h3 class="text-sm font-bold">Periodontal Screening</h3>
         <div class="grid grid-cols-2 gap-2">
             <label>
-                <input type="checkbox" wire:model.change="chart.gingivitis" @if(auth()->user()->account_type == 'patient') disabled @endif> Gingivitis
+                <input type="checkbox" wire:model.change="chart.gingivitis" @if($chartReadonly) disabled @endif> Gingivitis
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.early_periodontitis" @if(auth()->user()->account_type == 'patient') disabled @endif> Early Periodontitis
+                <input type="checkbox" wire:model.change="chart.early_periodontitis" @if($chartReadonly) disabled @endif> Early Periodontitis
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.moderate_periodontitis" @if(auth()->user()->account_type == 'patient') disabled @endif> Moderate Periodontitis
+                <input type="checkbox" wire:model.change="chart.moderate_periodontitis" @if($chartReadonly) disabled @endif> Moderate Periodontitis
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.advanced_periodontitis" @if(auth()->user()->account_type == 'patient') disabled @endif> Advanced Periodontitis
+                <input type="checkbox" wire:model.change="chart.advanced_periodontitis" @if($chartReadonly) disabled @endif> Advanced Periodontitis
             </label>
         </div>
     
@@ -197,19 +206,19 @@ HTML;
         <h3 class="text-sm font-bold mt-4">Occlusion</h3>
         <div class="grid grid-cols-2 gap-2">
             <label>
-                <input type="checkbox" wire:model.change="chart.occlusion_class_molar" @if(auth()->user()->account_type == 'patient') disabled @endif> Class Molar
+                <input type="checkbox" wire:model.change="chart.occlusion_class_molar" @if($chartReadonly) disabled @endif> Class Molar
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.overjet" @if(auth()->user()->account_type == 'patient') disabled @endif> Overjet
+                <input type="checkbox" wire:model.change="chart.overjet" @if($chartReadonly) disabled @endif> Overjet
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.overbite" @if(auth()->user()->account_type == 'patient') disabled @endif> Overbite
+                <input type="checkbox" wire:model.change="chart.overbite" @if($chartReadonly) disabled @endif> Overbite
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.midline_deviation" @if(auth()->user()->account_type == 'patient') disabled @endif> Midline Deviation
+                <input type="checkbox" wire:model.change="chart.midline_deviation" @if($chartReadonly) disabled @endif> Midline Deviation
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.crossbite" @if(auth()->user()->account_type == 'patient') disabled @endif> Crossbite
+                <input type="checkbox" wire:model.change="chart.crossbite" @if($chartReadonly) disabled @endif> Crossbite
             </label>
         </div>
     
@@ -217,10 +226,10 @@ HTML;
         <h3 class="text-sm font-bold mt-4">Appliances</h3>
         <div class="grid grid-cols-2 gap-2">
             <label>
-                <input type="checkbox" wire:model.change="chart.appliance_orthodontic" @if(auth()->user()->account_type == 'patient') disabled @endif> Orthodontic
+                <input type="checkbox" wire:model.change="chart.appliance_orthodontic" @if($chartReadonly) disabled @endif> Orthodontic
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.appliance_stayplate" @if(auth()->user()->account_type == 'patient') disabled @endif> Stayplate
+                <input type="checkbox" wire:model.change="chart.appliance_stayplate" @if($chartReadonly) disabled @endif> Stayplate
             </label>
             {{-- <label>
                 <input type="checkbox" wire:model.change="chart.appliance_others"> Others
@@ -231,16 +240,16 @@ HTML;
         <h3 class="text-sm font-bold mt-4">TMD</h3>
         <div class="grid grid-cols-2 gap-2">
             <label>
-                <input type="checkbox" wire:model.change="chart.tmd_clenching" @if(auth()->user()->account_type == 'patient') disabled @endif> Clenching
+                <input type="checkbox" wire:model.change="chart.tmd_clenching" @if($chartReadonly) disabled @endif> Clenching
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.tmd_clicking" @if(auth()->user()->account_type == 'patient') disabled @endif> Clicking
+                <input type="checkbox" wire:model.change="chart.tmd_clicking" @if($chartReadonly) disabled @endif> Clicking
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.tmd_trismus" @if(auth()->user()->account_type == 'patient') disabled @endif> Trismus
+                <input type="checkbox" wire:model.change="chart.tmd_trismus" @if($chartReadonly) disabled @endif> Trismus
             </label>
             <label>
-                <input type="checkbox" wire:model.change="chart.tmd_muscle_spasm" @if(auth()->user()->account_type == 'patient') disabled @endif> Muscle Spasm
+                <input type="checkbox" wire:model.change="chart.tmd_muscle_spasm" @if($chartReadonly) disabled @endif> Muscle Spasm
             </label>
         </div>
 
@@ -320,7 +329,7 @@ let fetchedRecords = [];
    CLICK HANDLER (ADMIN ONLY)
 ===================================================== */
 document.addEventListener('click', function (e) {
-@if(auth()->user()->account_type === 'patient')
+@if($chartReadonly)
   return;
 @endif
 

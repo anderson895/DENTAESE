@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\MedicalForm;
+use App\Models\PatientRecord;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use App\Models\Service;
@@ -18,7 +19,12 @@ class Clientside extends Controller
         return view('client.consent');
     }
     public function record(){
-        return view('client.patient_record');
+        $userId = auth()->id();
+        $patientinfo = PatientRecord::firstOrCreate(
+            ['user_id' => $userId],
+            ['user_id' => $userId]
+        );
+        return view('client.patient_record', compact('patientinfo'));
     }
 
     public function CProfile(){
@@ -27,7 +33,18 @@ class Clientside extends Controller
         return view('client.cprofile',compact('medicalForm'));
     }
     public function CForms(){
-        return view('client.patient_record');
+        $userId = auth()->id();
+        $patientinfo = PatientRecord::firstOrCreate(
+            ['user_id' => $userId],
+            ['user_id' => $userId]
+        );
+
+        // If profile is already completed, no need to show first-login form again
+        if ($patientinfo->profile_completed) {
+            return redirect()->route('CBookingo');
+        }
+
+        return view('client.cforms', compact('patientinfo'));
     }
     public function CBooking(){
         $stores = Store::all(); 

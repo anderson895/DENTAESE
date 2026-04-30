@@ -89,46 +89,33 @@ class ProfileController extends Controller
 
 public function showProfile()
 {
+    $userid = auth()->id();
+    $user = Auth::user();
+
     $completedAppointments = Appointment::with(['user', 'dentist'])
-        ->where('user_id', auth()->id())
+        ->where('user_id', $userid)
         ->whereIn('status', ['completed', 'no_show','cancelled'])
         ->orderBy('appointment_date', 'desc')
         ->get();
 
-    
     $appointment = Appointment::with(['user', 'store'])
-        ->where('user_id', auth()->id())
+        ->where('user_id', $userid)
         ->latest()
         ->first();
 
-    // If the user has no appointment yet
-    if (!$appointment) {
-    
-        return view('client.cprofile', [
-            'completedAppointments' => $completedAppointments,
-            'appointment' => null,
-            'record' => null,
-            'patient' => null,
-            'patientinfo' => null,
-        ]);
-       
-    }
-
-    
-    $user = $appointment->user;
-    $userid = $user->id;
-
-   
-    $record = $appointment->user->appointment;
-
-   
-    $patient = $appointment->user;
-
-    
+    // Always ensure a patient_record exists so the Patient Information tab
+    // renders an editable (empty) PDA form for newly created accounts.
     $patientinfo = PatientRecord::firstOrCreate(
         ['user_id' => $userid],
         ['user_id' => $userid]
     );
+
+    // The treatment-record partial expects a collection of completed
+    // appointments. For a brand-new patient this will simply be empty.
+    $record = $completedAppointments;
+
+    // The dental-chart partial expects $patient to be the User model.
+    $patient = $user;
 
     return view('client.cprofile', compact(
         'completedAppointments', 'appointment', 'record', 'patient', 'patientinfo'

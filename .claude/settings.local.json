@@ -14,7 +14,14 @@
       "Bash(where python *)",
       "Bash(where python3 *)",
       "Bash(cp *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(git status *)",
+      "Bash(xargs grep *)",
+      "Bash(xargs basename *)",
+      "Bash(git checkout *)",
+      "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/admin/dental-chart/rx.blade.php)",
+      "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/livewire/dental-chart-board.blade.php)",
+      "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/admin/dental-chart/rx.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/livewire/dental-chart-board.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/patient_record.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/cprofile.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/cforms.blade.php)"
     ]
   }
 }

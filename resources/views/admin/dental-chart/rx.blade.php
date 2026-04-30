@@ -1,3 +1,8 @@
+@php
+    $rxAuthUser       = auth()->user();
+    $rxIsReceptionist = $rxAuthUser && $rxAuthUser->position === 'Receptionist';
+@endphp
+
 <div class="flex items-center mt-2 mb-4">
         <button onclick="window.printRx()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Print Rx</button>
 
@@ -8,9 +13,10 @@
         >
             Next
         </button>
-</div>    
-    
-    <!-- Input area hidden in print -->
+</div>
+
+    <!-- Input area hidden in print and for receptionists (read-only) -->
+    @if(!$rxIsReceptionist)
     <div class="mb-4 no-print">
         <div class="flex gap-2 mb-2">
             <div class="relative w-full">
@@ -50,6 +56,7 @@
         </div>
         <button type="button" id="add-medicine" class="bg-blue-600 text-white px-4 py-2 rounded w-full md:w-auto">+ Add Medicine</button>
     </div>
+    @endif
 <div id="receipt-content" class="p-6 max-w-3xl mx-auto bg-white shadow rounded">
     <h1 class="text-center text-xl font-bold mb-4">SANTIAGO-AMANCIO DENTAL CLINIC</h1>
 
@@ -94,6 +101,7 @@ const searchInput = document.getElementById('medicine-search');
 const suggestionsDiv = document.getElementById('medicine-suggestions');
 const selectedMedId = document.getElementById('selected-medicine-id');
 
+if (searchInput && suggestionsDiv) {
 searchInput.addEventListener('input', function() {
     const query = this.value.toLowerCase().trim();
     if (query.length < 1) { suggestionsDiv.classList.add('hidden'); return; }
@@ -120,9 +128,12 @@ document.addEventListener('click', function(e) {
         suggestionsDiv.classList.add('hidden');
     }
 });
+} // end if (searchInput && suggestionsDiv)
 
 // Add medicine
-document.getElementById('add-medicine').addEventListener('click', function() {
+const addMedicineBtn = document.getElementById('add-medicine');
+if (addMedicineBtn) {
+addMedicineBtn.addEventListener('click', function() {
     const medId = selectedMedId.value;
     const qty = document.getElementById('medicine-qty').value;
     const freq = document.getElementById('medicine-freq').value;
@@ -164,13 +175,17 @@ document.getElementById('add-medicine').addEventListener('click', function() {
     document.getElementById('medicine-time').value = '';
     document.getElementById('medicine-duration').value = '';
 });
+} // end if (addMedicineBtn)
 
 // Remove medicine (delegate)
-document.getElementById('rx-list').addEventListener('click', function(e) {
+const rxListEl = document.getElementById('rx-list');
+if (rxListEl) {
+rxListEl.addEventListener('click', function(e) {
     if (e.target.classList.contains('remove-medicine')) {
         e.target.parentElement.remove();
     }
 });
+}
 
 // Print function
 window.printRx = function () {
