@@ -46,8 +46,8 @@
         </button>
     </div>
 
-    {{-- DATE RANGE FILTER --}}
-    <form method="GET" class="mb-6 flex gap-4 items-end no-print">
+    {{-- FILTERS --}}
+    <form method="GET" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end no-print bg-white p-4 rounded shadow">
 
         <div>
             <label class="font-semibold block">Start Date:</label>
@@ -61,9 +61,64 @@
                    class="border p-2 rounded w-full">
         </div>
 
-        <button class="bg-blue-600 text-white px-5 py-2 rounded h-10">
-            Filter
-        </button>
+        <div>
+            <label class="font-semibold block">Patient Name:</label>
+            <input type="text" name="patient_name" value="{{ request('patient_name') }}"
+                   placeholder="Search name..."
+                   class="border p-2 rounded w-full">
+        </div>
+
+        <div>
+            <label class="font-semibold block">Service:</label>
+            <select name="service_id" class="border p-2 rounded w-full">
+                <option value="">-- All Services --</option>
+                @foreach($services as $service)
+                    <option value="{{ $service->id }}" {{ request('service_id') == $service->id ? 'selected' : '' }}>
+                        {{ $service->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label class="font-semibold block">Dentist (Staff):</label>
+            <select name="dentist_id" class="border p-2 rounded w-full">
+                <option value="">-- All Dentists --</option>
+                @foreach($dentists as $d)
+                    <option value="{{ $d->id }}" {{ request('dentist_id') == $d->id ? 'selected' : '' }}>
+                        {{ $d->name }} {{ $d->lastname }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label class="font-semibold block">Status:</label>
+            <select name="status" class="border p-2 rounded w-full">
+                <option value="">-- All (completed, cancelled, no-show) --</option>
+                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                <option value="no_show" {{ request('status') == 'no_show' ? 'selected' : '' }}>No Show</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="font-semibold block">Payment Type:</label>
+            <select name="payment_type" class="border p-2 rounded w-full">
+                <option value="">-- All --</option>
+                <option value="CASH" {{ request('payment_type') == 'CASH' ? 'selected' : '' }}>CASH</option>
+                <option value="GCASH" {{ request('payment_type') == 'GCASH' ? 'selected' : '' }}>GCASH</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded h-10">
+                Filter
+            </button>
+            <a href="{{ route('reports.appointments') }}" class="bg-gray-400 text-white px-5 py-2 rounded h-10 flex items-center">
+                Reset
+            </a>
+        </div>
     </form>
 
     <!-- PRINT AREA -->

@@ -156,11 +156,11 @@ public function approveBooking(Request $request, $id)
 public function view($id)
 {
     // Get the appointment with related user and store
-    $appointment = Appointment::with('user', 'store')->findOrFail($id);
+    $appointment = Appointment::with('user', 'store', 'dentist')->findOrFail($id);
 
     $patient = $appointment->user;
 
-  
+
     $record = $patient->appointment()
         ->whereIn('status', ['completed'])
         ->get();
@@ -180,7 +180,13 @@ public function view($id)
 
     $totalPrice = $servicePrices->sum();
 
-
+    // Dentists available at this branch (for changeable doctor on check-in)
+    $branchDentists = collect();
+    if ($appointment->store) {
+        $branchDentists = $appointment->store->staff()
+            ->wherePivot('position', 'dentist')
+            ->get(['users.id', 'users.name', 'users.lastname']);
+    }
 
 
     return view('admin.appointment_detail', compact(
@@ -191,10 +197,27 @@ public function view($id)
         'medicines',
         'serviceNames',
         'servicePrices',
-        'totalPrice'
+        'totalPrice',
+        'branchDentists'
     ));
 
 
+}
+
+public function changeDentist(Request $request, $id)
+{
+    $request->validate([
+        'dentist_id' => 'required|exists:users,id',
+    ]);
+
+    $appointment = Appointment::findOrFail($id);
+    $appointment->update(['dentist_id' => $request->dentist_id]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Dentist updated successfully.',
+        'dentist_name' => $appointment->dentist->name ?? '',
+    ]);
 }
 
 public function settle(Request $request, $id)

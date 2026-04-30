@@ -115,6 +115,7 @@ Route::post('/login-face', [AuthUi::class, 'loginFace'])->name('login-face');
 
 
 // web.php
+Route::post('/signup/validate-step', [AuthUi::class, 'validateSignupStep'])->name('signup.validateStep');
 Route::post('/signup/send-otp', [AuthUi::class, 'sendOtp'])->name('send.otp');
 Route::get('/signup/verify-otp', [AuthUi::class, 'verifyOtp'])->name('verify.otp');
 

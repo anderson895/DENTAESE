@@ -135,6 +135,10 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
     $availableSlots = [];
     $currentSlot = $opening->copy();
 
+    // Hide past slots when booking for today
+    $isToday = Carbon::parse($date)->isToday();
+    $now = Carbon::now();
+
    while ($currentSlot->lt($closing)) {
     $slotEnd = $currentSlot->copy()->addMinutes($slotDuration);
 
@@ -145,7 +149,10 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
     });
 
     if (!$overlapping) {
-        $availableSlots[] = $currentSlot->format('H:i');
+        // Skip if the slot end has already passed (today only)
+        if (!$isToday || $slotEnd->setDateFrom($now)->gt($now)) {
+            $availableSlots[] = $currentSlot->format('H:i');
+        }
         $currentSlot->addMinutes($slotDuration);
     } else {
         // Jump to the end of the overlapping booking
@@ -192,6 +199,10 @@ public function getAvailableSlots(Request $request, Store $store)
     $availableSlots = [];
     $currentSlot = $opening->copy();
 
+    // Hide past slots when booking for today
+    $isToday = Carbon::parse($date)->isToday();
+    $now = Carbon::now();
+
     while ($currentSlot->lt($closing)) {
         $slotEnd = $currentSlot->copy()->addMinutes($slotDuration);
 
@@ -203,7 +214,10 @@ public function getAvailableSlots(Request $request, Store $store)
         });
 
         if (!$overlapping) {
-            $availableSlots[] = $currentSlot->format('H:i');
+            // Skip if the slot end has already passed (today only)
+            if (!$isToday || $slotEnd->setDateFrom($now)->gt($now)) {
+                $availableSlots[] = $currentSlot->format('H:i');
+            }
             $currentSlot = $slotEnd; // Continue after this slot
         } else {
             // Skip to end of overlapping booking

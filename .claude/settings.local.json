@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Test-Path *)",
+      "Bash(php -l app/Http/Controllers/AdminBookingController.php)",
+      "Bash(php -l app/Http/Controllers/AppointmentController.php)",
+      "Bash(php -l app/Http/Controllers/ReportController.php)",
+      "Bash(php -l app/Http/Controllers/VisitLogController.php)",
+      "Bash(php artisan *)",
+      "Bash(php -l app/Http/Controllers/AuthUi.php)",
+      "PowerShell($outPath = \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\\\\System-Revision-Progress.docx\"; $word = New-Object -ComObject Word.Application; $word.Visible = $false; try { $doc = $word.Documents.Add\\(\\); Write-Output \"WORD_OK\"; $doc.Close\\(0\\); $word.Quit\\(\\); Write-Output \"DONE\" } catch { Write-Output \\(\"ERROR: \" + $_.Exception.Message\\); $word.Quit\\(\\) })",
+      "PowerShell(& \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\\\\_build_progress_docx.ps1\")",
+      "Bash(unzip -o \"System-Revision-April-30.docx\" -d /tmp/docx-extract/)",
+      "Bash(where python *)",
+      "Bash(where python3 *)",
+      "Bash(cp *)",
+      "Bash(python *)"
+    ]
+  }
+}

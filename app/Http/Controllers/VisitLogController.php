@@ -99,7 +99,10 @@ class VisitLogController extends Controller
         $appointment = $this->findTodayAppointment($user->id);
 
         if ($appointment) {
-            $appointment->update(['status' => 'arrived']);
+            $appointment->update([
+                'status' => 'arrived',
+                'arrived_at' => $appointment->arrived_at ?? Carbon::now(),
+            ]);
         }
 
         if ($alreadyLogged) {

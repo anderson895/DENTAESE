@@ -151,11 +151,60 @@
 
 <!-- ================= STEP 4 ================= -->
 <div class="step hidden" id="step-4">
-    <label>Enter OTP</label>
-    <input type="text" id="otp" name="otp"
-        class="w-full border p-2 rounded"
-        placeholder="6-digit OTP" required>
+    <label class="block text-center mb-4 font-medium text-gray-700">Enter the 6-digit OTP sent to your email</label>
+    <div id="otp-boxes" class="flex justify-center gap-2 mb-2">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
+    </div>
+    <input type="hidden" id="otp" name="otp">
 </div>
+
+<script>
+(function() {
+    const digits = document.querySelectorAll('#otp-boxes .otp-digit');
+    const hidden = document.getElementById('otp');
+
+    function syncHidden() {
+        hidden.value = Array.from(digits).map(d => d.value).join('');
+    }
+
+    digits.forEach((input, idx) => {
+        input.addEventListener('input', (e) => {
+            // Strip non-digits
+            input.value = input.value.replace(/\D/g, '');
+            if (input.value && idx < digits.length - 1) {
+                digits[idx + 1].focus();
+            }
+            syncHidden();
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !input.value && idx > 0) {
+                digits[idx - 1].focus();
+            } else if (e.key === 'ArrowLeft' && idx > 0) {
+                digits[idx - 1].focus();
+            } else if (e.key === 'ArrowRight' && idx < digits.length - 1) {
+                digits[idx + 1].focus();
+            }
+        });
+
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, digits.length);
+            pasted.split('').forEach((char, i) => {
+                if (digits[i]) digits[i].value = char;
+            });
+            syncHidden();
+            const nextEmpty = Array.from(digits).findIndex(d => !d.value);
+            (nextEmpty === -1 ? digits[digits.length - 1] : digits[nextEmpty]).focus();
+        });
+    });
+})();
+</script>
 
 <!-- NAV BUTTONS -->
 <div class="flex justify-between pt-4 border-t">
@@ -238,26 +287,113 @@ function showStep(step) {
     $('#progressBar').css('width', `${(step / totalSteps) * 100}%`);
 }
 
+// ─────────────────────────────────────────────
+// Per-step error rendering
+// ─────────────────────────────────────────────
+function clearStepErrors(stepEl) {
+    stepEl.find('.field-error').remove();
+    stepEl.find('input, select, textarea')
+          .removeClass('border-red-500 ring-1 ring-red-500');
+}
+
+function showFieldErrors(stepEl, errors) {
+    clearStepErrors(stepEl);
+    let firstField = null;
+    Object.entries(errors).forEach(([field, messages]) => {
+        const input = stepEl.find(`[name="${field}"]`).first();
+        if (!input.length) return;
+        input.addClass('border-red-500 ring-1 ring-red-500');
+        const errorHtml = `<p class="field-error text-red-600 text-xs mt-1">${messages[0]}</p>`;
+        // Place after the input's container if present, else after the input itself
+        const wrapper = input.closest('.relative').length ? input.closest('.relative') : input;
+        wrapper.after(errorHtml);
+        if (!firstField) firstField = input;
+    });
+    if (firstField) firstField[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function clientValidateRequiredFields(stepEl) {
+    // Native HTML5 check for required fields visible in this step
+    const inputs = stepEl.find('input[required], select[required], textarea[required]').filter(':visible');
+    const errors = {};
+    inputs.each(function () {
+        if (!this.checkValidity()) {
+            const name = this.name;
+            const message = this.validationMessage || 'This field is required.';
+            if (name) {
+                errors[name] = errors[name] || [message];
+            }
+        }
+    });
+    return errors;
+}
+
+function validateStepOnServer(step) {
+    return new Promise((resolve, reject) => {
+        const formData = new FormData($('#signupForm')[0]);
+        formData.append('step', step);
+        $.ajax({
+            url: '{{ route("signup.validateStep") }}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: () => resolve(),
+            error: (xhr) => reject(xhr),
+        });
+    });
+}
+
 $(document).ready(function () {
     showStep(currentStep);
 
-    $('.next').click(function () {
-        // Step 2: password match check
-        if (currentStep === 2) {
-            if ($('#password').val() !== $('#confirm_password').val()) {
-                Swal.fire('Password Mismatch', 'Passwords do not match.', 'error');
-                return;
-            }
-            currentStep++; showStep(currentStep); return;
+    // Clear inline error for a field as soon as the user edits it
+    $(document).on('input change', '#signupForm input, #signupForm select, #signupForm textarea', function () {
+        $(this).removeClass('border-red-500 ring-1 ring-red-500');
+        $(this).closest('.relative').nextAll('.field-error').first().remove();
+        $(this).nextAll('.field-error').first().remove();
+        const wrapper = $(this).closest('.relative').length ? $(this).closest('.relative') : $(this);
+        wrapper.next('.field-error').remove();
+    });
+
+    $('.next').click(async function () {
+        const stepEl = $('#step-' + currentStep);
+        clearStepErrors(stepEl);
+
+        // ── 1. Client-side required check ──
+        const clientErrors = clientValidateRequiredFields(stepEl);
+        if (Object.keys(clientErrors).length > 0) {
+            showFieldErrors(stepEl, clientErrors);
+            return;
         }
 
-        // Step 3: face must be captured first; then send OTP before advancing
+        // ── 2. Step 3 face check (no server call needed for that) ──
         if (currentStep === 3) {
             if (!faceRegistered) {
-                Swal.fire('Face Required', 'Please capture your face first.', 'warning');
+                showFieldErrors(stepEl, { face_descriptor: ['Please capture your face before continuing.'] });
                 return;
             }
-            // Send OTP now (user is not logged in, we just need their email from the form)
+        }
+
+        // ── 3. Server-side validation per step (steps 1-3) ──
+        if (currentStep <= 3) {
+            try {
+                Swal.fire({ title: 'Validating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                await validateStepOnServer(currentStep);
+                Swal.close();
+            } catch (xhr) {
+                Swal.close();
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    showFieldErrors(stepEl, xhr.responseJSON.errors);
+                } else {
+                    Swal.fire('Error', xhr.responseJSON?.message ?? 'Validation failed.', 'error');
+                }
+                return;
+            }
+        }
+
+        // ── 4. After step 3 server validation succeeds, send OTP before advancing ──
+        if (currentStep === 3) {
             Swal.fire({ title: 'Sending OTP...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const otpData = new FormData($('#signupForm')[0]);
             $.ajax({
@@ -271,7 +407,30 @@ $(document).ready(function () {
                     currentStep++; showStep(currentStep);
                 },
                 error: function (xhr) {
-                    Swal.fire('Error', xhr.responseJSON?.message ?? 'Failed to send OTP.', 'error');
+                    Swal.close();
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        // Map errors back to whichever step they belong to
+                        const errors = xhr.responseJSON.errors;
+                        const step1Fields = ['name','middlename','lastname','suffix','birth_date','birthplace_municipality','birthplace_province','address_street','address_barangay','address_municipality','address_province','address_house_number','address_other_details'];
+                        const step2Fields = ['email','user','password','contact_number'];
+                        const step1Errors = {}, step2Errors = {}, otherErrors = {};
+                        Object.entries(errors).forEach(([field, msgs]) => {
+                            if (step1Fields.includes(field)) step1Errors[field] = msgs;
+                            else if (step2Fields.includes(field)) step2Errors[field] = msgs;
+                            else otherErrors[field] = msgs;
+                        });
+                        if (Object.keys(step1Errors).length) {
+                            currentStep = 1; showStep(1);
+                            showFieldErrors($('#step-1'), step1Errors);
+                        } else if (Object.keys(step2Errors).length) {
+                            currentStep = 2; showStep(2);
+                            showFieldErrors($('#step-2'), step2Errors);
+                        } else {
+                            Swal.fire('Error', xhr.responseJSON.message || 'Failed to send OTP.', 'error');
+                        }
+                    } else {
+                        Swal.fire('Error', xhr.responseJSON?.message ?? 'Failed to send OTP.', 'error');
+                    }
                 }
             });
             return;

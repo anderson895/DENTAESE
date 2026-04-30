@@ -53,12 +53,14 @@
 </td>
                                     <td class="border px-2 py-1">{{ ucfirst($appt->status) }}</td>
                                     <td>
-                                        @if ($appt->status !== 'completed' && $appt->status !== 'cancelled')
+                                        @if ($appt->status === 'pending')
                                             <button type="button"
                                                 class="cancel-btn bg-red-500 text-white px-3 py-1 rounded ml-2"
                                                 data-id="{{ $appt->id }}">
                                                 Cancel
                                             </button>
+                                        @elseif ($appt->status === 'approved')
+                                            <span class="text-xs text-gray-500 italic">Approved — contact clinic to cancel</span>
                                         @endif
                                     </td>
                                 </tr>

@@ -63,18 +63,43 @@
             {{ $appointment->user->suffix ?? '' }}
         </p>
 
-        <p><strong>Dentist:</strong> {{ $appointment->dentist->name ?? 'N/A' }}</p>
-
         @php
             use Carbon\Carbon;
 
             $date  = Carbon::parse($appointment->appointment_date)->format('F j, Y');
             $start = Carbon::parse($appointment->appointment_time)->format('g:i A');
             $end   = Carbon::parse($appointment->booking_end_time)->format('g:i A');
+            $arrived = $appointment->arrived_at ? Carbon::parse($appointment->arrived_at)->format('g:i A') : null;
         @endphp
+
+        <div class="mt-2 mb-2">
+            <strong>Dentist:</strong>
+            @if(in_array($appointment->status, ['pending', 'approved', 'arrived']) && (auth()->user()->position === 'Receptionist' || auth()->user()->position === 'admin'))
+                <select id="changeDentistSelect"
+                        data-id="{{ $appointment->id }}"
+                        class="border rounded p-1 ml-2">
+                    @foreach($branchDentists as $d)
+                        <option value="{{ $d->id }}" {{ $appointment->dentist_id == $d->id ? 'selected' : '' }}>
+                            {{ $d->name }} {{ $d->lastname }}
+                        </option>
+                    @endforeach
+                </select>
+                <button id="saveDentistBtn" type="button" class="ml-2 px-3 py-1 bg-blue-600 text-white rounded text-sm">Save</button>
+            @else
+                {{ $appointment->dentist->name ?? 'N/A' }} {{ $appointment->dentist->lastname ?? '' }}
+            @endif
+        </div>
 
         <p><strong>Date:</strong> {{ $date }}</p>
         <p><strong>Time:</strong> {{ $start }} - {{ $end }}</p>
+        <p>
+            <strong>Arrived at:</strong>
+            @if($arrived)
+                <span class="text-green-700 font-semibold">{{ $arrived }}</span>
+            @else
+                <span class="text-gray-500 italic">Not yet arrived</span>
+            @endif
+        </p>
         <p><strong>Branch:</strong> {{ $appointment->store->name ?? 'N/A' }}</p>
         <p><strong>Description:</strong> {{ $appointment->desc }}</p>
 
@@ -386,6 +411,37 @@ function printCheckinReceipt() {
 
 
 <script>
+$(document).on('click', '#saveDentistBtn', function () {
+    const select = $('#changeDentistSelect');
+    const id = select.data('id');
+    const dentistId = select.val();
+
+    Swal.fire({
+        title: 'Change Dentist?',
+        text: 'Reassign this appointment to the selected dentist?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, save'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        $.ajax({
+            url: `/appointments/${id}/change-dentist`,
+            type: 'PUT',
+            data: {
+                _token: '{{ csrf_token() }}',
+                dentist_id: dentistId,
+            },
+            success: function (res) {
+                Swal.fire('Saved', res.message, 'success');
+            },
+            error: function (xhr) {
+                Swal.fire('Error', xhr.responseJSON?.message || 'Failed to update dentist.', 'error');
+            }
+        });
+    });
+});
+
 $(document).on('input', 'input[name="total_price"]', function () {
     let value = parseFloat($(this).val());
 

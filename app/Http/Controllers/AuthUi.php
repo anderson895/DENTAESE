@@ -167,6 +167,60 @@ class AuthUi extends Controller
     //      Also stored in session so finalSignup() can
     //      use it as fallback if request body is missing it.
     // ===============================
+    /**
+     * Per-step validation for the signup wizard.
+     * Returns 422 with field-level errors if validation fails, 200 otherwise.
+     */
+    public function validateSignupStep(Request $request)
+    {
+        $step = (int) $request->input('step', 0);
+
+        $rulesByStep = [
+            1 => [
+                'name'                    => 'required|string',
+                'middlename'              => 'nullable|string',
+                'lastname'                => 'required|string',
+                'suffix'                  => 'nullable|string|max:10',
+                'birth_date'              => 'required|date|before:today',
+                'birthplace_municipality' => 'required|string',
+                'birthplace_province'     => 'required|string',
+                'address_street'          => 'required|string',
+                'address_barangay'        => 'required|string',
+                'address_municipality'    => 'required|string',
+                'address_province'        => 'required|string',
+                'address_house_number'    => 'nullable|string',
+                'address_other_details'   => 'nullable|string',
+            ],
+            2 => [
+                'email'            => 'required|email|unique:users,email|unique:newusers,email',
+                'contact_number'   => 'required|string',
+                'user'             => 'required|string|unique:users,user|unique:newusers,user',
+                'password'         => 'required|string|min:6',
+                'confirm_password' => 'required|same:password',
+            ],
+            3 => [
+                'face_descriptor' => 'required|string',
+            ],
+        ];
+
+        if (!isset($rulesByStep[$step])) {
+            return response()->json(['message' => 'Invalid step.'], 422);
+        }
+
+        $messages = [
+            'birth_date.before'       => 'Birthdate must be in the past.',
+            'confirm_password.same'   => 'Passwords do not match.',
+            'email.unique'            => 'This email is already registered.',
+            'user.unique'             => 'This username is already taken.',
+            'password.min'            => 'Password must be at least 6 characters.',
+            'face_descriptor.required'=> 'Please capture your face before continuing.',
+        ];
+
+        $request->validate($rulesByStep[$step], $messages);
+
+        return response()->json(['status' => 'ok']);
+    }
+
     public function sendOtp(Request $request)
     {
         $request->validate([

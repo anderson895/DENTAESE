@@ -61,7 +61,7 @@
     <div class="flex justify-between mb-4">
         <div>
             <p><strong>Patient Name:</strong> <span id="patient_name">{{ $appointment->user->lastname ?? 'N/A' }}, {{ $appointment->user->name ?? 'N/A' }} {{ $appointment->user->middlename ?? 'N/A' }} {{ $appointment->user->suffix ?? '' }}</span></p>
-            <p><strong>Age:</strong> <span id="patient_age">{{ \Carbon\Carbon::parse($appointment->user->birthdate)->age }}</span></p>
+            <p><strong>Age:</strong> <span id="patient_age">{{ $appointment->user->birth_date ? \Carbon\Carbon::parse($appointment->user->birth_date)->age : 'N/A' }}</span></p>
         </div>
         <div>
             <p><strong>Date:</strong> {{ now()->format('F j, Y') }}</p>

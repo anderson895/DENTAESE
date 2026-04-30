@@ -134,6 +134,7 @@ Route::post('/branch/update-schedule/{id}', [BranchController::class, 'updateSch
 Route::get('/appointments', [AdminBookingController::class, 'showBookings'])->name('admin.booking');
 Route::put('/appointments/{id}/approve', [AdminBookingController::class, 'approveBooking'])->name('appointments.approve');
 Route::get('/appointments/{id}/view', [AdminBookingController::class, 'view'])->name('appointments.view');
+Route::put('/appointments/{id}/change-dentist', [AdminBookingController::class, 'changeDentist'])->name('appointments.changeDentist');
 Route::post('/appointments/{id}/settle', [AdminBookingController::class, 'settle'])->name('appointments.settle');
 Route::get('/appointments/fetch', [AdminBookingController::class, 'fetch'])->name('appointments.fetch');
 Route::get('/admin/bookings/history', [AdminBookingController::class, 'showHistory'])->name('admin.booking.history');
