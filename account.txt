@@ -1,0 +1,6 @@
+Receptionist
+user Mhara Grace 
+pass Mhara GraceDentaease
+
+Admin
+AdminDentaease

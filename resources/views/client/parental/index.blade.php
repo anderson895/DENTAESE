@@ -5,7 +5,9 @@
 
 <div class="container mx-auto p-4 space-y-6">
 
-    @php($atLimit = $children->count() >= $maxChildren)
+    @php
+        $atLimit = $children->count() >= $maxChildren;
+    @endphp
     <div class="bg-white p-5 rounded shadow">
         <h1 class="text-2xl font-bold mb-1">Parental Control</h1>
         <p class="text-sm text-gray-600">
