@@ -23,9 +23,7 @@ Route::post('/dental/tooth/save', [DentalToothController::class, 'store'])->name
 
 Route::get('/dental/tooth/{patient}', [DentalToothController::class, 'fetch'])->name('dental.tooth.fetch');
 
-// Route::get('/', function () {
-//     return view('auth.login');
-// })->name('login');
+
 
 Route::get('/login', function () {
     return view('auth.login');
