@@ -130,7 +130,7 @@ Route::get('/logouts', [AdminController::class,'Logout'])->name('Logout')->middl
 
 Route::get('/dental-chart/{patient}', function (User $patient) {
     return view('admin.dental-chart.index', compact('patient'));
-});
+})->name('dental-chart.index');
 
 // ADMIN
 Route::middleware('auth')->group(function () {
