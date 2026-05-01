@@ -38,7 +38,17 @@
       "Bash(git rm *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\" -Directory)",
       "Bash(Select-Object Name)",
-      "PowerShell(ls \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\" | Where-Object {$_.PSIsContainer} | Select-Object Name)"
+      "PowerShell(ls \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\" | Where-Object {$_.PSIsContainer} | Select-Object Name)",
+      "Bash(curl *)",
+      "Bash(php render_test2.php)",
+      "Bash(php render_test3.php)",
+      "Bash(php render_test4.php)",
+      "Bash(git *)",
+      "Bash(php div_balance.php)",
+      "Bash(cat)",
+      "Bash(php verify.php)",
+      "Bash(rm -f verify.php)",
+      "Bash(php -l app/Http/Controllers/POSController.php)"
     ]
   }
 }

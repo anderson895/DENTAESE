@@ -35,9 +35,21 @@ class POSController extends Controller
     });
 
     $store = Store::find($storeId);
-    $preselectedPatientId = $request->input('patient_id');
+    $preselectedPatientId = $request->input('patient_id') ?: session('pos_patient_id');
     $appointmentId        = $request->input('appointment_id');
         return view('admin.pos.index', compact('medicines', 'storeId', 'store', 'preselectedPatientId', 'appointmentId'));
+    }
+
+    private function rememberPatient(Request $request): void
+    {
+        if ($request->has('patient_id')) {
+            $pid = $request->input('patient_id');
+            if ($pid === '' || $pid === null) {
+                session()->forget('pos_patient_id');
+            } else {
+                session()->put('pos_patient_id', $pid);
+            }
+        }
     }
 
     // Add to cart 
@@ -47,6 +59,8 @@ class POSController extends Controller
         'medicine_id' => 'required|integer',
         'quantity'    => 'required|integer|min:1',
     ]);
+
+    $this->rememberPatient($request);
 
     $batch = medicine_batches::where('medicine_id', $request->medicine_id)
         ->where('store_id', $storeId)
@@ -141,10 +155,11 @@ class POSController extends Controller
         }
     });
 
-    
-    session()->forget('cart');
 
- 
+    session()->forget('cart');
+    session()->forget('pos_patient_id');
+
+
   return redirect()->route('pos.index', $storeId)
     ->with('receipt', $sale->load('items.medicine', 'patient', 'user'));
 }
@@ -155,6 +170,8 @@ class POSController extends Controller
         'index' => 'required|integer',
         'quantity' => 'required|integer|min:1',
     ]);
+
+    $this->rememberPatient($request);
 
     $cart = session()->get('cart', []);
     if (!isset($cart[$request->index])) {
@@ -185,10 +202,12 @@ public function removeFromCart(Request $request, $storeId)
         'index' => 'required|integer',
     ]);
 
+    $this->rememberPatient($request);
+
     $cart = session()->get('cart', []);
     if (isset($cart[$request->index])) {
         unset($cart[$request->index]);
-        session()->put('cart', array_values($cart)); 
+        session()->put('cart', array_values($cart));
     }
 
     return back()->with('success', 'Item removed from cart!');

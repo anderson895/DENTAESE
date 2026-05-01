@@ -55,8 +55,9 @@
                     <form method="POST" action="{{ route('pos.add', $storeId) }}" class="mt-3 flex gap-2">
                         @csrf
                         <input type="hidden" name="medicine_id" value="{{ $medicine['id'] }}">
-                        <input type="number" name="quantity" min="1" 
-                            max="{{ $medicine['available_quantity'] }}" 
+                        <input type="hidden" name="patient_id" class="patient_id_mirror" value="{{ $preselectedPatientId ?? '' }}">
+                        <input type="number" name="quantity" min="1"
+                            max="{{ $medicine['available_quantity'] }}"
                             class="w-20 p-2 border rounded-lg text-center focus:ring-2 focus:ring-sky-400">
                         <button class="flex-1 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition">
                             Add
@@ -85,6 +86,7 @@
                         <form method="POST" action="{{ route('pos.update', $storeId) }}" class="flex items-center gap-1">
                             @csrf
                             <input type="hidden" name="index" value="{{ $i }}">
+                            <input type="hidden" name="patient_id" class="patient_id_mirror" value="{{ $preselectedPatientId ?? '' }}">
                             <input type="number" name="quantity" value="{{ $item['quantity'] }}"
                                 min="1" max="999"
                                 class="w-14 p-1 border rounded-lg text-center">
@@ -95,6 +97,7 @@
                         <form method="POST" action="{{ route('pos.remove', $storeId) }}">
                             @csrf
                             <input type="hidden" name="index" value="{{ $i }}">
+                            <input type="hidden" name="patient_id" class="patient_id_mirror" value="{{ $preselectedPatientId ?? '' }}">
                             <button class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">✕</button>
                         </form>
                     </div>
@@ -319,6 +322,10 @@ const POS_PATIENTS = @json($posPatients);
     const dropdown = document.getElementById('patient_suggestions');
     if (!input || !dropdown) return;
 
+    function syncMirrors() {
+        document.querySelectorAll('.patient_id_mirror').forEach(el => { el.value = hidden.value; });
+    }
+
     function render(matches) {
         if (matches.length === 0) {
             dropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No matching patient. Leave blank for Walk-in.</div>';
@@ -333,6 +340,7 @@ const POS_PATIENTS = @json($posPatients);
                 e.preventDefault();
                 input.value = el.getAttribute('data-name');
                 hidden.value = el.getAttribute('data-id');
+                syncMirrors();
                 clearBtn.classList.remove('hidden');
                 dropdown.classList.add('hidden');
             });
@@ -343,6 +351,7 @@ const POS_PATIENTS = @json($posPatients);
         const q = input.value.toLowerCase().trim();
         // typing invalidates a previously selected ID until they pick again
         hidden.value = '';
+        syncMirrors();
         clearBtn.classList.toggle('hidden', input.value.length === 0);
         if (!q) {
             render(POS_PATIENTS);
@@ -363,6 +372,7 @@ const POS_PATIENTS = @json($posPatients);
     clearBtn.addEventListener('click', () => {
         input.value = '';
         hidden.value = '';
+        syncMirrors();
         clearBtn.classList.add('hidden');
         input.focus();
     });

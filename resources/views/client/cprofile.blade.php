@@ -144,7 +144,7 @@
                 {{-- Check face_descriptor instead of face_token --}}
                 @if(Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== "")
                     <button id="capturemodal" class="px-4 m-5 py-2 bg-blue-200 text-white rounded cursor-not-allowed" disabled>
-                        ✅ Face Registered
+                        Face Registered
                     </button>
                 @else
                     <button id="capturemodal" class="px-4 m-5 py-2 bg-blue-500 text-white rounded">
@@ -226,6 +226,7 @@
         </div>
     </div>
 
+</div>
 </div>
 </div>
 </div>
