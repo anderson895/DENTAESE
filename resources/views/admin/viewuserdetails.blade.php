@@ -116,8 +116,23 @@
                 <!-- Right Panel -->
                 <div class="flex flex-col basis-[70%] gap-5">
                     <div class="rounded-md bg-white shadow p-5">
-                        <div class="flex justify-center mb-5">
-                            <img src="{{ asset('storage/qr_codes/' . $user->qr_code) }}" alt="User QR Code" class="h-40">
+                        <div class="flex flex-col items-center mb-5 gap-3">
+                            @php
+                                $qrPath = $user->qr_code ? 'qr_codes/' . $user->qr_code : null;
+                                $qrExists = $qrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($qrPath);
+                            @endphp
+                            @if($qrExists)
+                                <img id="userQrImage" src="{{ asset('storage/qr_codes/' . $user->qr_code) }}" alt="User QR Code" class="h-40">
+                            @else
+                                <img id="userQrImage" src="" alt="QR not available" class="h-40 hidden">
+                                <div id="qrMissingMsg" class="h-40 w-40 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded">
+                                    QR file is missing.<br>Click "Regenerate QR" to create a new one.
+                                </div>
+                            @endif
+                            <button type="button" id="regenerateQrBtn" data-id="{{ $user->id }}"
+                                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded shadow text-sm">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR
+                            </button>
                         </div>
                         <form id="updateProfile" class="flex flex-col gap-3">
                             <input type="hidden" name="id" id="id" value="{{ $user->id }}">
@@ -358,6 +373,47 @@
         });
     </script>
 <script>
+    // Regenerate QR
+    $('#regenerateQrBtn').click(function (e) {
+        e.preventDefault();
+        const userId = $(this).data('id');
+        const btn = $(this);
+
+        Swal.fire({
+            title: 'Regenerate QR Code?',
+            text: 'A new QR code will be generated. The old QR (if any) will no longer work.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, regenerate',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            btn.prop('disabled', true).text('Generating...');
+
+            $.ajax({
+                type: 'POST',
+                url: '{{ url("/qr/regenerate") }}/' + userId,
+                data: { _token: '{{ csrf_token() }}' },
+                success: function (response) {
+                    if (response.status === 'success') {
+                        $('#userQrImage').attr('src', response.qr_path).removeClass('hidden');
+                        $('#qrMissingMsg').remove();
+                        Swal.fire('Done!', response.message, 'success');
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to regenerate QR.', 'error');
+                    }
+                },
+                error: function (xhr) {
+                    Swal.fire('Error', xhr.responseJSON?.message || 'Failed to regenerate QR.', 'error');
+                },
+                complete: function () {
+                    btn.prop('disabled', false).html('<i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR');
+                }
+            });
+        });
+    });
+
     // Archive (Soft Delete)
     $('#archiveBtn').click(function(e) {
         e.preventDefault();

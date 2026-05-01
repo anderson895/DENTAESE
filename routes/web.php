@@ -102,6 +102,11 @@ Route::post('/cregister-face-registration', [FaceRecognitionController::class, '
 Route::get('/qr',[AuthUi::class, 'Qr'])->name('Qr');
 Route::post('/qr-login', [QrController::class, 'LoginQr'])->name('qr.login');
 
+Route::middleware('auth')->group(function () {
+    Route::post('/qr/regenerate/{user}', [QrController::class, 'regenerateForUser'])->name('qr.regenerate');
+    Route::post('/qr/regenerate-mine', [QrController::class, 'regenerateMyQr'])->name('qr.regenerate.mine');
+});
+
 
 //signup form
 

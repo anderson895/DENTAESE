@@ -99,12 +99,31 @@
             {{-- QR Code --}}
             <div class="basis-[50%] border">
                 <div class="flex flex-col justify-center m-3 items-center">
-                    <img src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="User QR Code"
-                        class="mx-auto w-40 h-40 object-contain border p-2 rounded" />
-                    <a href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="my-qr-code.png"
-                        class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200">
-                        Download QR Code (.png)
-                    </a>
+                    @php
+                        $myQrPath = Auth::user()->qr_code ? 'qr_codes/' . Auth::user()->qr_code : null;
+                        $myQrExists = $myQrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($myQrPath);
+                    @endphp
+                    @if($myQrExists)
+                        <img id="myQrImage" src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="User QR Code"
+                            class="mx-auto w-40 h-40 object-contain border p-2 rounded" />
+                        <a id="myQrDownload" href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="my-qr-code.png"
+                            class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200">
+                            Download QR Code (.png)
+                        </a>
+                    @else
+                        <img id="myQrImage" src="" alt="QR not available" class="mx-auto w-40 h-40 object-contain border p-2 rounded hidden" />
+                        <div id="myQrMissing" class="w-40 h-40 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded">
+                            QR file is missing.<br>Click "Regenerate QR" below.
+                        </div>
+                        <a id="myQrDownload" href="#" download="my-qr-code.png"
+                            class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200 hidden">
+                            Download QR Code (.png)
+                        </a>
+                    @endif
+                    <button id="regenerateMyQrBtn" type="button"
+                        class="mt-2 inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR
+                    </button>
                 </div>
             </div>
 
@@ -538,6 +557,59 @@ async function captureFaceAndRegister() {
 // Preload models on page load
 $(document).ready(function () {
     loadModels();
+});
+</script>
+
+{{-- ================= REGENERATE MY QR ================= --}}
+<script>
+document.getElementById('regenerateMyQrBtn').addEventListener('click', () => {
+    Swal.fire({
+        title: 'Regenerate your QR code?',
+        text: 'A new QR will be generated. Your old QR code will no longer work.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, regenerate',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        const btn = document.getElementById('regenerateMyQrBtn');
+        btn.disabled = true;
+        btn.innerHTML = 'Generating...';
+
+        fetch('{{ route("qr.regenerate.mine") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const img = document.getElementById('myQrImage');
+                const missing = document.getElementById('myQrMissing');
+                const dl = document.getElementById('myQrDownload');
+                img.src = data.qr_path;
+                img.classList.remove('hidden');
+                if (missing) missing.remove();
+                if (dl) {
+                    dl.href = data.qr_path;
+                    dl.classList.remove('hidden');
+                }
+                Swal.fire('Done!', data.message, 'success');
+            } else {
+                Swal.fire('Error', data.message || 'Failed to regenerate QR.', 'error');
+            }
+        })
+        .catch(() => {
+            Swal.fire('Error', 'Failed to regenerate QR.', 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR';
+        });
+    });
 });
 </script>
 

@@ -37,6 +37,56 @@ public function generateUserQr(User $user)
     ]);
 }
 
+public function regenerateForUser(User $user)
+{
+    $auth = Auth::user();
+    if (!$auth || ($auth->account_type !== 'admin' && $auth->position !== 'Admin' && $auth->position !== 'Receptionist')) {
+        return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 403);
+    }
+
+    $oldFile = 'qr_codes/' . ($user->qr_code ?? ('qr_' . $user->id . '.png'));
+    if (Storage::disk('public')->exists($oldFile)) {
+        Storage::disk('public')->delete($oldFile);
+    }
+
+    $user->qr_token = Str::uuid()->toString();
+    $user->save();
+
+    $response = $this->generateUserQr($user);
+    $data = $response->getData(true);
+
+    return response()->json([
+        'status'   => 'success',
+        'message'  => 'QR code regenerated.',
+        'qr_path'  => $data['qr_path'] . '?v=' . time(),
+    ]);
+}
+
+public function regenerateMyQr()
+{
+    $user = Auth::user();
+    if (!$user) {
+        return response()->json(['status' => 'error', 'message' => 'Not authenticated.'], 401);
+    }
+
+    $oldFile = 'qr_codes/' . ($user->qr_code ?? ('qr_' . $user->id . '.png'));
+    if (Storage::disk('public')->exists($oldFile)) {
+        Storage::disk('public')->delete($oldFile);
+    }
+
+    $user->qr_token = Str::uuid()->toString();
+    $user->save();
+
+    $response = $this->generateUserQr($user);
+    $data = $response->getData(true);
+
+    return response()->json([
+        'status'   => 'success',
+        'message'  => 'Your QR code has been regenerated.',
+        'qr_path'  => $data['qr_path'] . '?v=' . time(),
+    ]);
+}
+
 private function generatePngViaGd(string $token, int $size): string
 {
     $encoded    = \BaconQrCode\Encoder\Encoder::encode($token, \BaconQrCode\Common\ErrorCorrectionLevel::M());
