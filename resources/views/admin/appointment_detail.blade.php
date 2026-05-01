@@ -8,8 +8,18 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
-<div x-data="{ tab: localStorage.getItem('activeTab') || 'info', openReceiptModal: true }" 
-     x-init="$watch('tab', value => localStorage.setItem('activeTab', value))">
+@php
+    $authPosition  = auth()->user()->position ?? '';
+    $isReceptionist = $authPosition === 'Receptionist';
+    // Receptionist always lands on "checkin" first; Dentist/Admin land on Dental Chart
+    // and may persist their last-active tab via localStorage.
+    $defaultTab = $isReceptionist ? 'checkin' : 'info';
+@endphp
+<div x-data="{
+        tab: @js($isReceptionist) ? @js($defaultTab) : (localStorage.getItem('activeTab') || @js($defaultTab)),
+        openReceiptModal: true
+     }"
+     x-init="$watch('tab', value => { if (!@js($isReceptionist)) localStorage.setItem('activeTab', value); })">
 
     <h1 class="text-2xl font-bold mb-4">Appointment #{{ $appointment->id }}</h1>
 
