@@ -304,10 +304,13 @@ function hidePosSuggestions() {
     if (dd) dd.classList.add('hidden');
 }
 
-const POS_PATIENTS = @json($patients->map(fn($p) => [
-    'id' => $p->id,
-    'name' => trim(($p->lastname ?? '').', '.($p->name ?? '')),
-])->values());
+@php
+    $posPatients = $patients->map(fn($p) => [
+        'id' => $p->id,
+        'name' => trim(($p->lastname ?? '').', '.($p->name ?? '')),
+    ])->values();
+@endphp
+const POS_PATIENTS = @json($posPatients);
 
 (function () {
     const input = document.getElementById('patient_search');
