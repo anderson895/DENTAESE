@@ -256,7 +256,7 @@
             @endphp
 
             <div class="mb-4">
-                <a href="{{ route('pos.index', ['storeId' => $appointment->store_id, 'patient_id' => $appointment->user_id, 'appointment_id' => $appointment->id]) }}"
+                <a href="{{ route('pos.index', ['store' => $appointment->store_id, 'patient_id' => $appointment->user_id, 'appointment_id' => $appointment->id]) }}"
                    target="_blank"
                    class="inline-block bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded">
                     Open POS for this Patient
