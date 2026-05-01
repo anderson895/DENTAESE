@@ -13,10 +13,41 @@
     </a>
 </div>
 
-<form method="GET" action="{{ route('admin.booking.history') }}" class="mb-4 flex space-x-4">
-    <input type="date" name="start_date" value="{{ request('start_date') }}" class="border p-2 rounded">
-    <input type="date" name="end_date" value="{{ request('end_date') }}" class="border p-2 rounded">
-    <button class="bg-gray-600 text-white px-4 py-2 rounded">Filter</button>
+<form method="GET" action="{{ route('admin.booking.history') }}" class="mb-4 flex flex-wrap gap-3 items-end">
+    <div class="flex flex-col">
+        <label class="text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+        <input type="date" name="start_date" value="{{ request('start_date') }}" class="border p-2 rounded">
+    </div>
+    <div class="flex flex-col">
+        <label class="text-xs font-semibold text-gray-600 mb-1">End Date</label>
+        <input type="date" name="end_date" value="{{ request('end_date') }}" class="border p-2 rounded">
+    </div>
+
+    @if(auth()->user()->position !== 'Dentist')
+    <div class="flex flex-col">
+        <label class="text-xs font-semibold text-gray-600 mb-1">Dentist</label>
+        <select name="dentist_id" class="border p-2 rounded">
+            <option value="">-- All Dentists --</option>
+            @foreach ($dentists as $dentist)
+                <option value="{{ $dentist->id }}" {{ request('dentist_id') == $dentist->id ? 'selected' : '' }}>
+                    {{ $dentist->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    @endif
+
+    <div class="flex flex-col">
+        <label class="text-xs font-semibold text-gray-600 mb-1">Status</label>
+        <select name="status" class="border p-2 rounded">
+            <option value="">-- All Status --</option>
+            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+            <option value="no_show" {{ request('status') == 'no_show' ? 'selected' : '' }}>No Show</option>
+        </select>
+    </div>
+
+    <button class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Filter</button>
 </form>
 
 <table class="w-full border">

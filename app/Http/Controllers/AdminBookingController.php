@@ -296,13 +296,21 @@ public function cancelBooking($id)
 
 public function showHistory(Request $request)
 {
+    $allowedStatuses = ['completed', 'cancelled', 'no_show'];
+
     $query = Appointment::with(['user', 'dentist'])
         ->where('store_id', session('active_branch_id'))
-        ->whereIn('status', ['completed', 'cancelled', 'no_show']);
+        ->whereIn('status', $allowedStatuses);
 
     // Dentist can only see their own appointments
     if (auth()->user()->position === 'Dentist') {
         $query->where('dentist_id', auth()->id());
+    } elseif ($request->filled('dentist_id')) {
+        $query->where('dentist_id', $request->input('dentist_id'));
+    }
+
+    if ($request->filled('status') && in_array($request->input('status'), $allowedStatuses, true)) {
+        $query->where('status', $request->input('status'));
     }
 
     // Date filters
@@ -319,10 +327,21 @@ public function showHistory(Request $request)
 
     $appointments = $query->get();
 
+    // Dentist dropdown options for current branch (hidden for dentist role)
+    $dentists = collect();
+    if (auth()->user()->position !== 'Dentist') {
+        $store = Store::find(session('active_branch_id'));
+        if ($store) {
+            $dentists = $store->staff()
+                ->wherePivot('position', 'dentist')
+                ->get(['users.id', 'users.name']);
+        }
+    }
+
     // 🔴 IMPORTANT: load all services for modal multi-select
     $services = Service::all();
 
-    return view('admin.booking_history', compact('appointments', 'services'));
+    return view('admin.booking_history', compact('appointments', 'services', 'dentists'));
 }
 
 

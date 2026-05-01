@@ -174,7 +174,8 @@
                         </thead>
                       <tbody>
                         @forelse ($expiringSoon as $batch)
-                            <tr class="text-gray-700 dark:text-gray-100">
+                            <tr class="text-gray-700 dark:text-gray-100 hover:bg-gray-100 cursor-pointer transition"
+                                onclick="window.location='{{ route('inventory') }}?search={{ urlencode($batch->medicine->name) }}'">
                                 <th class="border-t-0 px-4 py-4 text-left text-xs text-gray-500">
                                     {{ $batch->medicine->name }}
                                 </th>
@@ -207,12 +208,13 @@
                 <table class="w-full min-w-[540px]">
                     <tbody>
                         @forelse ($appointmentsToday as $appointment)
-                        <tr>
+                        <tr class="hover:bg-gray-50 cursor-pointer transition"
+                            onclick="window.location='{{ route('appointments.view', $appointment->id) }}'">
                             <td class="py-2 px-4 border-b border-gray-100">
                                 <div class="flex items-center">
-                                    <a href="#" class="text-gray-600 text-sm font-medium hover:text-primary ml-2 truncate">
+                                    <span class="text-gray-600 text-sm font-medium hover:text-primary ml-2 truncate">
                                         {{ $appointment->user->name ?? 'Unknown' }}
-                                    </a>
+                                    </span>
                                 </div>
                             </td>
                             <td class="py-2 px-4 border-b border-gray-100">

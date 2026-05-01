@@ -64,10 +64,52 @@
                 </button>
             </div>
 
-            <form method="GET" class="mb-4 flex gap-2 items-center">
-                <label>From: <input type="date" name="from" value="{{ $from->format('Y-m-d') }}" class="border rounded px-2 py-1"></label>
-                <label>To: <input type="date" name="to" value="{{ $to->format('Y-m-d') }}" class="border rounded px-2 py-1"></label>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">Filter</button>
+            <form method="GET" class="mb-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-end print:hidden bg-white p-4 rounded shadow">
+                <div>
+                    <label class="block text-sm font-semibold">From:</label>
+                    <input type="date" name="from" value="{{ $from->format('Y-m-d') }}" class="border rounded px-2 py-1 w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold">To:</label>
+                    <input type="date" name="to" value="{{ $to->format('Y-m-d') }}" class="border rounded px-2 py-1 w-full">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold">Cashier:</label>
+                    <select name="cashier_id" class="border rounded px-2 py-1 w-full">
+                        <option value="">-- All Cashiers --</option>
+                        @foreach($cashiers as $c)
+                            <option value="{{ $c->id }}" {{ (string)$cashierId === (string)$c->id ? 'selected' : '' }}>
+                                {{ trim(($c->lastname ?? '').', '.($c->name ?? '')) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold">Patient:</label>
+                    <select name="patient_id" class="border rounded px-2 py-1 w-full">
+                        <option value="">-- All Patients --</option>
+                        @foreach($patients as $p)
+                            <option value="{{ $p->id }}" {{ (string)$patientId === (string)$p->id ? 'selected' : '' }}>
+                                {{ trim(($p->lastname ?? '').', '.($p->name ?? '')) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold">Medicine:</label>
+                    <select name="medicine_id" class="border rounded px-2 py-1 w-full">
+                        <option value="">-- All Medicines --</option>
+                        @foreach($medicinesList as $m)
+                            <option value="{{ $m->id }}" {{ (string)$medicineId === (string)$m->id ? 'selected' : '' }}>
+                                {{ $m->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Filter</button>
+                    <a href="{{ route('reports.sales') }}" class="px-4 py-2 bg-gray-400 text-white rounded flex items-center">Reset</a>
+                </div>
             </form>
 
             <table class="table-auto border-collapse border border-gray-300 w-full">
@@ -84,25 +126,36 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($sales as $sale)
-                        @foreach($sale->items as $item)
-                        <tr>
-                            <td class="border px-2 py-1">{{ $sale->id }}</td>
-                            <td class="border px-2 py-1">{{ $sale->created_at->format('Y-m-d') }}</td>
-                            <td class="border px-2 py-1">{{ $sale->user->name }}</td>
-                            <td class="border px-2 py-1">{{ $sale->patient?->name ?? 'Walk-in' }}</td>
-                            <td class="border px-2 py-1">{{ $item->medicine->name }}</td>
-                            <td class="border px-2 py-1">{{ $item->quantity }}</td>
-                            <td class="border px-2 py-1">{{ number_format($item->price, 2) }}</td>
-                            <td class="border px-2 py-1">{{ number_format($item->subtotal, 2) }}</td>
-                        </tr>
+                    @php $shownTotal = 0; @endphp
+                    @forelse($sales as $sale)
+                        @php
+                            $items = $medicineId
+                                ? $sale->items->where('medicine_id', $medicineId)
+                                : $sale->items;
+                        @endphp
+                        @foreach($items as $item)
+                            @php $shownTotal += $item->subtotal; @endphp
+                            <tr>
+                                <td class="border px-2 py-1">{{ $sale->id }}</td>
+                                <td class="border px-2 py-1">{{ $sale->created_at->format('Y-m-d') }}</td>
+                                <td class="border px-2 py-1">{{ $sale->user->name }}</td>
+                                <td class="border px-2 py-1">{{ $sale->patient?->name ?? 'Walk-in' }}</td>
+                                <td class="border px-2 py-1">{{ $item->medicine->name }}</td>
+                                <td class="border px-2 py-1">{{ $item->quantity }}</td>
+                                <td class="border px-2 py-1">{{ number_format($item->price, 2) }}</td>
+                                <td class="border px-2 py-1">{{ number_format($item->subtotal, 2) }}</td>
+                            </tr>
                         @endforeach
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="8" class="border p-3 text-center text-gray-500">No sales found for the selected filters.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
                 
             </table>
             <div class="mt-4 text-right font-bold text-lg">
-        Grand Total: {{ number_format($sales->sum('total_amount'), 2) }}
+        Grand Total: {{ number_format($medicineId ? $shownTotal : $sales->sum('total_amount'), 2) }}
     </div>
         </div>
 

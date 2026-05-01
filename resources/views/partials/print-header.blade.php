@@ -1,47 +1,64 @@
 @php
-    $clinicName    = config('clinic.name', 'SANTIAGO–AMANCIO DENTAL CLINIC');
-    $clinicTagline = config('clinic.tagline', 'Quality Dental Care You Can Trust');
-    $clinicAddress = $address ?? config('clinic.address', '');
-    $clinicPhone   = config('clinic.phone', '');
-    $clinicEmail   = config('clinic.email', '');
-    $reportTitle   = $title ?? '';
-    $reportMeta    = $meta ?? null;
-    $logoPath      = public_path('images/clinic-logo.png');
-    $logoSrc       = file_exists($logoPath) ? asset('images/clinic-logo.png') : null;
+    $clinicName     = config('clinic.name', 'SANTIAGO – AMANCIO DENTAL CLINIC');
+    $clinicTagline  = config('clinic.tagline', '');
+    $clinicAddress  = $address ?? config('clinic.address', '');
+    $clinicPhone    = config('clinic.phone', '');
+    $clinicEmail    = config('clinic.email', '');
+    $clinicDentists = config('clinic.dentists', '');
+    $reportTitle    = $title ?? '';
+    $reportMeta     = $meta ?? null;
+
+    $logoCandidates = ['images/clinic-logo.png', 'images/logo.png'];
+    $logoSrc = null;
+    foreach ($logoCandidates as $rel) {
+        if (file_exists(public_path($rel))) {
+            $logoSrc = asset($rel);
+            break;
+        }
+    }
 @endphp
 
-<div class="clinic-print-header" style="border-bottom:2px solid #000; padding:8px 0 10px; margin-bottom:14px; display:flex; align-items:center; gap:14px;">
+<div class="clinic-print-header"
+     style="border-bottom:2px solid #0b3b8c; padding:6px 0 10px; margin-bottom:14px; display:flex; align-items:center; gap:14px; font-family: 'Times New Roman', Georgia, serif;">
     @if($logoSrc)
-        <img src="{{ $logoSrc }}" alt="Clinic Logo" style="width:64px; height:64px; object-fit:contain;">
-    @else
-        <div style="width:64px; height:64px; border-radius:50%; background:#dbeafe; color:#1d4ed8; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:11px; text-align:center; line-height:1.1;">
-            DENTAEASE
-        </div>
+        <img src="{{ $logoSrc }}" alt="Clinic Logo"
+             style="width:72px; height:72px; object-fit:contain; flex:0 0 auto;">
     @endif
-    <div style="flex:1;">
-        <div style="font-size:16pt; font-weight:bold; letter-spacing:0.5px;">{{ $clinicName }}</div>
+
+    <div style="flex:1; text-align:center;">
+        <div style="font-size:18pt; font-weight:bold; letter-spacing:1px; color:#0b3b8c; line-height:1.1;">
+            {{ $clinicName }}
+        </div>
         @if($clinicTagline)
             <div style="font-size:9pt; color:#555; font-style:italic;">{{ $clinicTagline }}</div>
         @endif
         @if($clinicAddress)
-            <div style="font-size:9pt; color:#333;">{{ $clinicAddress }}</div>
+            <div style="font-size:10pt; color:#222; margin-top:2px;">{{ $clinicAddress }}</div>
         @endif
         @if($clinicPhone || $clinicEmail)
-            <div style="font-size:9pt; color:#333;">
-                @if($clinicPhone) Tel: {{ $clinicPhone }} @endif
+            <div style="font-size:10pt; color:#222;">
+                @if($clinicPhone){{ $clinicPhone }}@endif
                 @if($clinicPhone && $clinicEmail) &middot; @endif
-                @if($clinicEmail) {{ $clinicEmail }} @endif
+                @if($clinicEmail){{ $clinicEmail }}@endif
+            </div>
+        @endif
+        @if($clinicDentists)
+            <div style="font-size:10pt; font-weight:bold; color:#0b3b8c; margin-top:2px;">
+                {{ $clinicDentists }}
             </div>
         @endif
     </div>
-    <div style="text-align:right; font-size:9pt; color:#444;">
+
+    <div style="text-align:right; font-size:8pt; color:#444; flex:0 0 auto; min-width:120px;">
         <div>Printed: {{ now()->format('M d, Y h:i A') }}</div>
-        <div>By: {{ auth()->user()->name ?? '' }} {{ auth()->user()->lastname ?? '' }}</div>
+        @auth
+            <div>By: {{ trim((auth()->user()->name ?? '').' '.(auth()->user()->lastname ?? '')) }}</div>
+        @endauth
     </div>
 </div>
 
 @if($reportTitle)
-    <h2 style="text-align:center; font-size:14pt; font-weight:bold; margin:6px 0 12px; text-transform:uppercase; letter-spacing:1px;">
+    <h2 style="text-align:center; font-size:13pt; font-weight:bold; margin:4px 0 10px; text-transform:uppercase; letter-spacing:1.5px;">
         {{ $reportTitle }}
     </h2>
     @if($reportMeta)

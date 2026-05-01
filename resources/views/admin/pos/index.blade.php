@@ -113,14 +113,27 @@
             </p>
             <form method="POST" action="{{ route('pos.checkout', $storeId) }}" class="space-y-3">
                 @csrf
-                @php $presel = $preselectedPatientId ?? null; @endphp
-                <label for="patient_id" class="block text-sm font-medium">Customer (Patient)</label>
-                <select name="patient_id" id="patient_id" class="border rounded p-2 w-full">
-                    <option value="">Walk-in</option>
-                    @foreach(\App\Models\User::where('account_type', 'patient')->get() as $patient)
-                        <option value="{{ $patient->id }}" {{ $presel == $patient->id ? 'selected' : '' }}>{{ $patient->name }} {{ $patient->lastname }}</option>
-                    @endforeach
-                </select>
+                @php
+                    $presel = $preselectedPatientId ?? null;
+                    $patients = \App\Models\User::where('account_type', 'patient')
+                        ->orderBy('lastname')->orderBy('name')
+                        ->get(['id', 'name', 'lastname']);
+                    $preselPatient = $presel ? $patients->firstWhere('id', $presel) : null;
+                @endphp
+                <label for="patient_search" class="block text-sm font-medium">Customer (Patient)</label>
+                <div class="relative">
+                    <input type="text" id="patient_search"
+                        value="{{ $preselPatient ? trim($preselPatient->lastname.', '.$preselPatient->name) : '' }}"
+                        placeholder="Walk-in"
+                        autocomplete="off"
+                        class="border rounded p-2 w-full pr-8 focus:ring-2 focus:ring-sky-400">
+                    <button type="button" id="patient_clear"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-lg leading-none {{ $preselPatient ? '' : 'hidden' }}"
+                        aria-label="Clear">&times;</button>
+                    <input type="hidden" name="patient_id" id="patient_id" value="{{ $presel }}">
+                    <div id="patient_suggestions"
+                        class="absolute z-30 bg-white border rounded w-full max-h-60 overflow-y-auto hidden shadow-lg mt-1"></div>
+                </div>
 
                 <label for="payment_method" class="block text-sm font-medium">Payment Method</label>
                 <select name="payment_method" id="payment_method" class="border rounded p-2 w-full">
@@ -193,13 +206,11 @@
                 </table>
                 <!-- Total -->
                 <div class="text-right font-bold text-lg border-t pt-2 foot">
-                    <span>Total: ₱<span x-text="receipt.total_amount.toFixed(2)"></span></span>
-                    <template x-if="receipt.amount_given">
-                        <div class="text-sm font-normal mt-1">
-                            <p>Amount Given: ₱<span x-text="parseFloat(receipt.amount_given).toFixed(2)"></span></p>
-                            <p>Change: ₱<span x-text="parseFloat(receipt.change_amount || 0).toFixed(2)"></span></p>
-                        </div>
-                    </template>
+                    <span>Total: ₱<span x-text="parseFloat(receipt.total_amount).toFixed(2)"></span></span>
+                    <div class="text-sm font-normal mt-1">
+                        <p>Amount Given: ₱<span x-text="parseFloat(receipt.amount_given ?? receipt.total_amount).toFixed(2)"></span></p>
+                        <p>Change: ₱<span x-text="parseFloat(receipt.change_amount ?? 0).toFixed(2)"></span></p>
+                    </div>
                 </div>
                 <!-- Seller -->
                 <div class="text-right mt-8 foot">
@@ -292,6 +303,67 @@ function hidePosSuggestions() {
     const dd = document.getElementById('posSuggestions');
     if (dd) dd.classList.add('hidden');
 }
+
+const POS_PATIENTS = @json($patients->map(fn($p) => [
+    'id' => $p->id,
+    'name' => trim(($p->lastname ?? '').', '.($p->name ?? '')),
+])->values());
+
+(function () {
+    const input = document.getElementById('patient_search');
+    const hidden = document.getElementById('patient_id');
+    const clearBtn = document.getElementById('patient_clear');
+    const dropdown = document.getElementById('patient_suggestions');
+    if (!input || !dropdown) return;
+
+    function render(matches) {
+        if (matches.length === 0) {
+            dropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No matching patient. Leave blank for Walk-in.</div>';
+        } else {
+            dropdown.innerHTML = matches.slice(0, 8).map(p =>
+                `<div class="patient-suggestion px-3 py-2 hover:bg-sky-50 cursor-pointer text-sm" data-id="${p.id}" data-name="${p.name.replace(/"/g,'&quot;')}">${p.name}</div>`
+            ).join('');
+        }
+        dropdown.classList.remove('hidden');
+        dropdown.querySelectorAll('.patient-suggestion').forEach(el => {
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                input.value = el.getAttribute('data-name');
+                hidden.value = el.getAttribute('data-id');
+                clearBtn.classList.remove('hidden');
+                dropdown.classList.add('hidden');
+            });
+        });
+    }
+
+    input.addEventListener('input', () => {
+        const q = input.value.toLowerCase().trim();
+        // typing invalidates a previously selected ID until they pick again
+        hidden.value = '';
+        clearBtn.classList.toggle('hidden', input.value.length === 0);
+        if (!q) {
+            render(POS_PATIENTS);
+            return;
+        }
+        render(POS_PATIENTS.filter(p => p.name.toLowerCase().includes(q)));
+    });
+
+    input.addEventListener('focus', () => {
+        const q = input.value.toLowerCase().trim();
+        render(q ? POS_PATIENTS.filter(p => p.name.toLowerCase().includes(q)) : POS_PATIENTS);
+    });
+
+    input.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.add('hidden'), 150);
+    });
+
+    clearBtn.addEventListener('click', () => {
+        input.value = '';
+        hidden.value = '';
+        clearBtn.classList.add('hidden');
+        input.focus();
+    });
+})();
 
 function calcChange() {
     const total = {{ collect($cart)->sum('subtotal') }};

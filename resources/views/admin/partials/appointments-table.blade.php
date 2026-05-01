@@ -75,17 +75,15 @@
                 Change Time
             </button>
 
-        @if(auth()->user()->position === 'Dentist')
-            <a href="{{ route('dental-chart.index', $appointment->user->id) }}"
-               class="bg-blue-500 text-white px-3 py-1 rounded">
-                Dental Chart
-            </a>
-        @else
-            <a href="{{ route('appointments.view', $appointment->id) }}"
-               class="bg-blue-500 text-white px-3 py-1 rounded">
-                Check In
-            </a>
-        @endif
+        <a href="{{ route('appointments.view', $appointment->id) }}"
+           class="bg-blue-500 text-white px-3 py-1 rounded">
+            View
+        </a>
+    @elseif (in_array($appointment->status, ['completed','cancelled','no_show']))
+        <a href="{{ route('appointments.view', $appointment->id) }}"
+           class="bg-blue-500 text-white px-3 py-1 rounded">
+            View
+        </a>
     @endif
 </td>
 

@@ -5,7 +5,10 @@
 
 <style>
 /* PRINT STYLE */
+.print-only { display: none; }
+
 @media print {
+    @page { margin: 12mm; }
 
     /* Hide everything except the report */
     body * {
@@ -24,13 +27,10 @@
     }
 
     /* Hide buttons and form when printing */
-    .no-print {
-        display: none !important;
-    }
+    .no-print { display: none !important; }
 
-    .print-header {
-        display: block !important;
-    }
+    /* Show clinic letterhead only when printing */
+    .print-only { display: block !important; }
 }
 </style>
 
@@ -124,8 +124,8 @@
     <!-- PRINT AREA -->
     <div id="print-section">
 
-        <!-- Personalized Clinic Header (visible on print) -->
-        <div class="print-header" style="display:none;">
+        <!-- Personalized Clinic Header (visible on print only) -->
+        <div class="print-only">
             @include('partials.print-header', [
                 'title'   => 'Appointments Report',
                 'meta'    => 'Period: '.($startDate ?? '').' – '.($endDate ?? '').(($store->name ?? '') ? ' | Branch: '.$store->name : ''),
@@ -133,7 +133,7 @@
             ])
         </div>
 
-        <h2 class="text-xl font-bold mb-3">
+        <h2 class="text-xl font-bold mb-3 no-print">
             Appointments from {{ $startDate }} to {{ $endDate }}
         </h2>
 
