@@ -48,13 +48,6 @@
             </div>
         @endif
     </div>
-
-    <div style="text-align:right; font-size:8pt; color:#444; flex:0 0 auto; min-width:120px;">
-        <div>Printed: {{ now()->format('M d, Y h:i A') }}</div>
-        @auth
-            <div>By: {{ trim((auth()->user()->name ?? '').' '.(auth()->user()->lastname ?? '')) }}</div>
-        @endauth
-    </div>
 </div>
 
 @if($reportTitle)
@@ -65,3 +58,13 @@
         <div style="text-align:center; font-size:9pt; color:#444; margin-bottom:10px;">{{ $reportMeta }}</div>
     @endif
 @endif
+
+<div class="clinic-print-footer"
+     style="position:fixed; left:0; right:0; bottom:8px; padding:4px 12px 0; border-top:1px solid #999;
+            display:flex; justify-content:space-between; align-items:center;
+            font-family: 'Times New Roman', Georgia, serif; font-size:8pt; color:#444;">
+    <div>Printed: {{ now()->format('M d, Y h:i A') }}</div>
+    @auth
+        <div>By: {{ trim((auth()->user()->name ?? '').' '.(auth()->user()->lastname ?? '')) }}</div>
+    @endauth
+</div>
