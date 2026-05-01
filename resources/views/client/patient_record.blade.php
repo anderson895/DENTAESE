@@ -46,6 +46,13 @@
         </button>
     @endif
 
+    {{-- Personalized Clinic Header (print only) --}}
+    <div class="hidden print:block">
+        @include('partials.print-header', [
+            'title' => 'Patient Information Record',
+        ])
+    </div>
+
     {{-- PDA Header --}}
     <div class="flex items-center gap-4 mb-4 border-b pb-3">
         <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs text-center leading-tight">PDA</div>

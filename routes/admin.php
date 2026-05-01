@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitLogController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -126,6 +127,14 @@ Route::get('/branch/users-by-position', [BranchController::class, 'getUsersByPos
 Route::post('/branch/{store}/remove-user', [BranchController::class, 'removeUser']);
 Route::get('/branch/deletebranch', [BranchController::class, 'DeleteBranch'])->name('DeleteBranch');
 Route::post('/branch/update-schedule/{id}', [BranchController::class, 'updateSchedule']);
+
+// Calendar-based schedule (clinic open days + doctor schedules)
+Route::get('/schedule/calendar', [ScheduleController::class, 'index'])->name('schedule.calendar');
+Route::get('/schedule/events', [ScheduleController::class, 'events'])->name('schedule.events');
+Route::post('/schedule/clinic-override', [ScheduleController::class, 'saveClinicOverride'])->name('schedule.clinic.save');
+Route::delete('/schedule/clinic-override/{override}', [ScheduleController::class, 'deleteClinicOverride'])->name('schedule.clinic.delete');
+Route::post('/schedule/doctor', [ScheduleController::class, 'saveDoctorSchedule'])->name('schedule.doctor.save');
+Route::delete('/schedule/doctor/{schedule}', [ScheduleController::class, 'deleteDoctorSchedule'])->name('schedule.doctor.delete');
 
 //branch selection
 

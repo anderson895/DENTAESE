@@ -28,6 +28,12 @@
             <option value="gcash" {{ request('payment_method') == 'gcash' ? 'selected' : '' }}>GCash</option>
             <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Card</option>
         </select>
+        <select name="status" class="border rounded p-2">
+            <option value="">-- Status --</option>
+            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+            <option value="voided"    {{ request('status') == 'voided' ? 'selected' : '' }}>Voided</option>
+            <option value="refunded"  {{ request('status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
+        </select>
         <button class="px-4 py-2 bg-sky-600 text-white rounded">Filter</button>
         <a href="{{ route('transactions.index', ['storeId' => $storeId]) }}" class="px-4 py-2 bg-gray-300 rounded">Reset</a>
     </form>
@@ -78,10 +84,11 @@
 
             <div id="receipt-modal">
                 <!-- Header -->
-                <div class="text-center mb-6">
-                    <h1 class="text-xl font-bold">SANTIAGO-AMANCIO DENTAL CLINIC</h1>
-                    <p>{{ $store->name }}<br>{{ $store->address }}</p>
-                </div>
+                @include('partials.print-header', [
+                    'title'   => 'POS Receipt',
+                    'meta'    => ($store->name ?? '').' — '.($store->address ?? ''),
+                    'address' => $store->address ?? null,
+                ])
 
                 <!-- Info -->
                 <div class="flex justify-between mb-4 text-sm">

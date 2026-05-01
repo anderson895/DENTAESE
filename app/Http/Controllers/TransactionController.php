@@ -45,6 +45,16 @@ class TransactionController extends Controller
             });
         }
 
+        // Payment method filter
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $sales = $query->latest()->paginate(15);
         $store = Store::find($storeId);
         return view('admin.transactions.index', compact('sales', 'storeId', 'store'));

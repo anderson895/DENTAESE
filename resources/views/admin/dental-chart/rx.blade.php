@@ -8,7 +8,7 @@
 
         <!-- Next button (right) -->
         <button
-            @click="tab='treatment'"
+            @click="tab='pos'"
             class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
         >
             Next
@@ -58,12 +58,11 @@
     </div>
     @endif
 <div id="receipt-content" class="p-6 max-w-3xl mx-auto bg-white shadow rounded">
-    <h1 class="text-center text-xl font-bold mb-4">SANTIAGO-AMANCIO DENTAL CLINIC</h1>
-
-    <p class="text-center">
-        {{ ($appointment->store->name ?? 'N/A') }}<br>
-        {{ ($appointment->store->address ?? 'N/A') }}<br>
-    </p></br>
+    @include('partials.print-header', [
+        'title'   => 'Prescription (Rx)',
+        'meta'    => ($appointment->store->name ?? '').' — '.($appointment->store->address ?? ''),
+        'address' => $appointment->store->address ?? null,
+    ])
 
     <div class="flex justify-between mb-4">
         <div>

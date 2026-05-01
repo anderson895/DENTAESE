@@ -223,19 +223,42 @@
     success: function (response) {
       if (response.status === 'success') {
         let printWindow = window.open('', '', 'width=900,height=600');
+        const clinicName    = @json(config('clinic.name'));
+        const clinicTagline = @json(config('clinic.tagline'));
+        const clinicAddress = @json(config('clinic.address'));
+        const clinicPhone   = @json(config('clinic.phone'));
+        const clinicEmail   = @json(config('clinic.email'));
+        const printedBy     = @json((auth()->user()->name ?? '').' '.(auth()->user()->lastname ?? ''));
+        const printedAt     = new Date().toLocaleString();
         let content = `
           <html>
           <head>
             <title>Patient List</title>
             <style>
               body { font-family: Arial, sans-serif; }
-              table { width:100%; border-collapse: collapse; margin-top:20px; }
+              table { width:100%; border-collapse: collapse; margin-top:10px; }
               th, td { border: 1px solid #333; padding: 8px; text-align: left; }
               th { background: #f4f4f4; }
-              h2 { text-align: center; margin-bottom: 20px; }
+              h2 { text-align: center; margin: 8px 0 16px; text-transform: uppercase; letter-spacing: 1px; }
+              .clinic-header { border-bottom: 2px solid #000; padding: 6px 0 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+              .clinic-name { font-size: 16pt; font-weight: bold; letter-spacing: 0.5px; }
+              .clinic-sub { font-size: 9pt; color: #444; }
+              .print-meta { text-align: right; font-size: 9pt; color: #444; }
             </style>
           </head>
           <body>
+            <div class="clinic-header">
+              <div>
+                <div class="clinic-name">${clinicName}</div>
+                ${clinicTagline ? `<div class="clinic-sub" style="font-style:italic;">${clinicTagline}</div>` : ''}
+                ${clinicAddress ? `<div class="clinic-sub">${clinicAddress}</div>` : ''}
+                ${(clinicPhone || clinicEmail) ? `<div class="clinic-sub">${clinicPhone ? 'Tel: ' + clinicPhone : ''}${(clinicPhone && clinicEmail) ? ' · ' : ''}${clinicEmail || ''}</div>` : ''}
+              </div>
+              <div class="print-meta">
+                <div>Printed: ${printedAt}</div>
+                <div>By: ${printedBy}</div>
+              </div>
+            </div>
             <h2>Patient List</h2>
             <table>
               <thead>

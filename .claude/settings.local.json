@@ -21,7 +21,15 @@
       "Bash(git checkout *)",
       "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/admin/dental-chart/rx.blade.php)",
       "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/livewire/dental-chart-board.blade.php)",
-      "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/admin/dental-chart/rx.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/livewire/dental-chart-board.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/patient_record.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/cprofile.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/cforms.blade.php)"
+      "Bash(php -l /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/admin/dental-chart/rx.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/livewire/dental-chart-board.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/patient_record.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/cprofile.blade.php /c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/resources/views/client/cforms.blade.php)",
+      "PowerShell(Add-Type -AssemblyName System.IO.Compression.FileSystem; $zip = [System.IO.Compression.ZipFile]::OpenRead\\(\"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\\\\System-Revision-April-30.docx\"\\); $entry = $zip.Entries | Where-Object { $_.FullName -eq \"word/document.xml\" }; $stream = $entry.Open\\(\\); $reader = New-Object System.IO.StreamReader\\($stream\\); $content = $reader.ReadToEnd\\(\\); $reader.Close\\(\\); $zip.Dispose\\(\\); $content)",
+      "Bash(php -l app/Http/Controllers/ScheduleController.php)",
+      "Bash(php -l app/Models/Store.php)",
+      "Bash(php -l app/Models/DoctorSchedule.php)",
+      "Bash(php -l app/Models/StoreScheduleOverride.php)",
+      "Bash(php -l app/Http/Controllers/ParentalControlController.php)",
+      "Bash(php -l app/Models/ParentChildLink.php)",
+      "Bash(php -l app/Models/User.php)"
     ]
   }
 }

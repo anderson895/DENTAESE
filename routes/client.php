@@ -8,8 +8,19 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DentalChartController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MedicalFormController;
+use App\Http\Controllers\ParentalControlController;
 
 Route::get('/crecord', [Clientside::class,'record'])->name('crecord')->middleware('auth');
+
+// Parental control
+Route::middleware(['auth'])->group(function () {
+    Route::get('/parental',                 [ParentalControlController::class, 'index'])->name('parental.index');
+    Route::post('/parental/link-existing',  [ParentalControlController::class, 'linkExisting'])->name('parental.linkExisting');
+    Route::post('/parental/create-child',   [ParentalControlController::class, 'createChild'])->name('parental.createChild');
+    Route::delete('/parental/unlink/{link}',[ParentalControlController::class, 'unlink'])->name('parental.unlink');
+    Route::post('/parental/switch-to',      [ParentalControlController::class, 'switchTo'])->name('parental.switchTo');
+    Route::post('/parental/switch-back',    [ParentalControlController::class, 'switchBack'])->name('parental.switchBack');
+});
 
 Route::post('/notifications/mark-as-read', function () {
     auth()->user()->unreadNotifications->markAsRead();

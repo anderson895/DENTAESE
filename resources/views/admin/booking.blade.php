@@ -36,6 +36,7 @@
             <option value="arrived" {{ request('status') == 'arrived' ? 'selected' : '' }}>Arrived</option>
             <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
             <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+            <option value="no_show" {{ request('status') == 'no_show' ? 'selected' : '' }}>No Show</option>
         </select>
     </div>
 
@@ -60,6 +61,7 @@
             <option value="arrived" {{ request('status') == 'arrived' ? 'selected' : '' }}>Arrived</option>
             <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
             <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+            <option value="no_show" {{ request('status') == 'no_show' ? 'selected' : '' }}>No Show</option>
         </select>
     </div>
     <div class="flex items-end">

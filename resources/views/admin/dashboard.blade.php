@@ -248,22 +248,26 @@
                 </select>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div class="rounded-md border border-dashed border-gray-200 p-4">
+                <a href="{{ route('admin.booking', ['status' => 'approved']) }}"
+                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="active-count">0</div>
                     <span class="text-gray-400 text-sm">Active</span>
-                </div>
-                <div class="rounded-md border border-dashed border-gray-200 p-4">
+                </a>
+                <a href="{{ route('admin.booking', ['status' => 'completed']) }}"
+                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="completed-count">0</div>
                     <span class="text-gray-400 text-sm">Completed</span>
-                </div>
-                <div class="rounded-md border border-dashed border-gray-200 p-4">
+                </a>
+                <a href="{{ route('admin.booking', ['status' => 'cancelled']) }}"
+                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="canceled-count">0</div>
                     <span class="text-gray-400 text-sm">Canceled</span>
-                </div>
-                <div class="rounded-md border border-dashed border-gray-200 p-4">
+                </a>
+                <a href="{{ route('admin.booking', ['status' => 'no_show']) }}"
+                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="noshow-count">0</div>
                     <span class="text-gray-400 text-sm">No Show</span>
-                </div>
+                </a>
             </div>
             <div>
                 <canvas id="order-chart"></canvas>
@@ -346,7 +350,8 @@ $(document).ready(function () {
 
 
 // SALES PER BRANCH
-new Chart(document.getElementById('salesPerBranchChart'), {
+const salesPerBranchEl = document.getElementById('salesPerBranchChart');
+if (salesPerBranchEl) new Chart(salesPerBranchEl, {
     type: 'bar',
     data: {
         labels: {!! json_encode($salesPerBranch->pluck('name')) !!},
@@ -370,7 +375,8 @@ new Chart(document.getElementById('salesPerBranchChart'), {
 });
 
 // APPOINTMENTS PER BRANCH
-new Chart(document.getElementById('appointmentsPerBranchChart'), {
+const appointmentsPerBranchEl = document.getElementById('appointmentsPerBranchChart');
+if (appointmentsPerBranchEl) new Chart(appointmentsPerBranchEl, {
     type: 'bar',
     data: {
         labels: {!! json_encode($appointmentsPerBranch->pluck('name')) !!},
@@ -394,7 +400,8 @@ new Chart(document.getElementById('appointmentsPerBranchChart'), {
 });
 
 // TOTAL ACCUMULATED SALES & APPOINTMENTS (LINE)
-new Chart(document.getElementById('totalAccumulatedChart'), {
+const totalAccumulatedEl = document.getElementById('totalAccumulatedChart');
+if (totalAccumulatedEl) new Chart(totalAccumulatedEl, {
     type: 'line',
     data: {
         labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],

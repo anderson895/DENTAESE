@@ -108,6 +108,17 @@
         {{-- <x-nav-link href="/cforms" icon="fa-solid fa-file-medical" label="Medical History Update" /> --}}
         {{-- <x-nav-link href="/cprofile" icon="fa-solid fa-user" label="Profile" /> --}}
         <x-nav-link href="/patient/chat" icon="fa-solid fa-comments" label="Message" />
+        <x-nav-link href="/parental" icon="fa-solid fa-people-roof" label="Parental Control" />
+
+        @if(session('parent_user_id'))
+            <form method="POST" action="{{ route('parental.switchBack') }}" class="px-3 py-2">
+                @csrf
+                <button class="text-xs px-3 py-2 bg-yellow-100 text-yellow-800 rounded w-full">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>
+                    Switch back to parent
+                </button>
+            </form>
+        @endif
 
       </nav>
 

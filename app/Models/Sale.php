@@ -12,6 +12,7 @@ class Sale extends Model
         'total_amount',
         'amount_given',
         'change_amount',
+        'payment_method',
         'status',
         'remarks',
         'patient_id',

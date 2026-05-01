@@ -53,9 +53,12 @@
     <div id="tab-content">
         <!-- Sales Report -->
         <div x-show="tab === 'sales'" id="sales-printable" class="printable">
+            <div class="hidden print:block">
+                @include('partials.print-header', ['title' => 'Sales Report', 'meta' => 'Period: '.$from->format('M d, Y').' – '.$to->format('M d, Y')])
+            </div>
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-2xl font-bold">Sales Report</h1>
-                <button onclick="window.print()" 
+                <button onclick="window.print()"
                     class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 print:hidden">
                     Print
                 </button>
@@ -105,9 +108,12 @@
 
 <!-- Inventory Movement -->
 <div x-show="tab === 'inventory'" id="inventory-printable">
+    <div class="hidden print:block">
+        @include('partials.print-header', ['title' => 'Inventory Movement', 'meta' => 'Period: '.request('inv_from', now()->startOfMonth()->format('Y-m-d')).' – '.request('inv_to', now()->endOfMonth()->format('Y-m-d'))])
+    </div>
     <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">Inventory Movement</h1>
-        <button onclick="window.print()" 
+        <button onclick="window.print()"
             class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 print:hidden">
             Print
         </button>

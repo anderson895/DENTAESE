@@ -15,12 +15,12 @@ class POSController extends Controller
 {
     //
 
-      public function index($storeId)
+      public function index(Request $request, $storeId)
     {
        $medicines = medicine_batches::with('medicine')
     ->where('store_id', $storeId)
     ->where('quantity', '>', 0)
-    ->where('status', 'active') 
+    ->where('status', 'active')
     ->get()
     ->groupBy('medicine_id')
     ->map(function ($batches) {
@@ -35,7 +35,9 @@ class POSController extends Controller
     });
 
     $store = Store::find($storeId);
-        return view('admin.pos.index', compact('medicines', 'storeId', 'store'));
+    $preselectedPatientId = $request->input('patient_id');
+    $appointmentId        = $request->input('appointment_id');
+        return view('admin.pos.index', compact('medicines', 'storeId', 'store', 'preselectedPatientId', 'appointmentId'));
     }
 
     // Add to cart 
@@ -99,13 +101,14 @@ class POSController extends Controller
         $changeAmount = $amountGiven ? max(0, $amountGiven - $totalAmount) : null;
 
         $sale = Sale::create([
-            'store_id'     => $storeId,
-            'user_id'      => auth()->id(),   
-            'patient_id'   => $request->patient_id, 
-            'total_amount' => $totalAmount,
-            'amount_given' => $amountGiven,
-            'change_amount'=> $changeAmount,
-            'status'       => 'completed',
+            'store_id'       => $storeId,
+            'user_id'        => auth()->id(),
+            'patient_id'     => $request->patient_id,
+            'total_amount'   => $totalAmount,
+            'amount_given'   => $amountGiven,
+            'change_amount'  => $changeAmount,
+            'payment_method' => $request->payment_method,
+            'status'         => 'completed',
         ]);
 
         foreach ($cart as $item) {

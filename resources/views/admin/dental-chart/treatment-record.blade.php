@@ -6,6 +6,9 @@
     @endif
 
     <div class="bg-white p-6 shadow rounded">
+        <div class="hidden print:block">
+            @include('partials.print-header', ['title' => 'Treatment Record'])
+        </div>
         <p><strong>Name: </strong>{{ $patientinfo->user->lastname }}, {{ $patientinfo->user->name }} {{ $patientinfo->user->middlename }} {{ $patientinfo->user->suffix ?? '' }}</p>
         <p><strong>Address: </strong>{{ $patientinfo->user->current_address }}</p>
         <p><strong>Birthdate: </strong>{{ \Carbon\Carbon::parse($patientinfo->user->birth_date)->format('M d, Y') }}</p>

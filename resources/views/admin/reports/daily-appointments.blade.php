@@ -125,10 +125,12 @@
     <div id="print-section">
 
         <!-- Personalized Clinic Header (visible on print) -->
-        <div class="text-center mb-6 print-header" style="display:none;">
-            <h1 class="text-2xl font-bold">SANTIAGO-AMANCIO DENTAL CLINIC</h1>
-            <p class="text-sm text-gray-600">{{ $store->name ?? '' }} &bull; {{ $store->address ?? '' }}</p>
-            <hr class="mt-2 border-2">
+        <div class="print-header" style="display:none;">
+            @include('partials.print-header', [
+                'title'   => 'Appointments Report',
+                'meta'    => 'Period: '.($startDate ?? '').' – '.($endDate ?? '').(($store->name ?? '') ? ' | Branch: '.$store->name : ''),
+                'address' => $store->address ?? null,
+            ])
         </div>
 
         <h2 class="text-xl font-bold mb-3">

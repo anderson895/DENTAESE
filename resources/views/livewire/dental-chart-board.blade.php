@@ -28,6 +28,13 @@
     </div>
 @endif
 
+{{-- Personalized Clinic Header (print only) --}}
+<div class="hidden print:block">
+    @include('partials.print-header', [
+        'title' => 'Dental Chart',
+    ])
+</div>
+
 {{-- PATIENT INFO --}}
 <div>
     <p><strong>Name:</strong> {{ $patient->lastname }}, {{ $patient->name }} {{ $patient->middlename }} {{ $patient->suffix ?? '' }}</p>

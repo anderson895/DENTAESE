@@ -109,4 +109,23 @@ class User extends Authenticatable
             ->where('store_id', $storeId)
             ->latestOfMany();
     }
+
+    public function children()
+    {
+        return $this->belongsToMany(User::class, 'parent_child_links', 'parent_user_id', 'child_user_id')
+                    ->withPivot('relationship')
+                    ->withTimestamps();
+    }
+
+    public function parents()
+    {
+        return $this->belongsToMany(User::class, 'parent_child_links', 'child_user_id', 'parent_user_id')
+                    ->withPivot('relationship')
+                    ->withTimestamps();
+    }
+
+    public function isParentOf(int $childUserId): bool
+    {
+        return $this->children()->where('child_user_id', $childUserId)->exists();
+    }
 }

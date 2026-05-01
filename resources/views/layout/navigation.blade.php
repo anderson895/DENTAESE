@@ -110,6 +110,7 @@
                     @if (auth()->user()->position != 'Receptionist')
                         <x-nav-link href="/services" icon="fa-solid fa-tooth" label="Services" />
                         <x-nav-link href="/branch" icon="fa-solid fa-code-branch" label="Branch" />
+                        <x-nav-link href="/schedule/calendar" icon="fa-solid fa-calendar-days" label="Schedule Calendar" />
                     @endif
 
                     @if (session('active_branch_id') != "admin")

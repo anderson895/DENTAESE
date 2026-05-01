@@ -11,11 +11,17 @@
         <div class="flex flex-row justify-between items-center flex-wrap gap-3">
             <h1 class="text-3xl font-bold text-sky-600 mb-4">Point of Sale</h1>
             <div class="flex gap-2 items-center">
-                <input type="text" id="posSearch" placeholder="Search medicine..." 
-                    class="border rounded-lg p-2 w-60 focus:ring-2 focus:ring-sky-400"
-                    onkeyup="filterMedicines()">
-                <button 
-                onclick="window.location='{{ route('transactions.index', ['storeId' => session('active_branch_id')]) }}'" 
+                <div class="relative">
+                    <input type="text" id="posSearch" placeholder="Type to search medicine..."
+                        class="border rounded-lg p-2 w-72 focus:ring-2 focus:ring-sky-400"
+                        autocomplete="off"
+                        onkeyup="filterMedicines()"
+                        onfocus="showPosSuggestions()"
+                        onblur="setTimeout(hidePosSuggestions, 150)">
+                    <div id="posSuggestions" class="absolute z-20 bg-white border rounded-lg w-72 max-h-72 overflow-y-auto hidden shadow-lg mt-1"></div>
+                </div>
+                <button
+                onclick="window.location='{{ route('transactions.index', ['storeId' => session('active_branch_id')]) }}'"
                 class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition">
                 Transaction History
                 </button>
@@ -107,11 +113,12 @@
             </p>
             <form method="POST" action="{{ route('pos.checkout', $storeId) }}" class="space-y-3">
                 @csrf
+                @php $presel = $preselectedPatientId ?? null; @endphp
                 <label for="patient_id" class="block text-sm font-medium">Customer (Patient)</label>
                 <select name="patient_id" id="patient_id" class="border rounded p-2 w-full">
                     <option value="">Walk-in</option>
                     @foreach(\App\Models\User::where('account_type', 'patient')->get() as $patient)
-                        <option value="{{ $patient->id }}">{{ $patient->name }} {{ $patient->lastname }}</option>
+                        <option value="{{ $patient->id }}" {{ $presel == $patient->id ? 'selected' : '' }}>{{ $patient->name }} {{ $patient->lastname }}</option>
                     @endforeach
                 </select>
 
@@ -148,10 +155,11 @@
             
             <div id="receipt-modal">
                 <!-- Header -->
-                <div class="text-center mb-6">
-                    <h1 class="text-xl font-bold">SANTIAGO-AMANCIO DENTAL CLINIC</h1>
-                    <p>{{ $store->name }}<br>{{ $store->address }}</p>
-                </div>
+                @include('partials.print-header', [
+                    'title'   => 'POS Receipt',
+                    'meta'    => ($store->name ?? '').' — '.($store->address ?? ''),
+                    'address' => $store->address ?? null,
+                ])
                 <!-- Info -->
                 <div class="flex justify-between mb-4 text-sm">
                     <div>
@@ -235,12 +243,54 @@ function printReceipt() {
     printWindow.close();
 }
 
+const POS_MEDICINES = @json($medicines->values());
+
 function filterMedicines() {
-    const query = document.getElementById('posSearch').value.toLowerCase();
+    const query = document.getElementById('posSearch').value.toLowerCase().trim();
+    // Filter cards
     document.querySelectorAll('.medicine-card').forEach(card => {
         const name = card.getAttribute('data-name');
         card.style.display = name.includes(query) ? '' : 'none';
     });
+    // Update suggestions dropdown
+    const dropdown = document.getElementById('posSuggestions');
+    if (!dropdown) return;
+    if (!query) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+        return;
+    }
+    const matches = POS_MEDICINES.filter(m => (m.name || '').toLowerCase().includes(query)).slice(0, 8);
+    if (matches.length === 0) {
+        dropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No match.</div>';
+        dropdown.classList.remove('hidden');
+        return;
+    }
+    dropdown.innerHTML = matches.map(m =>
+        `<div class="pos-suggestion px-3 py-2 hover:bg-sky-50 cursor-pointer flex justify-between text-sm" data-name="${(m.name||'').replace(/"/g,'&quot;')}">
+            <span><strong>${m.name}</strong> <span class="text-gray-500">(${m.unit ?? ''})</span></span>
+            <span class="text-sky-600">₱${parseFloat(m.price).toFixed(2)}</span>
+        </div>`
+    ).join('');
+    dropdown.classList.remove('hidden');
+    dropdown.querySelectorAll('.pos-suggestion').forEach(el => {
+        el.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('posSearch');
+            input.value = el.getAttribute('data-name');
+            filterMedicines();
+            dropdown.classList.add('hidden');
+        });
+    });
+}
+
+function showPosSuggestions() {
+    const q = document.getElementById('posSearch').value;
+    if (q && q.trim().length > 0) filterMedicines();
+}
+function hidePosSuggestions() {
+    const dd = document.getElementById('posSuggestions');
+    if (dd) dd.classList.add('hidden');
 }
 
 function calcChange() {

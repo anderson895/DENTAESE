@@ -18,6 +18,7 @@
         <button @click="tab='info'" :class="tab==='info' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Dental Chart</button>
         <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='rx'" :class="tab==='rx' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">RX</button>
+        <button @click="tab='pos'" :class="tab==='pos' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">POS</button>
         <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
         <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
     </div>
@@ -218,6 +219,85 @@
 </div>
 
 
+    <div x-show="tab==='pos'" x-cloak>
+        <div class="bg-white p-6 rounded shadow">
+            <div class="flex items-center mt-2 mb-4">
+                <h2 class="text-xl font-bold">POS — Medicine Purchase</h2>
+                <button
+                    @click="tab='treatment'"
+                    class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    Next
+                </button>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-4">
+                Open the POS to record medicine purchases for
+                <strong>{{ $appointment->user->name }} {{ $appointment->user->lastname }}</strong>.
+                The total ay automatic na rin makukuha sa Treatment Record at sa final receipt.
+            </p>
+
+            @php
+                $patientSales = \App\Models\Sale::with('items.medicine')
+                    ->where('patient_id', $appointment->user_id)
+                    ->where('store_id', $appointment->store_id)
+                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->get();
+                $patientMedicineTotal = $patientSales->sum('total_amount');
+            @endphp
+
+            <div class="mb-4">
+                <a href="{{ route('pos.index', ['storeId' => $appointment->store_id, 'patient_id' => $appointment->user_id, 'appointment_id' => $appointment->id]) }}"
+                   target="_blank"
+                   class="inline-block bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded">
+                    Open POS for this Patient
+                </a>
+            </div>
+
+            <h3 class="font-semibold text-gray-700 mb-2">Medicine Purchases for this Visit</h3>
+            <table class="w-full border-collapse border border-gray-300 text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-3 py-2 text-left">Receipt #</th>
+                        <th class="border px-3 py-2 text-left">Items</th>
+                        <th class="border px-3 py-2 text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($patientSales as $sale)
+                        <tr>
+                            <td class="border px-3 py-2">{{ $sale->id }}</td>
+                            <td class="border px-3 py-2">
+                                <ul class="list-disc pl-4">
+                                    @foreach($sale->items as $item)
+                                        <li>
+                                            {{ $item->medicine->name ?? '—' }}
+                                            ({{ $item->quantity }} × ₱{{ number_format($item->price, 2) }})
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                            <td class="border px-3 py-2 text-right">₱{{ number_format($sale->total_amount, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center text-gray-500 py-4">
+                                No medicine purchases yet for this visit.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                @if($patientMedicineTotal > 0)
+                    <tfoot class="bg-gray-50">
+                        <tr>
+                            <td colspan="2" class="border px-3 py-2 text-right font-semibold">Medicine Total</td>
+                            <td class="border px-3 py-2 text-right font-semibold">₱{{ number_format($patientMedicineTotal, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
+
     <div x-show="tab==='treatment'" x-cloak>
         <div id="printable-treatment">
             @include('admin.dental-chart.treatment-record', ['record' => $record])
@@ -265,15 +345,11 @@
         <div id="ack-receipt-print" class="print-area">
 
             <!-- HEADER -->
-            <div style="text-align:center; line-height:1.4;">
-                <strong>Santiago – Amancio Dental Clinic</strong><br>
-                <span style="font-size:10pt;">
-                    {{ $appointment->store->address ?? 'N/A' }}<br>
-                    {{ $appointment->store->name ?? 'N/A' }}
-                </span>
-            </div>
-
-            <hr style="margin:10px 0;">
+            @include('partials.print-header', [
+                'title'   => 'Acknowledgement Receipt',
+                'meta'    => ($appointment->store->name ?? '').' — '.($appointment->store->address ?? ''),
+                'address' => $appointment->store->address ?? null,
+            ])
 
             <!-- TITLE -->
             <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -323,6 +399,55 @@
                     </span>
                 </div>
             </div>
+
+            @php
+                $combinedSales = \App\Models\Sale::with('items.medicine')
+                    ->where('patient_id', $appointment->user_id)
+                    ->where('store_id', $appointment->store_id)
+                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->get();
+                $combinedMedTotal = $combinedSales->sum('total_amount');
+                $combinedTreatmentTotal = (float) ($appointment->total_price ?? 0);
+                $combinedGrandTotal = $combinedTreatmentTotal + $combinedMedTotal;
+            @endphp
+
+            @if($combinedSales->count() > 0 || $combinedTreatmentTotal > 0)
+                <hr style="margin:14px 0;">
+                <div style="font-size:11pt;">
+                    <strong>Itemized Charges</strong>
+                    <table style="width:100%; border-collapse:collapse; margin-top:6px; font-size:10pt;">
+                        <thead>
+                            <tr>
+                                <th style="border:1px solid #000; padding:3px; text-align:left;">Description</th>
+                                <th style="border:1px solid #000; padding:3px; text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if($combinedTreatmentTotal > 0)
+                                <tr>
+                                    <td style="border:1px solid #000; padding:3px;">Treatment / Services</td>
+                                    <td style="border:1px solid #000; padding:3px; text-align:right;">₱{{ number_format($combinedTreatmentTotal, 2) }}</td>
+                                </tr>
+                            @endif
+                            @foreach($combinedSales as $sale)
+                                @foreach($sale->items as $item)
+                                    <tr>
+                                        <td style="border:1px solid #000; padding:3px;">
+                                            Medicine: {{ $item->medicine->name ?? '—' }}
+                                            ({{ $item->quantity }} × ₱{{ number_format($item->price, 2) }})
+                                        </td>
+                                        <td style="border:1px solid #000; padding:3px; text-align:right;">₱{{ number_format($item->subtotal ?? ($item->quantity * $item->price), 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            @endforeach
+                            <tr>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">Grand Total</td>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">₱{{ number_format($combinedGrandTotal, 2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @endif
 
             <!-- SIGNATURE -->
             <div style="margin-top:40px; text-align:right;">
