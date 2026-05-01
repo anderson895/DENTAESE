@@ -194,7 +194,7 @@ $.get(`/branch/${storeId}/dentists`, function (response) {
             selectHtml += `<option value="">-- Choose Dentist --</option>`;
             response.dentists.forEach(d => {
                 // use escape here if names may contain backticks, but this is basic
-                selectHtml += `<option value="${d.id}">${d.name}</option>`;
+                selectHtml += `<option value="${d.id}">${d.full_name}</option>`;
             });
             selectHtml += `</select>`;
             $w.html(selectHtml);

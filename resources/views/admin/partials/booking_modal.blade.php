@@ -84,6 +84,12 @@
             </div>
 
                         <!-- Submit -->
+            <button type="button"
+                onclick="$('#bookingModal').addClass('hidden')"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">
+                Cancel
+            </button>
+
             <button type="submit" name="appointment_type" id="normal" value="normal"
                 class="bg-blue-600 text-white px-4 py-2 rounded">
                 Book Appointment
@@ -254,7 +260,7 @@ $.get(`/branch/${storeId}/dentists`, function (response) {
         if (response.dentists && response.dentists.length > 0) {
             selectHtml += `<option value="">-- Choose Dentist --</option>`;
             response.dentists.forEach(d => {
-                selectHtml += `<option value="${d.id}">${d.name}</option>`;
+                selectHtml += `<option value="${d.id}">${d.full_name}</option>`;
             });
             selectHtml += `</select>`;
             $w.html(selectHtml);
@@ -277,10 +283,16 @@ flatpickr("#appointment_date", {
 });
 
 $(document).on('change', '#dentist_id', function () {
-    const dentistId =  $(this).val();
-    $('#selected_dentist').val(dentistId); 
-    console.log(dentistId + "asd")
-    document.getElementById('appointment_date').value = "";
+    const dentistId = $(this).val();
+    $('#selected_dentist').val(dentistId);
+    // If a date was already chosen, re-fetch time slots for the new dentist on that same date
+    // instead of wiping the date and forcing the user to re-pick.
+    const currentDate = $('#appointment_date').val();
+    if (currentDate) {
+        $('#appointment_date').trigger('change');
+    } else {
+        $('#appointment_time').html('<option value="">-- Select Date First --</option>');
+    }
 });
 
 $(document).on('change', '#appointment_date', function () {

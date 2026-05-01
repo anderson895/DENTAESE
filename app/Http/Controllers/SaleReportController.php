@@ -21,8 +21,8 @@ public function index(Request $request)
     $activeBranchId = session('active_branch_id');
 
     // For sales
-    $from = $request->filled('from') ? Carbon::parse($request->from) : now()->startOfMonth();
-    $to = $request->filled('to') ? Carbon::parse($request->to) : now()->endOfMonth();
+    $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : now()->startOfMonth();
+    $to = $request->filled('to') ? Carbon::parse($request->to)->endOfDay() : now()->endOfMonth();
 
     $cashierId  = $request->input('cashier_id');
     $patientId  = $request->input('patient_id');
@@ -62,8 +62,8 @@ public function index(Request $request)
     $medicinesList = medicines::orderBy('name')->get(['id', 'name']);
 
     // For inventory
-    $invFrom = $request->filled('inv_from') ? Carbon::parse($request->inv_from) : now()->startOfMonth();
-    $invTo = $request->filled('inv_to') ? Carbon::parse($request->inv_to) : now()->endOfMonth();
+    $invFrom = $request->filled('inv_from') ? Carbon::parse($request->inv_from)->startOfDay() : now()->startOfMonth();
+    $invTo = $request->filled('inv_to') ? Carbon::parse($request->inv_to)->endOfDay() : now()->endOfMonth();
 
     $movementsQuery = MedicineMovement::with(['medicine', 'batch'])
         ->whereBetween('created_at', [$invFrom, $invTo]);

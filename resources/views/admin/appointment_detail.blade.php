@@ -16,8 +16,8 @@
     $defaultTab = $isReceptionist ? 'checkin' : 'info';
 @endphp
 <div x-data="{
-        tab: @js($isReceptionist) ? @js($defaultTab) : (localStorage.getItem('activeTab') || @js($defaultTab)),
-        openReceiptModal: true
+        tab: (new URLSearchParams(window.location.search).get('tab')) || (@js($isReceptionist) ? @js($defaultTab) : (localStorage.getItem('activeTab') || @js($defaultTab))),
+        openReceiptModal: false
      }"
      x-init="$watch('tab', value => { if (!@js($isReceptionist)) localStorage.setItem('activeTab', value); })">
 
@@ -188,24 +188,13 @@
             {{-- ACTION BUTTONS --}}
 
             <div class="mt-6">
-                    <div class="flex flex-row gap-5" id="action-buttons">
-                        <button type="submit"
-                                class="bg-green-600 text-white px-4 py-2 rounded"
-                                data-status="completed">
-                            Complete
-                        </button>
-
-                        <button type="submit"
-                                class="bg-red-600 text-white px-4 py-2 rounded"
-                                data-status="no_show">
-                            No Show
-                        </button>
-                    </div>
-            </div>
-            <!-- <div class="mt-6">
                 @if ($appointment->status === 'completed')
                     <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
-                        Completed
+                        Paid
+                    </span>
+                @elseif ($appointment->status === 'no_show')
+                    <span class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded font-semibold">
+                        No Show
                     </span>
                 @else
                     <div class="flex flex-row gap-5" id="action-buttons">
@@ -222,7 +211,7 @@
                         </button>
                     </div>
                 @endif
-            </div> -->
+            </div>
 
         </form>
     </div>
@@ -257,7 +246,6 @@
 
             <div class="mb-4">
                 <a href="{{ route('pos.index', ['store' => $appointment->store_id, 'patient_id' => $appointment->user_id, 'appointment_id' => $appointment->id]) }}"
-                   target="_blank"
                    class="inline-block bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded">
                     Open POS for this Patient
                 </a>
@@ -497,6 +485,28 @@
 {{-- Scripts --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@if(session('open_receipt'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        window.dispatchEvent(new CustomEvent('open-receipt'));
+    });
+</script>
+@endif
+@if(session('success'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: @json(session('success')),
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
+    });
+</script>
+@endif
 <script>
 function printCheckinReceipt() {
     const receipt = document.getElementById('ack-receipt-print');
@@ -655,18 +665,33 @@ $(document).on('input', 'input[name="total_price"]', function () {
                         ).then(() => {
 
                             // UI-only update (Blade remains untouched)
-                            if ($('#status').val() === 'completed') {
+                            const newStatus = $('#status').val();
+                            if (newStatus === 'completed') {
                                 $('#action-buttons').replaceWith(`
                                     <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
-                                        Completed
+                                        Paid
+                                    </span>
+                                `);
+                            } else if (newStatus === 'no_show') {
+                                $('#action-buttons').replaceWith(`
+                                    <span class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded font-semibold">
+                                        No Show
                                     </span>
                                 `);
                             }
 
                             window.dispatchEvent(new CustomEvent('open-receipt'));
                         });
+                    },
+                    error: function (xhr) {
+                        let msg = xhr.responseJSON?.message || 'Failed to finalize appointment.';
+                        const errs = xhr.responseJSON?.errors;
+                        if (errs) {
+                            msg = Object.values(errs).flat().join(' ');
+                        }
+                        Swal.fire('Error', msg, 'error');
                     }
-                }); 
+                });
             });
         });
 

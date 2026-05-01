@@ -8,6 +8,7 @@ use App\Models\SaleItem;
 use App\Models\medicine_batches;
 use App\Models\MedicineMovement;
 use App\Models\Store;
+use App\Models\Appointment;
 
 use Illuminate\Support\Facades\DB;
 
@@ -36,8 +37,18 @@ class POSController extends Controller
 
     $store = Store::find($storeId);
     $preselectedPatientId = $request->input('patient_id') ?: session('pos_patient_id');
-    $appointmentId        = $request->input('appointment_id');
-        return view('admin.pos.index', compact('medicines', 'storeId', 'store', 'preselectedPatientId', 'appointmentId'));
+    $appointmentId        = $request->input('appointment_id') ?: session('pos_appointment_id');
+
+    if ($request->has('appointment_id')) {
+        $aid = $request->input('appointment_id');
+        if ($aid === '' || $aid === null) {
+            session()->forget('pos_appointment_id');
+        } else {
+            session()->put('pos_appointment_id', $aid);
+        }
+    }
+
+    return view('admin.pos.index', compact('medicines', 'storeId', 'store', 'preselectedPatientId', 'appointmentId'));
     }
 
     private function rememberPatient(Request $request): void
@@ -159,6 +170,16 @@ class POSController extends Controller
     session()->forget('cart');
     session()->forget('pos_patient_id');
 
+    // If POS was opened from a specific appointment ("Open POS for this Patient"),
+    // return to that appointment's POS tab so the user can see the recorded purchase.
+    $appointmentId = session()->pull('pos_appointment_id');
+    if ($appointmentId) {
+        $appointment = Appointment::find($appointmentId);
+        if ($appointment) {
+            return redirect()->route('appointments.view', ['id' => $appointment->id, 'tab' => 'pos'])
+                ->with('success', 'Sale recorded for this appointment.');
+        }
+    }
 
   return redirect()->route('pos.index', $storeId)
     ->with('receipt', $sale->load('items.medicine', 'patient', 'user'));

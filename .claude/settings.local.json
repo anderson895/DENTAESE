@@ -48,7 +48,9 @@
       "Bash(cat)",
       "Bash(php verify.php)",
       "Bash(rm -f verify.php)",
-      "Bash(php -l app/Http/Controllers/POSController.php)"
+      "Bash(php -l app/Http/Controllers/POSController.php)",
+      "PowerShell(Get-Content *)",
+      "Bash(php *)"
     ]
   }
 }
