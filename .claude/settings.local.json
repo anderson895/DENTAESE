@@ -35,7 +35,10 @@
       "Bash(rm -rf ./*)",
       "Bash(unzip -q \"/c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/System-Revision-April-30.docx\" -d .)",
       "Bash(grep -oP '<w:p[^>]*>\\(?:\\(?!</w:p>\\).\\){0,800}\\\\[DONE\\\\]\\(?:\\(?!</w:p>\\).\\){0,800}</w:p>' /tmp/docx_extract/word/document.xml)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\" -Directory)",
+      "Bash(Select-Object Name)",
+      "PowerShell(ls \"C:\\\\Users\\\\Desktop\\\\Downloads\\\\projects\\\\Dentaease\\\\DENTAESE\" | Where-Object {$_.PSIsContainer} | Select-Object Name)"
     ]
   }
 }

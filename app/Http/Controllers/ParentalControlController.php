@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 
 class ParentalControlController extends Controller
 {
+    public const MAX_CHILDREN = 10;
+
     /**
      * Show the parent's children dashboard.
      */
@@ -19,8 +21,9 @@ class ParentalControlController extends Controller
         $children = $parent->children()->get();
 
         return view('client.parental.index', [
-            'parent'   => $parent,
-            'children' => $children,
+            'parent'       => $parent,
+            'children'     => $children,
+            'maxChildren'  => self::MAX_CHILDREN,
         ]);
     }
 
@@ -29,6 +32,10 @@ class ParentalControlController extends Controller
      */
     public function linkExisting(Request $request)
     {
+        if (Auth::user()->children()->count() >= self::MAX_CHILDREN) {
+            return back()->withErrors(['email' => 'Child account limit reached (max ' . self::MAX_CHILDREN . ').']);
+        }
+
         $data = $request->validate([
             'email'        => 'required|email',
             'password'     => 'required|string',
@@ -65,6 +72,10 @@ class ParentalControlController extends Controller
      */
     public function createChild(Request $request)
     {
+        if (Auth::user()->children()->count() >= self::MAX_CHILDREN) {
+            return back()->withErrors(['email' => 'Child account limit reached (max ' . self::MAX_CHILDREN . ').']);
+        }
+
         $data = $request->validate([
             'name'           => 'required|string|max:255',
             'lastname'       => 'required|string|max:255',

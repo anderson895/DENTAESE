@@ -5,11 +5,16 @@
 
 <div class="container mx-auto p-4 space-y-6">
 
+    @php($atLimit = $children->count() >= $maxChildren)
     <div class="bg-white p-5 rounded shadow">
         <h1 class="text-2xl font-bold mb-1">Parental Control</h1>
         <p class="text-sm text-gray-600">
             Link or create child patient accounts so you can manage their bookings, view their records,
             and switch between accounts safely.
+        </p>
+        <p class="text-xs text-gray-500 mt-2">
+            Linked child accounts: <strong>{{ $children->count() }} / {{ $maxChildren }}</strong>
+            @if($atLimit) <span class="text-red-600">— limit reached</span> @endif
         </p>
     </div>
 
@@ -95,7 +100,7 @@
                     <label class="text-xs text-gray-600">Relationship (optional)</label>
                     <input type="text" name="relationship" class="border rounded p-2 w-full" placeholder="e.g. Mother, Father, Guardian">
                 </div>
-                <button class="w-full px-4 py-2 bg-blue-600 text-white rounded">Link account</button>
+                <button @disabled($atLimit) class="w-full px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Link account</button>
             </form>
         </div>
 
@@ -147,7 +152,7 @@
                         <input type="password" name="password_confirmation" class="border rounded p-2 w-full" required>
                     </div>
                 </div>
-                <button class="w-full px-4 py-2 bg-green-600 text-white rounded">Create child account</button>
+                <button @disabled($atLimit) class="w-full px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Create child account</button>
             </form>
         </div>
     </div>
