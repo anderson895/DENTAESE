@@ -29,7 +29,12 @@
       "Bash(php -l app/Models/StoreScheduleOverride.php)",
       "Bash(php -l app/Http/Controllers/ParentalControlController.php)",
       "Bash(php -l app/Models/ParentChildLink.php)",
-      "Bash(php -l app/Models/User.php)"
+      "Bash(php -l app/Models/User.php)",
+      "Bash(mkdir -p /tmp/docx_extract)",
+      "Read(//tmp/**)",
+      "Bash(rm -rf ./*)",
+      "Bash(unzip -q \"/c/Users/Desktop/Downloads/projects/Dentaease/DENTAESE/System-Revision-April-30.docx\" -d .)",
+      "Bash(grep -oP '<w:p[^>]*>\\(?:\\(?!</w:p>\\).\\){0,800}\\\\[DONE\\\\]\\(?:\\(?!</w:p>\\).\\){0,800}</w:p>' /tmp/docx_extract/word/document.xml)"
     ]
   }
 }

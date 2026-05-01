@@ -25,17 +25,116 @@
 @endphp
 
 <style>
-    .pda-input { @apply w-full border-0 border-b border-gray-400 focus:border-blue-600 focus:outline-none focus:ring-0 px-1 py-1 bg-transparent text-sm; }
-    .pda-section-title { @apply text-base font-bold tracking-wide text-gray-800 border-b border-gray-300 pb-1 mt-6 mb-3; }
-    .pda-yn-row { @apply flex items-start gap-2 py-1 text-sm border-b border-gray-100; }
-    .pda-yn-label { @apply flex-1 text-gray-700; }
-    .pda-yn-radios { @apply flex items-center gap-3 shrink-0; }
-    .pda-yn-radios label { @apply flex items-center gap-1 text-xs text-gray-600; }
-    .pda-detail { @apply mt-1 ml-6 text-xs text-gray-500; }
-    .pda-detail input { @apply border-0 border-b border-gray-300 focus:border-blue-600 focus:outline-none focus:ring-0 px-1 text-xs w-full bg-transparent; }
-    .pda-cond-grid { @apply grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm; }
-    .pda-cond-grid label { @apply flex items-center gap-2 text-gray-700; }
-    .pda-cond-grid input[type="checkbox"] { @apply w-4 h-4; }
+    /* Bordered input fields */
+    .pda-input {
+        display: block;
+        width: 100%;
+        border: 1px solid #d1d5db;       /* gray-300 */
+        border-radius: 0.375rem;          /* rounded-md */
+        background: #ffffff;
+        padding: 0.5rem 0.75rem;          /* py-2 px-3 */
+        font-size: 0.875rem;              /* text-sm */
+        color: #1f2937;                   /* gray-800 */
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .pda-input:focus {
+        outline: none;
+        border-color: #3b82f6;            /* blue-500 */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .pda-input[readonly],
+    .pda-input:disabled {
+        background: #f9fafb;              /* gray-50 */
+        color: #6b7280;                   /* gray-500 */
+    }
+    /* Narrow variant for short fields like Blood Type / Blood Pressure */
+    .pda-input.pda-input-narrow {
+        width: 12rem;                     /* ~192px */
+        flex: 0 0 12rem;
+    }
+
+    /* Labels stacked above inputs */
+    #patient-form label.text-xs {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+        font-size: 0.75rem;
+        color: #4b5563;                   /* gray-600 */
+    }
+
+    /* Section title bars */
+    .pda-section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+        color: #1f2937;
+        border-bottom: 1px solid #d1d5db;
+        padding-bottom: 0.25rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Yes/No question rows */
+    .pda-yn-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+        border-bottom: 1px solid #f3f4f6; /* gray-100 */
+    }
+    .pda-yn-label { flex: 1; color: #374151; }
+    .pda-yn-radios { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+    .pda-yn-radios label {
+        display: flex; align-items: center; gap: 0.25rem;
+        font-size: 0.75rem; color: #4b5563;
+    }
+
+    /* Detail follow-up inputs */
+    .pda-detail { margin-top: 0.5rem; margin-left: 1.5rem; font-size: 0.75rem; color: #6b7280; }
+    .pda-detail input {
+        display: block;
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background: #ffffff;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        color: #1f2937;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .pda-detail input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Conditions checklist grid */
+    .pda-cond-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.25rem 1rem;
+        font-size: 0.875rem;
+    }
+    @media (min-width: 768px) {
+        .pda-cond-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .pda-cond-grid label { display: flex; align-items: center; gap: 0.5rem; color: #374151; }
+    .pda-cond-grid input[type="checkbox"] { width: 1rem; height: 1rem; }
+
+    /* Print: revert to flat lines for the formal PDA look */
+    @media print {
+        .pda-input,
+        .pda-detail input {
+            border: 0 !important;
+            border-bottom: 1px solid #555 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 2px !important;
+            background: transparent !important;
+        }
+    }
 </style>
 
 <div class="max-w-5xl mx-auto p-6 bg-white shadow rounded-lg print:shadow-none">
@@ -279,7 +378,7 @@
                     <label class="flex items-center gap-2"><input type="checkbox" name="allergic_latex" value="1" {{ old('allergic_latex', $patientinfo->allergic_latex ?? false) ? 'checked' : '' }}> Latex</label>
                     <label class="flex items-center gap-2 col-span-2 md:col-span-1">
                         <span>Others:</span>
-                        <input type="text" name="allergic_others" class="border-0 border-b border-gray-300 focus:border-blue-600 focus:outline-none focus:ring-0 px-1 text-xs flex-1 bg-transparent" value="{{ old('allergic_others', $patientinfo->allergic_others ?? '') }}">
+                        <input type="text" name="allergic_others" class="pda-input flex-1 text-xs py-1" value="{{ old('allergic_others', $patientinfo->allergic_others ?? '') }}">
                     </label>
                 </div>
             </div>
@@ -327,17 +426,17 @@
 
             {{-- 11. Blood Type --}}
             <div class="px-3 py-2 border-b border-gray-100">
-                <div class="pda-yn-row">
-                    <span class="pda-yn-label">11. Blood Type</span>
-                    <input type="text" name="blood_type" class="pda-input w-32 shrink-0" value="{{ old('blood_type', $patientinfo->blood_type ?? '') }}">
+                <div class="flex items-center gap-3">
+                    <span class="pda-yn-label whitespace-nowrap">11. Blood Type</span>
+                    <input type="text" name="blood_type" class="pda-input pda-input-narrow" value="{{ old('blood_type', $patientinfo->blood_type ?? '') }}">
                 </div>
             </div>
 
             {{-- 12. Blood Pressure --}}
             <div class="px-3 py-2 border-b border-gray-100">
-                <div class="pda-yn-row">
-                    <span class="pda-yn-label">12. Blood Pressure</span>
-                    <input type="text" name="blood_pressure" class="pda-input w-32 shrink-0" value="{{ old('blood_pressure', $patientinfo->blood_pressure ?? '') }}">
+                <div class="flex items-center gap-3">
+                    <span class="pda-yn-label whitespace-nowrap">12. Blood Pressure</span>
+                    <input type="text" name="blood_pressure" class="pda-input pda-input-narrow" value="{{ old('blood_pressure', $patientinfo->blood_pressure ?? '') }}">
                 </div>
             </div>
 
