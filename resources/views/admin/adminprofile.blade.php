@@ -35,11 +35,29 @@
 
     <div class="flex flex-col basis-[70%] gap-5">
         <div class="rounded-md bg-white shadow flex flex-row gap-3 p-5">
-            <div class="basis-[50%] border rounded p-4 flex items-center justify-center">
-                <a href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="qr_code.svg">
-                <img src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="QR Code" class="w-32 h-32 hover:opacity-80" />
-                <p class="text-blue-600 text-sm mt-2 text-center hover:underline">Download QR Code</p>
-                </a>
+            <div class="basis-[50%] border rounded p-4 flex flex-col items-center justify-center gap-3">
+                @php
+                    $myQrPath = Auth::user()->qr_code ? 'qr_codes/' . Auth::user()->qr_code : null;
+                    $myQrExists = $myQrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($myQrPath);
+                @endphp
+                @if($myQrExists)
+                    <a id="myQrDownload" href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="qr_code.png" class="flex flex-col items-center">
+                        <img id="myQrImage" src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="QR Code" class="w-32 h-32 hover:opacity-80" />
+                        <p class="text-blue-600 text-sm mt-2 text-center hover:underline">Download QR Code</p>
+                    </a>
+                @else
+                    <a id="myQrDownload" href="#" download="qr_code.png" class="flex-col items-center hidden">
+                        <img id="myQrImage" src="" alt="QR Code" class="w-32 h-32" />
+                        <p class="text-blue-600 text-sm mt-2 text-center hover:underline">Download QR Code</p>
+                    </a>
+                    <div id="myQrMissing" class="w-32 h-32 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded">
+                        QR file is missing.<br>Click "Regenerate QR" below.
+                    </div>
+                @endif
+                <button id="regenerateMyQrBtn" type="button"
+                    class="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-sm">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR
+                </button>
             </div>
                         <div class="basis-[50%] border flex flex-col">
                 <div class="flex flex-row justify-between m-3">
@@ -248,6 +266,57 @@
         });
     })
 
+
+    ///regenerate QR
+    document.getElementById('regenerateMyQrBtn').addEventListener('click', () => {
+        Swal.fire({
+            title: 'Regenerate your QR code?',
+            text: 'A new QR will be generated. Your old QR code will no longer work.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, regenerate',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            const btn = document.getElementById('regenerateMyQrBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Generating...';
+
+            fetch('{{ route("qr.regenerate.mine") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const img = document.getElementById('myQrImage');
+                    const dl = document.getElementById('myQrDownload');
+                    const missing = document.getElementById('myQrMissing');
+                    if (img) img.src = data.qr_path;
+                    if (dl) {
+                        dl.href = data.qr_path;
+                        dl.classList.remove('hidden');
+                        dl.classList.add('flex');
+                    }
+                    if (missing) missing.remove();
+                    Swal.fire('Done!', data.message, 'success');
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to regenerate QR.', 'error');
+                }
+            })
+            .catch(() => {
+                Swal.fire('Error', 'Failed to regenerate QR.', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR';
+            });
+        });
+    });
 
     ///remove face token
     document.getElementById('removeFaceToken').addEventListener('click', () => {
