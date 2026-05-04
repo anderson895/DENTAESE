@@ -9,7 +9,15 @@
     <!-- Medicines List (Left Side) -->
     <div class="lg:col-span-2 space-y-4">
         <div class="flex flex-row justify-between items-center flex-wrap gap-3">
-            <h1 class="text-3xl font-bold text-sky-600 mb-4">Point of Sale</h1>
+            <div class="flex items-center gap-3 mb-4">
+                @if(!empty($appointmentId))
+                    <a href="{{ route('appointments.view', ['id' => $appointmentId, 'tab' => 'pos']) }}"
+                       class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Back to Appointment
+                    </a>
+                @endif
+                <h1 class="text-3xl font-bold text-sky-600">Point of Sale</h1>
+            </div>
             <div class="flex gap-2 items-center">
                 <div class="relative">
                     <input type="text" id="posSearch" placeholder="Type to search medicine..."

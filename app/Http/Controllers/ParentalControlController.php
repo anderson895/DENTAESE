@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ChildLinkRequest;
 use App\Models\ParentChildLink;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class ParentalControlController extends Controller
 {
@@ -18,27 +20,32 @@ class ParentalControlController extends Controller
     public function index()
     {
         $parent = Auth::user();
-        $children = $parent->children()->get();
+        $links = ParentChildLink::with('child')
+            ->where('parent_user_id', $parent->id)
+            ->orderByRaw("CASE status WHEN 'active' THEN 0 ELSE 1 END")
+            ->latest()
+            ->get();
 
         return view('client.parental.index', [
-            'parent'       => $parent,
-            'children'     => $children,
-            'maxChildren'  => self::MAX_CHILDREN,
+            'parent'      => $parent,
+            'links'       => $links,
+            'maxChildren' => self::MAX_CHILDREN,
         ]);
     }
 
     /**
-     * Link an existing patient account as a child by verifying credentials.
+     * Send a confirmation email to the child so they can approve the link.
      */
     public function linkExisting(Request $request)
     {
-        if (Auth::user()->children()->count() >= self::MAX_CHILDREN) {
+        $parent = Auth::user();
+
+        if ($parent->children()->count() >= self::MAX_CHILDREN) {
             return back()->withErrors(['email' => 'Child account limit reached (max ' . self::MAX_CHILDREN . ').']);
         }
 
         $data = $request->validate([
             'email'        => 'required|email',
-            'password'     => 'required|string',
             'relationship' => 'nullable|string|max:50',
         ]);
 
@@ -46,66 +53,89 @@ class ParentalControlController extends Controller
             ->where('account_type', 'patient')
             ->first();
 
-        if (!$child || !Hash::check($data['password'], $child->password)) {
-            return back()->withErrors(['email' => 'Invalid child account credentials.'])->withInput();
+        if (!$child) {
+            return back()->withErrors(['email' => 'No patient account found with that email.'])->withInput();
         }
 
-        if ($child->id === Auth::id()) {
+        if ($child->id === $parent->id) {
             return back()->withErrors(['email' => 'You cannot link your own account.']);
         }
 
-        ParentChildLink::firstOrCreate(
-            [
-                'parent_user_id' => Auth::id(),
-                'child_user_id'  => $child->id,
-            ],
-            [
-                'relationship' => $data['relationship'] ?? null,
-            ]
-        );
+        $existing = ParentChildLink::where('parent_user_id', $parent->id)
+            ->where('child_user_id', $child->id)
+            ->first();
 
-        return redirect()->route('parental.index')->with('success', 'Child account linked successfully.');
+        if ($existing && $existing->status === 'active') {
+            return back()->withErrors(['email' => 'This account is already linked.']);
+        }
+
+        $token = Str::random(48);
+        $expiresAt = now()->addHours(48);
+
+        if ($existing) {
+            $existing->update([
+                'relationship'        => $data['relationship'] ?? $existing->relationship,
+                'status'              => 'pending',
+                'verification_token'  => $token,
+                'token_expires_at'    => $expiresAt,
+            ]);
+        } else {
+            ParentChildLink::create([
+                'parent_user_id'      => $parent->id,
+                'child_user_id'       => $child->id,
+                'relationship'        => $data['relationship'] ?? null,
+                'status'              => 'pending',
+                'verification_token'  => $token,
+                'token_expires_at'    => $expiresAt,
+            ]);
+        }
+
+        $confirmUrl = route('parental.confirm', ['token' => $token]);
+        Mail::to($child->email)->send(new ChildLinkRequest(
+            $parent->full_name ?: ($parent->name ?? 'A Dentaease user'),
+            $data['relationship'] ?? null,
+            $confirmUrl
+        ));
+
+        return redirect()->route('parental.index')
+            ->with('success', 'A confirmation email has been sent to ' . $child->email . '. The link will activate once they approve it.');
     }
 
     /**
-     * Create a brand-new child account owned by this parent.
+     * Child clicks the confirmation link from their email.
      */
-    public function createChild(Request $request)
+    public function confirmLink(string $token)
     {
-        if (Auth::user()->children()->count() >= self::MAX_CHILDREN) {
-            return back()->withErrors(['email' => 'Child account limit reached (max ' . self::MAX_CHILDREN . ').']);
+        $link = ParentChildLink::where('verification_token', $token)->first();
+
+        if (!$link || $link->status === 'active') {
+            return redirect()->route('login')->withErrors(['email' => 'This confirmation link is invalid or already used.']);
         }
 
-        $data = $request->validate([
-            'name'           => 'required|string|max:255',
-            'lastname'       => 'required|string|max:255',
-            'middlename'     => 'nullable|string|max:255',
-            'birth_date'     => 'required|date|before:today',
-            'email'          => 'required|email|unique:users,email',
-            'contact_number' => 'nullable|string|max:30',
-            'relationship'   => 'nullable|string|max:50',
-            'password'       => 'required|string|min:8|confirmed',
+        if ($link->token_expires_at && $link->token_expires_at->isPast()) {
+            return redirect()->route('login')->withErrors(['email' => 'This confirmation link has expired.']);
+        }
+
+        $confirmUrl = route('parental.confirm', ['token' => $token]);
+
+        if (!Auth::check()) {
+            return redirect()->route('login', ['next' => $confirmUrl])
+                ->with('info', 'Please log in to your patient account to confirm the parental control link request.');
+        }
+
+        if (Auth::id() !== (int) $link->child_user_id) {
+            Auth::logout();
+            return redirect()->route('login', ['next' => $confirmUrl])
+                ->with('info', 'Please log in as the child account (' . ($link->child->email ?? 'the invited account') . ') to confirm this link.');
+        }
+
+        $link->update([
+            'status'              => 'active',
+            'verification_token'  => null,
+            'token_expires_at'    => null,
         ]);
 
-        $child = User::create([
-            'name'            => $data['name'],
-            'lastname'        => $data['lastname'],
-            'middlename'      => $data['middlename'] ?? null,
-            'birth_date'      => $data['birth_date'],
-            'email'           => $data['email'],
-            'contact_number'  => $data['contact_number'] ?? null,
-            'password'        => Hash::make($data['password']),
-            'account_type'    => 'patient',
-            'status'          => 'active',
-        ]);
-
-        ParentChildLink::create([
-            'parent_user_id' => Auth::id(),
-            'child_user_id'  => $child->id,
-            'relationship'   => $data['relationship'] ?? null,
-        ]);
-
-        return redirect()->route('parental.index')->with('success', 'Child account created and linked.');
+        return redirect()->route('CDashboard')->with('success', 'Parental control link approved.');
     }
 
     public function unlink(ParentChildLink $link)

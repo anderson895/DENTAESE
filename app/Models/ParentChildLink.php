@@ -10,6 +10,13 @@ class ParentChildLink extends Model
         'parent_user_id',
         'child_user_id',
         'relationship',
+        'status',
+        'verification_token',
+        'token_expires_at',
+    ];
+
+    protected $casts = [
+        'token_expires_at' => 'datetime',
     ];
 
     public function parent()

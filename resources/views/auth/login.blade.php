@@ -12,6 +12,12 @@
 
         @csrf
 
+        <input type="hidden" name="next" value="{{ request('next') }}">
+
+        @if(session('info'))
+            <div class="bg-blue-100 text-blue-800 p-3 rounded text-sm">{{ session('info') }}</div>
+        @endif
+
         <div>
             <label class="text-gray-700 text-sm font-medium">Username</label>
             <input type="text" name="user" class="mt-1 w-full border border-sky-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
@@ -80,6 +86,7 @@ $(document).ready(function () {
         var formData = {
             user: $('input[name="user"]').val(),
             password: $('input[name="password"]').val(),
+            next: $('input[name="next"]').val(),
             _token: '{{ csrf_token() }}'
         };
 

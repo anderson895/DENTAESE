@@ -73,6 +73,7 @@ class AdminController extends Controller
     // Expiring medicines
     $expiringSoon = medicine_batches::with('medicine')
         ->where('store_id', $branchId)
+        ->where('status', 'active')
         ->whereDate('expiration_date', '<=', now()->addMonth())
         ->where('quantity', '>', 0)
         ->orderBy('expiration_date', 'asc')

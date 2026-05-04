@@ -113,14 +113,22 @@ class User extends Authenticatable
     public function children()
     {
         return $this->belongsToMany(User::class, 'parent_child_links', 'parent_user_id', 'child_user_id')
-                    ->withPivot('relationship')
+                    ->withPivot('relationship', 'status')
+                    ->wherePivot('status', 'active')
                     ->withTimestamps();
+    }
+
+    public function pendingChildLinks()
+    {
+        return $this->hasMany(\App\Models\ParentChildLink::class, 'parent_user_id')
+                    ->where('status', 'pending');
     }
 
     public function parents()
     {
         return $this->belongsToMany(User::class, 'parent_child_links', 'child_user_id', 'parent_user_id')
-                    ->withPivot('relationship')
+                    ->withPivot('relationship', 'status')
+                    ->wherePivot('status', 'active')
                     ->withTimestamps();
     }
 

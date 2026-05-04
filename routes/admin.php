@@ -169,6 +169,8 @@ Route::post('/scan-face', [VisitLogController::class, 'handleFaceScan'])->name('
 //inventory
 Route::get('/inventorylist', [InventoryController::class,'InventoryList'])->name('InventoryList')->middleware('auth');
 Route::post('/medicines', [InventoryController::class, 'store'])->name('medicines.store');
+Route::put('/medicines/{medicine}', [InventoryController::class, 'update'])->name('medicines.update');
+Route::delete('/medicines/{medicine}', [InventoryController::class, 'destroy'])->name('medicines.destroy');
 
 Route::get('/medicines/{medicine}', [InventoryController::class, 'show'])->name('medicines.show');
 Route::post('/medicines/{medicine}/batch', [InventoryController::class, 'addBatch'])->name('medicines.addBatch');

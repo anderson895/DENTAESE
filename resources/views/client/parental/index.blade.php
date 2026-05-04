@@ -6,16 +6,17 @@
 <div class="container mx-auto p-4 space-y-6">
 
     @php
-        $atLimit = $children->count() >= $maxChildren;
+        $activeCount = $links->where('status', 'active')->count();
+        $atLimit = $activeCount >= $maxChildren;
     @endphp
     <div class="bg-white p-5 rounded shadow">
         <h1 class="text-2xl font-bold mb-1">Parental Control</h1>
         <p class="text-sm text-gray-600">
-            Link or create child patient accounts so you can manage their bookings, view their records,
+            Link existing patient accounts so you can manage their bookings, view their records,
             and switch between accounts safely.
         </p>
         <p class="text-xs text-gray-500 mt-2">
-            Linked child accounts: <strong>{{ $children->count() }} / {{ $maxChildren }}</strong>
+            Linked child accounts: <strong>{{ $activeCount }} / {{ $maxChildren }}</strong>
             @if($atLimit) <span class="text-red-600">— limit reached</span> @endif
         </p>
     </div>
@@ -36,10 +37,10 @@
 
     {{-- LINKED CHILDREN --}}
     <div class="bg-white p-5 rounded shadow">
-        <h2 class="text-lg font-semibold mb-3">Linked Children</h2>
+        <h2 class="text-lg font-semibold mb-3">Child Accounts</h2>
 
-        @if($children->isEmpty())
-            <p class="text-sm text-gray-500">No children linked yet. Use the forms below to link an existing account or create a new one.</p>
+        @if($links->isEmpty())
+            <p class="text-sm text-gray-500">No child accounts yet. Use the form below to send a link request.</p>
         @else
             <table class="w-full text-sm border-collapse">
                 <thead class="bg-gray-100">
@@ -47,31 +48,44 @@
                         <th class="border p-2 text-left">Name</th>
                         <th class="border p-2 text-left">Email</th>
                         <th class="border p-2 text-left">Relationship</th>
+                        <th class="border p-2 text-left">Status</th>
                         <th class="border p-2">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($children as $child)
+                    @foreach($links as $link)
+                        @php $child = $link->child; @endphp
                         <tr>
-                            <td class="border p-2">{{ $child->name }} {{ $child->lastname }}</td>
-                            <td class="border p-2">{{ $child->email }}</td>
-                            <td class="border p-2">{{ $child->pivot->relationship ?? '—' }}</td>
-                            <td class="border p-2 text-center">
-                                <form method="POST" action="{{ route('parental.switchTo') }}" class="inline">
-                                    @csrf
-                                    <input type="hidden" name="child_user_id" value="{{ $child->id }}">
-                                    <button class="px-3 py-1 bg-blue-600 text-white rounded text-xs">View as child</button>
-                                </form>
-
-                                @php
-                                    $linkRow = \App\Models\ParentChildLink::where('parent_user_id', auth()->id())
-                                        ->where('child_user_id', $child->id)->first();
-                                @endphp
-                                @if($linkRow)
-                                    <form method="POST" action="{{ route('parental.unlink', $linkRow->id) }}" class="inline" onsubmit="return confirm('Unlink this child account?')">
+                            <td class="border p-2">{{ $child?->name }} {{ $child?->lastname }}</td>
+                            <td class="border p-2">{{ $child?->email ?? '—' }}</td>
+                            <td class="border p-2">{{ $link->relationship ?? '—' }}</td>
+                            <td class="border p-2">
+                                @if($link->status === 'active')
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>
+                                @else
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">Pending verification</span>
+                                    @if($link->token_expires_at)
+                                        <div class="text-[10px] text-gray-500 mt-1">expires {{ $link->token_expires_at->format('M d, H:i') }}</div>
+                                    @endif
+                                @endif
+                            </td>
+                            <td class="border p-2 text-center whitespace-nowrap">
+                                @if($link->status === 'active')
+                                    <form method="POST" action="{{ route('parental.switchTo') }}" class="inline">
+                                        @csrf
+                                        <input type="hidden" name="child_user_id" value="{{ $link->child_user_id }}">
+                                        <button class="px-3 py-1 bg-blue-600 text-white rounded text-xs">View as child</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('parental.unlink', $link->id) }}" class="inline" onsubmit="return confirm('Unlink this child account?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs">Unlink</button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('parental.unlink', $link->id) }}" class="inline" onsubmit="return confirm('Cancel this request?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs">Cancel request</button>
                                     </form>
                                 @endif
                             </td>
@@ -82,81 +96,22 @@
         @endif
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {{-- LINK EXISTING --}}
-        <div class="bg-white p-5 rounded shadow">
-            <h2 class="text-lg font-semibold mb-3">Link an existing patient account</h2>
-            <p class="text-xs text-gray-500 mb-3">Verify the child's existing patient credentials to link it to your parent account.</p>
-            <form method="POST" action="{{ route('parental.linkExisting') }}" class="space-y-3">
-                @csrf
-                <div>
-                    <label class="text-xs text-gray-600">Child's email</label>
-                    <input type="email" name="email" class="border rounded p-2 w-full" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600">Child's password</label>
-                    <input type="password" name="password" class="border rounded p-2 w-full" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600">Relationship (optional)</label>
-                    <input type="text" name="relationship" class="border rounded p-2 w-full" placeholder="e.g. Mother, Father, Guardian">
-                </div>
-                <button @disabled($atLimit) class="w-full px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Link account</button>
-            </form>
-        </div>
-
-        {{-- CREATE NEW CHILD --}}
-        <div class="bg-white p-5 rounded shadow">
-            <h2 class="text-lg font-semibold mb-3">Create a new child account</h2>
-            <p class="text-xs text-gray-500 mb-3">Creates a new patient account that is automatically linked to your parent account.</p>
-            <form method="POST" action="{{ route('parental.createChild') }}" class="space-y-3">
-                @csrf
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs text-gray-600">First name</label>
-                        <input type="text" name="name" class="border rounded p-2 w-full" required>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600">Last name</label>
-                        <input type="text" name="lastname" class="border rounded p-2 w-full" required>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600">Middle name (optional)</label>
-                    <input type="text" name="middlename" class="border rounded p-2 w-full">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs text-gray-600">Birthdate</label>
-                        <input type="date" name="birth_date" class="border rounded p-2 w-full" required>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600">Contact number</label>
-                        <input type="text" name="contact_number" class="border rounded p-2 w-full">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600">Email</label>
-                    <input type="email" name="email" class="border rounded p-2 w-full" required>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600">Relationship</label>
-                    <input type="text" name="relationship" class="border rounded p-2 w-full" placeholder="e.g. Son, Daughter">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs text-gray-600">Password</label>
-                        <input type="password" name="password" class="border rounded p-2 w-full" required>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600">Confirm</label>
-                        <input type="password" name="password_confirmation" class="border rounded p-2 w-full" required>
-                    </div>
-                </div>
-                <button @disabled($atLimit) class="w-full px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Create child account</button>
-            </form>
-        </div>
+    {{-- LINK EXISTING --}}
+    <div class="bg-white p-5 rounded shadow">
+        <h2 class="text-lg font-semibold mb-3">Link an existing patient account</h2>
+        <p class="text-xs text-gray-500 mb-3">We'll send a confirmation link to the child's email. The link will activate only after they approve it from their inbox.</p>
+        <form method="POST" action="{{ route('parental.linkExisting') }}" class="space-y-3">
+            @csrf
+            <div>
+                <label class="text-xs text-gray-600">Child's email</label>
+                <input type="email" name="email" class="border rounded p-2 w-full" required>
+            </div>
+            <div>
+                <label class="text-xs text-gray-600">Relationship (optional)</label>
+                <input type="text" name="relationship" class="border rounded p-2 w-full" placeholder="e.g. Mother, Father, Guardian">
+            </div>
+            <button @disabled($atLimit) class="w-full px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Send confirmation email</button>
+        </form>
     </div>
 </div>
 @endsection

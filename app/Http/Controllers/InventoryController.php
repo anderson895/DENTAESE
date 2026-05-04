@@ -90,6 +90,43 @@ public function store(Request $request)
     return response()->json(['status' => 'success','message'=>'Medicine added']);
 }
 
+public function update(Request $request, medicines $medicine)
+{
+    $request->validate([
+        'name'        => 'required|string',
+        'unit'        => 'required|string',
+        'price'       => 'required|numeric',
+        'description' => 'nullable|string',
+    ]);
+
+    $medicine->update($request->only(['name', 'unit', 'price', 'description']));
+
+    return response()->json(['status' => 'success', 'message' => 'Medicine updated']);
+}
+
+public function destroy(medicines $medicine)
+{
+    $hasStock = $medicine->batches()->where('quantity', '>', 0)->exists();
+    if ($hasStock) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Cannot delete: this medicine still has batches with stock. Mark them expired or stock-out first.',
+        ], 422);
+    }
+
+    $hasSales = \App\Models\SaleItem::where('medicine_id', $medicine->id)->exists();
+    if ($hasSales) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Cannot delete: this medicine has sales history. Deletion would erase those records.',
+        ], 422);
+    }
+
+    $medicine->delete();
+
+    return response()->json(['status' => 'success', 'message' => 'Medicine deleted']);
+}
+
 public function show(medicines $medicine)
 {
     $batches = $medicine->batches()

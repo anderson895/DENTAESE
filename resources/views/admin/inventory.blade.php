@@ -102,6 +102,46 @@
   </div>
 </div>
 
+<!-- Modal: Edit Item -->
+<div id="editItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+  <div class="bg-white w-full max-w-xl rounded-lg p-6 shadow-lg relative">
+    <h3 class="text-lg font-bold mb-4">Edit Item</h3>
+    <form class="flex flex-col gap-3" id="editItemForm">
+      <input type="hidden" name="edit_id" id="edit_id">
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label class="font-semibold">Name</label>
+          <input type="text" name="edit_name" id="edit_name" required class="w-full border p-2 rounded" />
+        </div>
+        <div>
+          <label class="font-semibold">Price</label>
+          <input type="number" step="0.01" name="edit_price" id="edit_price" required class="w-full border p-2 rounded" />
+        </div>
+        <div>
+          <label class="font-semibold">Description</label>
+          <input type="text" name="edit_description" id="edit_description" class="w-full border p-2 rounded" />
+        </div>
+        <div>
+          <label class="font-semibold">Unit</label>
+          <select name="edit_unit" id="edit_unit" required class="w-full border p-2 rounded">
+            <option value="">-- Select Unit --</option>
+            <option value="mL">mL</option>
+            <option value="G">G</option>
+            <option value="MG">MG</option>
+            <option value="pcs">pcs</option>
+            <option value="bottle">bottle</option>
+            <option value="box">box</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-4">
+        <button type="submit" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded">Save changes</button>
+        <button type="button" id="closeEditModalBtn" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Modal: View User -->
 <div id="viewModal" class="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/30 hidden z-50">
   <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
@@ -147,19 +187,31 @@
         if (response.status === 'success') {
           let rows = '';
           response.data.forEach(item => {
+            const safeDesc = (item.description ?? '').replace(/"/g, '&quot;');
             rows += `
 <tr>
   <td class="border py-2 px-4">${item.name}</td>
   <td class="border py-2 px-4">${item.unit}</td>
   <td class="border py-2 px-4">${item.price}</td>
   <td class="border py-2 px-4">${item.total_quantity ?? 0}</td>
-  <td class="border py-2 px-4">${item.description}</td>
-  <td class="border py-2 px-4">
+  <td class="border py-2 px-4">${item.description ?? ''}</td>
+  <td class="border py-2 px-4 whitespace-nowrap">
     @if(session('active_branch_id') === 'admin')
       <a href="/medicines/${item.id}" class="text-blue-600 hover:underline" disabled>View</a>
     @else
-      <a href="/medicines/${item.id}" class="text-blue-600 hover:underline">View</a>
+      <a href="/medicines/${item.id}" class="text-blue-600 hover:underline mr-2">View</a>
     @endif
+    <button type="button"
+            class="text-amber-600 hover:underline mr-2 editBtn"
+            data-id="${item.id}"
+            data-name="${(item.name ?? '').replace(/"/g, '&quot;')}"
+            data-unit="${item.unit ?? ''}"
+            data-price="${item.price ?? ''}"
+            data-description="${safeDesc}">Edit</button>
+    <button type="button"
+            class="text-red-600 hover:underline deleteBtn"
+            data-id="${item.id}"
+            data-name="${(item.name ?? '').replace(/"/g, '&quot;')}">Delete</button>
   </td>
 </tr>`;
 
@@ -235,6 +287,88 @@
         error: function (xhr) {
           Swal.fire('Error', xhr.responseJSON.message || 'Something went wrong.', 'error');
         }
+      });
+    });
+
+    // EDIT — open modal with row data
+    $(document).on('click', '.editBtn', function () {
+      const $b = $(this);
+      $('#edit_id').val($b.data('id'));
+      $('#edit_name').val($b.data('name'));
+      $('#edit_unit').val($b.data('unit'));
+      $('#edit_price').val($b.data('price'));
+      $('#edit_description').val($b.data('description'));
+      $('#editItemModal').removeClass('hidden');
+    });
+
+    $('#closeEditModalBtn').click(() => $('#editItemModal').addClass('hidden'));
+    $(window).click(function (e) {
+      if ($(e.target).is('#editItemModal')) {
+        $('#editItemModal').addClass('hidden');
+      }
+    });
+
+    $('#editItemForm').submit(function (e) {
+      e.preventDefault();
+      const id = $('#edit_id').val();
+      $.ajax({
+        type: 'POST',
+        url: '/medicines/' + id,
+        data: {
+          _method: 'PUT',
+          _token: '{{ csrf_token() }}',
+          name: $('#edit_name').val(),
+          unit: $('#edit_unit').val(),
+          price: $('#edit_price').val(),
+          description: $('#edit_description').val(),
+        },
+        success: function (response) {
+          if (response.status === 'success') {
+            Swal.fire('Saved!', response.message, 'success');
+            $('#editItemModal').addClass('hidden');
+            InventoryList(currentPage);
+          } else {
+            Swal.fire('Error', response.message, 'error');
+          }
+        },
+        error: function (xhr) {
+          Swal.fire('Error', xhr.responseJSON?.message || 'Update failed.', 'error');
+        }
+      });
+    });
+
+    // DELETE — confirm then call destroy
+    $(document).on('click', '.deleteBtn', function () {
+      const id = $(this).data('id');
+      const name = $(this).data('name');
+      Swal.fire({
+        title: 'Delete this item?',
+        text: `"${name}" will be permanently removed.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Yes, delete it',
+      }).then((result) => {
+        if (!result.isConfirmed) return;
+        $.ajax({
+          type: 'POST',
+          url: '/medicines/' + id,
+          data: {
+            _method: 'DELETE',
+            _token: '{{ csrf_token() }}',
+          },
+          success: function (response) {
+            if (response.status === 'success') {
+              Swal.fire('Deleted', response.message, 'success');
+              InventoryList(currentPage);
+            } else {
+              Swal.fire('Error', response.message, 'error');
+            }
+          },
+          error: function (xhr) {
+            Swal.fire('Cannot delete', xhr.responseJSON?.message || 'Delete failed.', 'error');
+          }
+        });
       });
     });
 

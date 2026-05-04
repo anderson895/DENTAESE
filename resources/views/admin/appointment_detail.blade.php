@@ -658,6 +658,12 @@ $(document).on('input', 'input[name="total_price"]', function () {
                     processData: false,
                     contentType: false,
                     success: function (res) {
+                        // Clear local drafts on successful save
+                        try {
+                            localStorage.removeItem('appt_draft_{{ $appointment->id }}');
+                            localStorage.removeItem('rx_draft_{{ $appointment->id }}');
+                        } catch (e) {}
+
                         Swal.fire(
                             'Success',
                             res.message ?? 'Appointment completed successfully!',
@@ -740,7 +746,70 @@ $(document).on('input', 'input[name="total_price"]', function () {
         }, 200);
     }
     </script>
-    
 
-   
+<script>
+// =========================================================================
+// Local draft persistence for Check-in form + RX list, scoped per appointment.
+// Restores values when the user leaves and comes back (e.g. via POS).
+// =========================================================================
+(function () {
+    const APPT_KEY = 'appt_draft_{{ $appointment->id }}';
+    const RX_KEY   = 'rx_draft_{{ $appointment->id }}';
+
+    function checkinFields() {
+        return [
+            document.querySelector('#finalizeAppointmentForm textarea[name="work_done"]'),
+            document.querySelector('#finalizeAppointmentForm select[name="paytype"]'),
+            document.querySelector('#finalizeAppointmentForm input[name="total_price"]'),
+        ].filter(Boolean);
+    }
+
+    function saveCheckinDraft() {
+        const data = {};
+        checkinFields().forEach(el => { data[el.name] = el.value; });
+        try { localStorage.setItem(APPT_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function restoreCheckinDraft() {
+        let data;
+        try { data = JSON.parse(localStorage.getItem(APPT_KEY) || '{}'); } catch (e) { return; }
+        checkinFields().forEach(el => {
+            if (data[el.name] !== undefined && data[el.name] !== '' && !el.value) {
+                el.value = data[el.name];
+            }
+        });
+    }
+
+    function saveRxDraft() {
+        const list = document.getElementById('rx-list');
+        if (!list) return;
+        try { localStorage.setItem(RX_KEY, list.innerHTML); } catch (e) {}
+    }
+
+    function restoreRxDraft() {
+        const list = document.getElementById('rx-list');
+        if (!list) return;
+        const html = localStorage.getItem(RX_KEY);
+        if (html && !list.innerHTML.trim()) {
+            list.innerHTML = html;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        restoreCheckinDraft();
+        restoreRxDraft();
+
+        checkinFields().forEach(el => {
+            el.addEventListener('input', saveCheckinDraft);
+            el.addEventListener('change', saveCheckinDraft);
+        });
+
+        const rxList = document.getElementById('rx-list');
+        if (rxList) {
+            new MutationObserver(saveRxDraft).observe(rxList, { childList: true, subtree: true });
+        }
+    });
+})();
+</script>
+
 @endsection

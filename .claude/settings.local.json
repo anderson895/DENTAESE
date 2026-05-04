@@ -50,7 +50,11 @@
       "Bash(rm -f verify.php)",
       "Bash(php -l app/Http/Controllers/POSController.php)",
       "PowerShell(Get-Content *)",
-      "Bash(php *)"
+      "Bash(php *)",
+      "PowerShell(php artisan migrate)",
+      "PowerShell(php artisan tinker --execute=\"App\\\\Models\\\\User::select\\('id','email','account_type','deleted_at'\\)->withTrashed\\(\\)->get\\(\\)->each\\(function\\(`$u\\){ echo `$u->id.' | '.`$u->email.' | account_type='.var_export\\(`$u->account_type, true\\).' | deleted='.\\(`$u->deleted_at ? 'YES' : 'no'\\).PHP_EOL; }\\);\")",
+      "PowerShell(php artisan tinker --execute=\"App\\\\Models\\\\ParentChildLink::all\\(\\)->each\\(function\\(`$l\\){ echo `$l->id.' | parent='.`$l->parent_user_id.' child='.`$l->child_user_id.' status='.`$l->status.PHP_EOL; }\\);\")",
+      "PowerShell(php artisan tinker --execute=\"App\\\\Models\\\\ParentChildLink::all\\(\\)->each\\(function\\(`$l\\){ echo `$l->id.' | parent='.`$l->parent_user_id.' child='.`$l->child_user_id.' status='.`$l->status.' token='.\\(`$l->verification_token ? 'set' : 'cleared'\\).PHP_EOL; }\\);\")"
     ]
   }
 }
