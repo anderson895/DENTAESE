@@ -111,13 +111,25 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
         ->where('schedule_date', $date)->first();
     if ($clinicOverride) {
         if (!$clinicOverride->is_open) {
-            return response()->json(['slots' => [], 'booked_slots' => []]);
+            return response()->json([
+                'status' => 'success',
+                'slots' => [],
+                'booked_slots' => [],
+                'reason' => 'clinic_closed',
+                'message' => 'The clinic is closed on this date. Please choose another date.',
+            ]);
         }
     } else {
         $dayName = strtolower(Carbon::parse($date)->format('D'));
         $openDays = is_array($store->open_days) ? $store->open_days : json_decode($store->open_days, true);
         if (!in_array($dayName, $openDays ?? [])) {
-            return response()->json(['slots' => [], 'booked_slots' => []]);
+            return response()->json([
+                'status' => 'success',
+                'slots' => [],
+                'booked_slots' => [],
+                'reason' => 'clinic_closed',
+                'message' => 'The clinic is closed on this day. Please choose another date.',
+            ]);
         }
     }
 
@@ -126,7 +138,14 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
         ->where('schedule_date', $date)
         ->first();
     if ($docSchedule && $docSchedule->status === 'off') {
-        return response()->json(['slots' => [], 'booked_slots' => []]);
+        $dentistName = trim($dentist->name . ' ' . $dentist->lastname) ?: 'The selected dentist';
+        return response()->json([
+            'status' => 'success',
+            'slots' => [],
+            'booked_slots' => [],
+            'reason' => 'dentist_off',
+            'message' => "{$dentistName} is on day off on this date. Please choose another date or dentist.",
+        ]);
     }
 
     $opening = Carbon::parse(
@@ -187,10 +206,26 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
 }
 
 
+    // No selectable slots even though the clinic is open and the dentist is on
+    // duty — explain whether everything is booked or simply unavailable today.
+    $reason = null;
+    $message = null;
+    if (empty($availableSlots)) {
+        if (count($bookedSlots) > 0) {
+            $reason = 'fully_booked';
+            $message = 'All time slots are already booked on this date. Please choose another date.';
+        } else {
+            $reason = 'no_slots';
+            $message = 'No available time slots for this date. Please choose another date.';
+        }
+    }
+
     return response()->json([
         'status' => 'success',
         'slots' => $availableSlots,
-        'booked_slots' => $bookedSlots
+        'booked_slots' => $bookedSlots,
+        'reason' => $reason,
+        'message' => $message,
     ]);
 }
 

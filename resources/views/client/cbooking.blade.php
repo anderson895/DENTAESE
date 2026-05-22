@@ -229,6 +229,8 @@
             <option value="">-- Select Date First --</option>
         </select>
 
+        <div id="slotNotice" class="hidden mt-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800"></div>
+
         <div class="flex justify-between mt-4">
             <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded" onclick="goToStep(1)">Back</button>
             <button type="button" id="step2btn" class="bg-gray-500 text-white px-4 py-2 rounded" disabled onclick="goToStep(3)">Next</button>
@@ -469,6 +471,7 @@ $('#appointment_date').on('change', function () {
         .html('<option>Loading...</option>');
 
     $('#bookedSlots').html('<p>Loading...</p>');
+    $('#slotNotice').addClass('hidden').text('');
 
     $.get(`/branch/${storeId}/dentist/${dentistId}/slots`, { date }, function (resp) {
 
@@ -483,6 +486,7 @@ $('#appointment_date').on('change', function () {
             const isToday = date === now.toISOString().split('T')[0];
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
+            let selectableCount = 0;
             allTimes.forEach(time => {
                 // Parse time to minutes
                 const [h, m] = time.split(':').map(Number);
@@ -496,10 +500,25 @@ $('#appointment_date').on('change', function () {
                     // Don't show past time slots at all
                 } else {
                     options += `<option value="${time}">${label}</option>`;
+                    selectableCount++;
                 }
             });
 
-            $('#appointment_time').html(options);
+            // Show a clear notice when no time can actually be selected
+            // (dentist off / clinic closed / fully booked / all past) instead of
+            // leaving the patient with a silently empty dropdown.
+            const hasSelectable = selectableCount > 0;
+            if (!hasSelectable) {
+                const msg = resp.message
+                    || (booked.length
+                        ? 'All time slots are already booked on this date. Please choose another date.'
+                        : 'No available time slots for this date. Please choose another date.');
+                $('#slotNotice').removeClass('hidden').text(msg);
+                options = '<option value="">-- No available time --</option>';
+                $('#appointment_time').html(options).prop('disabled', true);
+            } else {
+                $('#appointment_time').html(options).prop('disabled', false);
+            }
             checkStep2NextButton();
 
             // 🔹 Render booked slots card

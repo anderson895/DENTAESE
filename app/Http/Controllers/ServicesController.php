@@ -53,7 +53,7 @@ class ServicesController extends Controller
         $validated = validator($mapped, [
             'name' => 'required|string|max:255',
             'approx_time' => 'required|integer', // in minutes
-            'approx_price' => 'required|numeric',
+            'approx_price' => 'nullable|numeric', // price is optional / hidden in the UI
             'description' => 'nullable|string',
             'type' => 'nullable|string',
         ])->validate();

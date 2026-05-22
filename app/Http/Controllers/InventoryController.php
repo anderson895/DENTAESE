@@ -106,11 +106,18 @@ public function update(Request $request, medicines $medicine)
 
 public function destroy(medicines $medicine)
 {
-    $hasStock = $medicine->batches()->where('quantity', '>', 0)->exists();
+    // Only ACTIVE batches with remaining stock should block deletion.
+    // Expired/suspended batches are hidden from the inventory UI and represent
+    // unusable stock, so they must not prevent removing a medicine that shows
+    // as empty across all branches.
+    $hasStock = $medicine->batches()
+        ->where('status', 'active')
+        ->where('quantity', '>', 0)
+        ->exists();
     if ($hasStock) {
         return response()->json([
             'status'  => 'error',
-            'message' => 'Cannot delete: this medicine still has batches with stock. Mark them expired or stock-out first.',
+            'message' => 'Cannot delete: this medicine still has active batches with stock. Mark them expired or stock-out first.',
         ], 422);
     }
 
