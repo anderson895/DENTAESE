@@ -56,7 +56,8 @@
       "PowerShell(php artisan tinker --execute=\"App\\\\Models\\\\ParentChildLink::all\\(\\)->each\\(function\\(`$l\\){ echo `$l->id.' | parent='.`$l->parent_user_id.' child='.`$l->child_user_id.' status='.`$l->status.PHP_EOL; }\\);\")",
       "PowerShell(php artisan tinker --execute=\"App\\\\Models\\\\ParentChildLink::all\\(\\)->each\\(function\\(`$l\\){ echo `$l->id.' | parent='.`$l->parent_user_id.' child='.`$l->child_user_id.' status='.`$l->status.' token='.\\(`$l->verification_token ? 'set' : 'cleared'\\).PHP_EOL; }\\);\")",
       "PowerShell(php -l app/Http/Controllers/AppointmentController.php; php -l app/Http/Controllers/ServicesController.php; php -l app/Http/Controllers/InventoryController.php)",
-      "PowerShell(php artisan view:clear)"
+      "PowerShell(php artisan view:clear)",
+      "PowerShell(php -l app/Http/Controllers/ServicesController.php)"
     ]
   }
 }
