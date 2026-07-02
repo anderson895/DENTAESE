@@ -122,7 +122,7 @@
                         </div>
                         <div class="text-center">
                             <p id="faceInstructionText" class="text-sm font-semibold text-gray-700">
-                                Move your head left and right, then open your mouth
+                                Move your head left and right
                             </p>
                             <p id="faceProgressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
                         </div>
@@ -134,10 +134,6 @@
                             <div class="flex items-center gap-1">
                                 <span id="faceRightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
                                 <span>Right Turn</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <span id="faceMouthIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                                <span>Open Mouth</span>
                             </div>
                         </div>
                     </div>
@@ -246,7 +242,6 @@ let faceAnimationFrameId  = null;
 // Liveness tracking
 let faceHeadMovementLeft  = false;
 let faceHeadMovementRight = false;
-let faceMouthOpened       = false;
 let faceCurrentProgress   = 0;
 
 // FPS tracking
@@ -276,56 +271,28 @@ async function loadFaceModels() {
 // ─────────────────────────────────────────────
 function updateFaceProgress() {
     let progress = 0;
-    if (faceHeadMovementLeft)  progress += 33.33;
-    if (faceHeadMovementRight) progress += 33.33;
-    if (faceMouthOpened)       progress += 33.34;
+    if (faceHeadMovementLeft)  progress += 50;
+    if (faceHeadMovementRight) progress += 50;
     faceCurrentProgress = Math.min(100, Math.round(progress));
 
     document.querySelector('#faceVideo').parentElement.style.setProperty('--progress', faceCurrentProgress + '%');
     document.getElementById('faceProgressText').textContent = `Progress: ${faceCurrentProgress}%`;
 
-    if (!faceHeadMovementLeft && !faceHeadMovementRight && !faceMouthOpened) {
-        document.getElementById('faceInstructionText').textContent = 'Move your head left and right, then open your mouth';
-    } else if (faceHeadMovementLeft && !faceHeadMovementRight && !faceMouthOpened) {
+    if (!faceHeadMovementLeft && !faceHeadMovementRight) {
+        document.getElementById('faceInstructionText').textContent = 'Move your head left and right';
+    } else if (faceHeadMovementLeft && !faceHeadMovementRight) {
         document.getElementById('faceInstructionText').textContent = 'Now turn your head to the right';
-    } else if (!faceHeadMovementLeft && faceHeadMovementRight && !faceMouthOpened) {
+    } else if (!faceHeadMovementLeft && faceHeadMovementRight) {
         document.getElementById('faceInstructionText').textContent = 'Now turn your head to the left';
-    } else if (faceHeadMovementLeft && faceHeadMovementRight && !faceMouthOpened) {
-        document.getElementById('faceInstructionText').textContent = 'Great! Now open your mouth wide';
-    } else if (faceMouthOpened && (!faceHeadMovementLeft || !faceHeadMovementRight)) {
-        if (!faceHeadMovementLeft && !faceHeadMovementRight) {
-            document.getElementById('faceInstructionText').textContent = 'Now turn your head left and right';
-        } else if (!faceHeadMovementLeft) {
-            document.getElementById('faceInstructionText').textContent = 'Now turn your head to the left';
-        } else {
-            document.getElementById('faceInstructionText').textContent = 'Now turn your head to the right';
-        }
     } else {
         document.getElementById('faceInstructionText').textContent = 'Verification complete! Identifying...';
     }
 
     document.getElementById('faceLeftIndicator').className  = faceHeadMovementLeft  ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
     document.getElementById('faceRightIndicator').className = faceHeadMovementRight ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
-    document.getElementById('faceMouthIndicator').className = faceMouthOpened        ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
 
     if (faceCurrentProgress === 100) {
         setTimeout(() => submitFaceRecognition(), 500);
-    }
-}
-
-function detectFaceMouthOpening(landmarks) {
-    const mouth            = landmarks.getMouth();
-    const upperLip         = mouth[13];
-    const lowerLip         = mouth[19];
-    const leftMouthCorner  = mouth[0];
-    const rightMouthCorner = mouth[6];
-    const mouthWidth       = Math.abs(rightMouthCorner.x - leftMouthCorner.x);
-    const mouthAspectRatio = Math.abs(lowerLip.y - upperLip.y) / mouthWidth;
-
-    if (mouthAspectRatio > 0.35 && !faceMouthOpened) {
-        faceMouthOpened = true;
-        console.log('✅ MOUTH OPENED | Ratio:', mouthAspectRatio.toFixed(3));
-        updateFaceProgress();
     }
 }
 
@@ -398,7 +365,6 @@ async function detectFaceLoop() {
             if (detection) {
                 drawFaceBoundingBox(detection, canvas);
                 detectFaceHeadMovement(detection.landmarks);
-                detectFaceMouthOpening(detection.landmarks);
             } else {
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
             }
@@ -417,14 +383,13 @@ function stopFaceDetection()  {
 }
 
 function resetFaceTracking() {
-    faceHeadMovementLeft = faceHeadMovementRight = faceMouthOpened = false;
+    faceHeadMovementLeft = faceHeadMovementRight = false;
     faceCurrentProgress = faceFps = faceFrameCount = 0;
-    document.getElementById('faceInstructionText').textContent = 'Move your head left and right, then open your mouth';
+    document.getElementById('faceInstructionText').textContent = 'Move your head left and right';
     document.getElementById('faceProgressText').textContent    = 'Progress: 0%';
     document.getElementById('faceDebugInfo').textContent       = 'FPS: --';
     document.getElementById('faceLeftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
     document.getElementById('faceRightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
-    document.getElementById('faceMouthIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
     document.querySelector('#faceVideo').parentElement.style.setProperty('--progress', '0%');
 }
 
