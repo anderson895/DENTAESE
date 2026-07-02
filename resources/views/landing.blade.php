@@ -8,7 +8,7 @@
     <section id="home" class="hero-gradient pt-16 pb-20">
         <div class="max-w-7xl mx-auto px-6 pt-20 text-center">
             <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
-              Testing Landing pages
+                Your Smile is Our <span class="text-yellow-300">Priority</span>
             </h1>
             <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
                 Since 1987, Santiago-Amancio Dental Clinic has been providing exceptional dental care across Bulacan.
