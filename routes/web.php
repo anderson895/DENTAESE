@@ -156,3 +156,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/patient/messages/upload', [MessageController::class, 'uploadFile'])
         ->name('patient.messages.upload');
 });
+
+// ─────────────────────────────────────────────
+// SELF-HEALING STORAGE FALLBACK
+// Serves /storage/* files directly kapag sira o wala yung
+// public/storage symlink (e.g. after Hostinger deployment).
+// Kapag buo yung symlink, hindi ito tinatamaan — Apache/Nginx
+// pa rin ang nagse-serve ng file nang direkta.
+// ─────────────────────────────────────────────
+Route::get('/storage/{path}', function (string $path) {
+    $base = realpath(storage_path('app/public'));
+    $file = realpath(storage_path('app/public') . DIRECTORY_SEPARATOR . $path);
+
+    abort_unless(
+        $base && $file && str_starts_with($file, $base . DIRECTORY_SEPARATOR) && is_file($file),
+        404
+    );
+
+    return response()->file($file);
+})->where('path', '.*');
