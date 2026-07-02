@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Disabled: the built-in serve route shadows our public /storage
+            // fallback route in routes/web.php (self-healing symlink fix).
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
