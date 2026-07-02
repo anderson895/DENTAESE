@@ -59,7 +59,10 @@
       "PowerShell(php artisan view:clear)",
       "PowerShell(php -l app/Http/Controllers/ServicesController.php)",
       "PowerShell(php artisan route:list --name=parental)",
-      "PowerShell(php -l app\\\\Http\\\\Controllers\\\\ParentalControlController.php; php -l app\\\\Models\\\\User.php)"
+      "PowerShell(php -l app\\\\Http\\\\Controllers\\\\ParentalControlController.php; php -l app\\\\Models\\\\User.php)",
+      "PowerShell($lines = Get-Content \"resources\\\\views\\\\client\\\\cprofile.blade.php\"; $open=0; $close=0; for \\($i=21; $i -le 270; $i++\\) { $l=$lines[$i]; $open += \\([regex]::Matches\\($l,'<div'\\)\\).Count; $close += \\([regex]::Matches\\($l,'</div>'\\)\\).Count }; \"Opens: $open, Closes: $close \\(lines 22-271\\)\")",
+      "PowerShell($lines = Get-Content \"resources\\\\views\\\\client\\\\cprofile.blade.php\"; $inTab=$false; $depth=0; $ln=0; foreach \\($l in $lines\\) { $ln++; if \\($l -match 'id=\"profile-tab\"'\\) { $inTab=$true }; if \\($inTab\\) { $depth += \\([regex]::Matches\\($l,'<div'\\)\\).Count - \\([regex]::Matches\\($l,'</div>'\\)\\).Count; if \\($depth -eq 0\\) { \"profile-tab closes at line $ln\"; break } } })",
+      "PowerShell($lines = Get-Content \"resources\\\\views\\\\client\\\\cprofile.blade.php\"; $inTab=$false; $depth=0; $ln=0; foreach \\($l in $lines\\) { $ln++; if \\($l -match 'id=\"profile-tab\"'\\) { $inTab=$true }; if \\($inTab\\) { $depth += \\([regex]::Matches\\($l,'<div'\\)\\).Count - \\([regex]::Matches\\($l,'</div>'\\)\\).Count; if \\($depth -eq 0\\) { \"profile-tab closes at line $ln\"; break } } }; $total = 0; foreach \\($l in $lines\\) { $total += \\([regex]::Matches\\($l,'<div'\\)\\).Count - \\([regex]::Matches\\($l,'</div>'\\)\\).Count }; \"whole file div delta: $total\")"
     ]
   }
 }

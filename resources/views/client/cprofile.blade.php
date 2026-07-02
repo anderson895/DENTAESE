@@ -2,12 +2,6 @@
 @section('title','CProfile')
 @section('main-content')
 <style>
-    input{
-        border: 1px;
-        background-color:#F5F5F5;
-        padding: 2px;
-    }
-    
     #video, #overlayCanvas {
         display: block;
         width: 320px;
@@ -30,23 +24,23 @@
 <div class="mb-6 border-b border-gray-300">
     <ul class="flex space-x-6 text-sm font-medium text-center text-gray-600" id="tabs">
         <li>
-            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600 active"
+            <button class="tab-button border-b-2 py-2 px-4 hover:text-primary hover:border-primary active border-primary text-primary"
                 data-tab="profile-tab">Profile</button>
         </li>
         <li>
-            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                 data-tab="medical-tab">Patient Information</button>
         </li>
         <li>
-            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                 data-tab="chart-tab">Dental Chart</button>
         </li>
         <li>
-            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                 data-tab="record-tab">Treatment Record</button>
         </li>
         <li>
-            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                 data-tab="consent-tab">Consent</button>
         </li>
     </ul>
@@ -65,92 +59,121 @@
 </div>
 
 <div id="profile-tab" class="tab-content">
-<div class="flex flex-col h-full">
-<div class="flex flex-row h-full gap-5">
+<div class="flex flex-col lg:flex-row gap-5 items-start">
 
-    {{-- LEFT: Profile Info --}}
-    <div class="rounded-md flex flex-col w-[30%] bg-white">
-        @if (Auth::user()->profile_image == null)
-        <div class="basis-[30%] bg-cover bg-no-repeat bg-center bg-[url({{ asset('images/defaultp.jpg') }})]">
-        @else
-        <div class="basis-[30%] bg-cover bg-no-repeat bg-center bg-[url({{ asset('storage/profile_pictures/' . Auth::user()->profile_image) }})]">
-        @endif
-        </div>
-        <div class="basis-[70%] flex flex-col p-5 overflow-y-auto">
-            <form class="flex flex-col gap-3" method="POST" action="{{ route('profile.upload') }}" enctype="multipart/form-data">
+    {{-- LEFT: Profile Card --}}
+    <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="h-24 bg-gradient-to-r from-sky-400 to-primary"></div>
+        <div class="px-6 pb-6 -mt-12 flex flex-col items-center">
+            @if (Auth::user()->profile_image == null)
+                <img src="{{ asset('images/defaultp.jpg') }}" alt="Profile picture"
+                    class="w-24 h-24 rounded-full object-cover border-4 border-white shadow bg-white">
+            @else
+                <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_image) }}" alt="Profile picture"
+                    class="w-24 h-24 rounded-full object-cover border-4 border-white shadow bg-white">
+            @endif
+            <h2 class="mt-3 text-lg font-bold text-gray-800 text-center">{{ Auth::user()->name }} {{ Auth::user()->lastname }}</h2>
+            <span class="text-xs text-gray-500 capitalize">{{ Auth::user()->account_type }}</span>
+
+            <form class="w-full mt-5 space-y-4" method="POST" action="{{ route('profile.upload') }}" enctype="multipart/form-data">
                 @csrf
-                <label for="fname">Name:</label>
-                <input type="text" name="fname" id="fname"
-                    value="{{ Auth::user()->lastname }}, {{ Auth::user()->name }} {{ Auth::user()->middlename }} {{ Auth::user()->suffix }}"
-                    readonly>
-                <label for="bday">Birth Day:</label>
-                <input type="date" name="bday" id="bday" value="{{ Auth::user()->birth_date }}" readonly>
-                <label for="profile_picture">Upload Profile Picture:</label>
-                <input type="file" name="profile_image" id="profile_image" accept="image/*" class="p-2 border rounded">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded mt-3 w-max">Upload</button>
+                <div>
+                    <label for="fname" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" name="fname" id="fname"
+                        value="{{ Auth::user()->lastname }}, {{ Auth::user()->name }} {{ Auth::user()->middlename }} {{ Auth::user()->suffix }}"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600" readonly>
+                </div>
+                <div>
+                    <label for="bday" class="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
+                    <input type="date" name="bday" id="bday" value="{{ Auth::user()->birth_date }}"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600" readonly>
+                </div>
+                <div>
+                    <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                    <input type="file" name="profile_image" id="profile_image" accept="image/*"
+                        class="w-full text-sm text-gray-600 border border-gray-200 rounded-lg cursor-pointer file:mr-3 file:py-2 file:px-3 file:border-0 file:bg-sky-50 file:text-sky-700 file:text-sm file:font-medium hover:file:bg-sky-100">
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-sky-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                    <i class="fa-solid fa-upload mr-1"></i> Upload
+                </button>
             </form>
         </div>
     </div>
 
-    {{-- RIGHT: QR + Face Recognition --}}
-    <div class="flex flex-col basis-[70%] gap-5">
-        <div class="rounded-md grow-1 bg-white flex flex-row gap-3 p-5">
+    {{-- RIGHT: QR + Face Recognition + Account Settings --}}
+    <div class="w-full lg:w-2/3 flex flex-col gap-5">
+        <div class="flex flex-col md:flex-row gap-5">
 
             {{-- QR Code --}}
-            <div class="basis-[50%] border">
-                <div class="flex flex-col justify-center m-3 items-center">
+            <div class="flex-1 bg-white rounded-xl shadow-sm p-5">
+                <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
+                    <i class="fa-solid fa-qrcode text-primary"></i> My QR Code
+                </h3>
+                <div class="flex flex-col items-center">
                     @php
                         $myQrPath = Auth::user()->qr_code ? 'qr_codes/' . Auth::user()->qr_code : null;
                         $myQrExists = $myQrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($myQrPath);
                     @endphp
                     @if($myQrExists)
                         <img id="myQrImage" src="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" alt="User QR Code"
-                            class="mx-auto w-40 h-40 object-contain border p-2 rounded" />
+                            class="w-40 h-40 object-contain border border-gray-200 p-2 rounded-lg" />
                         <a id="myQrDownload" href="{{ asset('storage/qr_codes/' . Auth::user()->qr_code) }}" download="my-qr-code.png"
-                            class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200">
-                            Download QR Code (.png)
+                            class="mt-4 w-full text-center bg-primary hover:bg-sky-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                            <i class="fa-solid fa-download mr-1"></i> Download QR Code (.png)
                         </a>
                     @else
-                        <img id="myQrImage" src="" alt="QR not available" class="mx-auto w-40 h-40 object-contain border p-2 rounded hidden" />
-                        <div id="myQrMissing" class="w-40 h-40 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded">
+                        <img id="myQrImage" src="" alt="QR not available" class="w-40 h-40 object-contain border border-gray-200 p-2 rounded-lg hidden" />
+                        <div id="myQrMissing" class="w-40 h-40 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded-lg">
                             QR file is missing.<br>Click "Regenerate QR" below.
                         </div>
                         <a id="myQrDownload" href="#" download="my-qr-code.png"
-                            class="mt-4 inline-block bg-[#f84525] text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200 hidden">
-                            Download QR Code (.png)
+                            class="mt-4 w-full text-center bg-primary hover:bg-sky-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition hidden">
+                            <i class="fa-solid fa-download mr-1"></i> Download QR Code (.png)
                         </a>
                     @endif
                     <button id="regenerateMyQrBtn" type="button"
-                        class="mt-2 inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm">
+                        class="mt-2 w-full inline-flex items-center justify-center border border-orange-300 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg text-sm font-medium transition">
                         <i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR
                     </button>
                 </div>
             </div>
 
             {{-- Face Recognition --}}
-            <div class="basis-[50%] border flex flex-col">
-                <div class="flex flex-row justify-between m-3">
-                    <p>Face Recognition</p>
-                    <button id="removeFaceToken" class="bg-[#FF0000] p-1 rounded-sm text-white">Remove</button>
+            <div class="flex-1 bg-white rounded-xl shadow-sm p-5 flex flex-col">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                    <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                        <i class="fa-solid fa-face-smile text-primary"></i> Face Recognition
+                    </h3>
+                    <button id="removeFaceToken" class="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i>Remove
+                    </button>
                 </div>
 
                 {{-- Loading Spinner --}}
                 <div id="loadingSpinner" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
-                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-sky-500"></div>
                 </div>
 
-                <br>
-
                 {{-- Check face_descriptor instead of face_token --}}
-                @if(Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== "")
-                    <button id="capturemodal" class="px-4 m-5 py-2 bg-blue-200 text-white rounded cursor-not-allowed" disabled>
-                        Face Registered
-                    </button>
-                @else
-                    <button id="capturemodal" class="px-4 m-5 py-2 bg-blue-500 text-white rounded">
-                        Capture & Register
-                    </button>
-                @endif
+                <div class="flex flex-col items-center justify-center flex-1 text-center gap-3 py-4">
+                    @if(Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== "")
+                        <span class="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                            <i class="fa-solid fa-check text-xl"></i>
+                        </span>
+                        <p class="text-sm text-gray-600">Your face is registered. You can log in using face recognition.</p>
+                        <button id="capturemodal" class="px-4 py-2 bg-sky-200 text-white rounded-lg text-sm cursor-not-allowed" disabled>
+                            Face Registered
+                        </button>
+                    @else
+                        <span class="w-14 h-14 rounded-full bg-sky-50 text-sky-500 flex items-center justify-center">
+                            <i class="fa-solid fa-camera text-xl"></i>
+                        </span>
+                        <p class="text-sm text-gray-600">Register your face to log in using face recognition.</p>
+                        <button id="capturemodal" class="px-4 py-2 bg-primary hover:bg-sky-700 text-white rounded-lg text-sm font-medium transition">
+                            <i class="fa-solid fa-camera mr-1"></i> Capture & Register
+                        </button>
+                    @endif
+                </div>
 
                 {{-- Face Registration Modal --}}
                 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
@@ -188,7 +211,6 @@
                                     <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
                                     <span>Right Turn</span>
                                 </div>
-                                <div class="flex items-center gap-1">
                             </div>
                         </div>
 
@@ -203,32 +225,48 @@
 
             </div>
         </div>
+        </div>
 
         {{-- Update Profile Form --}}
-        <div class="rounded-md grow-1 bg-white">
-            <div class="basis-[70%] flex flex-col p-5 overflow-y-auto">
-                <form id="updateProfile" class="flex flex-col gap-3" action="">
-                    <label for="email">Email</label>
-                    <input type="text" name="email" id="email" value="{{ Auth::user()->email }}">
-                    <label for="contact">Contact Number</label>
-                    <input type="number" name="contact" id="contact" value="{{ Auth::user()->contact_number }}">
-                    <label for="user">User</label>
-                    <input type="text" name="user" id="user" value="{{ Auth::user()->user }}">
-                    <label for="password">Password</label>
+        <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
+                <i class="fa-solid fa-user-gear text-primary"></i> Account Settings
+            </h3>
+            <form id="updateProfile" class="grid grid-cols-1 md:grid-cols-2 gap-4" action="">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="text" name="email" id="email" value="{{ Auth::user()->email }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                <div>
+                    <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <input type="number" name="contact" id="contact" value="{{ Auth::user()->contact_number }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                <div>
+                    <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" name="user" id="user" value="{{ Auth::user()->user }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                     <div class="relative">
-                        <input type="password" name="password" id="password" class="w-full pr-16">
-                        <button type="button" onclick="toggleProfilePass()" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 text-sm">Show</button>
+                        <input type="password" name="password" id="password" placeholder="Leave blank to keep current password"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        <button type="button" onclick="toggleProfilePass()"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-primary text-xs font-medium">Show</button>
                     </div>
-                    <input type="hidden" name="oldpassword" id="oldpassword" value="{{ Auth::user()->password }}">
-                    <button class="border rounded-md p-3" type="submit">Update</button>
-                </form>
-            </div>
+                </div>
+                <input type="hidden" name="oldpassword" id="oldpassword" value="{{ Auth::user()->password }}">
+                <div class="md:col-span-2 flex justify-end">
+                    <button class="bg-primary hover:bg-sky-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition" type="submit">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Update
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-</div>
-</div>
-</div>
 </div>
 
 <div id="medical-tab" class="tab-content hidden">
@@ -266,10 +304,12 @@ function toggleProfilePass() {
 document.querySelectorAll(".tab-button").forEach(button => {
     button.addEventListener("click", () => {
         const tab = button.dataset.tab;
-        document.querySelectorAll(".tab-button").forEach(btn =>
-            btn.classList.remove("active", "border-blue-600", "text-blue-600")
-        );
-        button.classList.add("active", "border-blue-600", "text-blue-600");
+        document.querySelectorAll(".tab-button").forEach(btn => {
+            btn.classList.remove("active", "border-primary", "text-primary");
+            btn.classList.add("border-transparent");
+        });
+        button.classList.remove("border-transparent");
+        button.classList.add("active", "border-primary", "text-primary");
         document.querySelectorAll(".tab-content").forEach(tc =>
             tc.classList.add("hidden")
         );
