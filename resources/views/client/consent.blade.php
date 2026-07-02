@@ -72,23 +72,6 @@
             I authorize the dental team to proceed with treatment and accept financial responsibility.
         </p>
 
-        <!-- Notes Section -->
-        <div class="pt-4">
-            <strong>Notes</strong>
-            <ul class="list-disc ml-6 mt-2 text-sm space-y-2">
-                <li>
-                    Missed appointments without prior notice (No-Show) may incur a
-                    <strong>₱200 no-show fee</strong>.
-                </li>
-                <li>
-                    Rescheduling or cancellation must be made at least
-                    <strong>24 hours in advance</strong>.
-                </li>
-                <li>
-                    Repeated no-shows may affect future appointment bookings.
-                </li>
-            </ul>
-        </div>
         <!-- Clinic Policies -->
         <div class="pt-4">
             <strong>Clinic Policies & Appointment Guidelines</strong>
