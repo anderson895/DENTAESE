@@ -16,7 +16,7 @@
             and switch between accounts safely.
         </p>
         <p class="text-xs text-gray-500 mt-2">
-            Linked child accounts: <strong>{{ $activeCount }} / {{ $maxChildren }}</strong>
+            Linked Linked Accounts: <strong>{{ $activeCount }} / {{ $maxChildren }}</strong>
             @if($atLimit) <span class="text-red-600">— limit reached</span> @endif
         </p>
     </div>
@@ -37,10 +37,10 @@
 
     {{-- LINKED CHILDREN --}}
     <div class="bg-white p-5 rounded shadow">
-        <h2 class="text-lg font-semibold mb-3">Child Accounts</h2>
+        <h2 class="text-lg font-semibold mb-3">Linked Accounts</h2>
 
         @if($links->isEmpty())
-            <p class="text-sm text-gray-500">No child accounts yet. Use the form below to send a link request.</p>
+            <p class="text-sm text-gray-500">No Linked Accounts yet. Use the form below to send a link request.</p>
         @else
             <table class="w-full text-sm border-collapse">
                 <thead class="bg-gray-100">
