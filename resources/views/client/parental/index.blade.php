@@ -103,7 +103,7 @@
         <form method="POST" action="{{ route('parental.linkExisting') }}" class="space-y-3">
             @csrf
             <div>
-                <label class="text-xs text-gray-600">FamilyEmail</label>
+                <label class="text-xs text-gray-600">Family Email</label>
                 <input type="email" name="email" class="border rounded p-2 w-full" required>
             </div>
             <div>
