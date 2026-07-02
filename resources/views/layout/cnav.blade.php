@@ -6,6 +6,17 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>@yield('title', 'Client Dashboard')</title>
 
+  <!-- Speed up CDN connections -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+  <!-- Anti-flicker: critical styles applied before Tailwind CDN generates CSS -->
+  <style>
+    .hidden { display: none; }
+    body { visibility: hidden; }
+    body.tw-ready { visibility: visible; }
+  </style>
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -29,6 +40,21 @@
 
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Reveal the page once Tailwind has generated its styles (prevents FOUC flicker) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          document.body.classList.add('tw-ready');
+        });
+      });
+    });
+    // Fallback: never leave the page hidden kahit ma-delay ang CDN
+    setTimeout(function () {
+      if (document.body) document.body.classList.add('tw-ready');
+    }, 1500);
+  </script>
 </head>
 
 <body class="bg-background font-sans">
@@ -47,7 +73,6 @@
           <button id="notificationToggle" class="relative focus:outline-none">
             <i class="fa-solid fa-bell text-xl text-white"></i>
             @if(Auth::user()->unreadNotifications->count())
-              <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
               <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             @endif
           </button>

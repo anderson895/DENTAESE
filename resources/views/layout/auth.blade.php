@@ -7,9 +7,36 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Santiago-Amancio Dental Clinic')</title>
 
+    <!-- Speed up CDN connections -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+    <!-- Anti-flicker: critical styles applied before Tailwind CDN generates CSS -->
+    <style>
+        .hidden { display: none; }
+        [x-cloak] { display: none !important; }
+        body { visibility: hidden; }
+        body.tw-ready { visibility: visible; }
+    </style>
+
     <!-- Tailwind & Alpine -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- Reveal the page once Tailwind has generated its styles (prevents FOUC flicker) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    document.body.classList.add('tw-ready');
+                });
+            });
+        });
+        // Fallback: never leave the page hidden kahit ma-delay ang CDN
+        setTimeout(function () {
+            if (document.body) document.body.classList.add('tw-ready');
+        }, 1500);
+    </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -49,8 +76,9 @@
                         <button @click="accountOpen = !accountOpen" class="text-gray-700 hover:text-blue-600 px-2 py-1">
                             Account ▾
                         </button>
-                        <div 
-                            x-show="accountOpen" 
+                        <div
+                            x-show="accountOpen"
+                            x-cloak
                             @click.away="accountOpen = false"
                             x-transition
                             class="absolute bg-white text-gray-800 shadow-lg rounded-md mt-2 right-0 w-48 z-50"
@@ -73,7 +101,7 @@
                                   d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                         <!-- Close icon -->
-                        <svg x-show="mobileOpen" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+                        <svg x-show="mobileOpen" x-cloak xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M6 18L18 6M6 6l12 12"/>
@@ -84,7 +112,7 @@
         </div>
 
         <!-- Mobile Menu Dropdown -->
-        <div x-show="mobileOpen" x-transition class="md:hidden bg-white shadow-lg">
+        <div x-show="mobileOpen" x-cloak x-transition class="md:hidden bg-white shadow-lg">
             <a href="{{ url('/') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Home</a>
             <a href="{{ url('/') }}#about" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">About</a>
             <a href="{{ url('/') }}#branches" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Locations</a>
