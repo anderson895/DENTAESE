@@ -53,10 +53,14 @@ class ServicesController extends Controller
         $validated = validator($mapped, [
             'name' => 'required|string|max:255',
             'approx_time' => 'required|integer', // in minutes
-            'approx_price' => 'required|numeric',
+            'approx_price' => 'nullable|numeric', // price is optional / hidden in the UI
             'description' => 'nullable|string',
             'type' => 'nullable|string',
         ])->validate();
+
+    // approx_price column is NOT NULL in the DB; price was removed from the UI,
+    // so default to 0 when none is provided to avoid an integrity violation.
+    $validated['approx_price'] = $validated['approx_price'] ?? 0;
 
     $service = Service::create($validated);
 

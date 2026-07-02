@@ -44,7 +44,7 @@
       <input type="text" name="name" placeholder="Name" required class="w-full border p-2 rounded">
       <input type="text" name="description" placeholder="Description" required class="w-full border p-2 rounded">
       <input type="number" name="time" placeholder="Approx. Time (mins)" required class="w-full border p-2 rounded">
-      <input type="number" name="price" placeholder="Approx. Price" required class="w-full border p-2 rounded" hidden>
+      <input type="number" name="price" placeholder="Approx. Price" class="w-full border p-2 rounded" hidden>
       <select name="type" id="type" class="w-full border p-2 rounded">
         <option value="General Dentistry">General Dentistry</option>
         <option value="Orthodontics">Orthodontics</option>
@@ -162,14 +162,28 @@
         _token: '{{ csrf_token() }}'
       };
 
-      $.post('{{ route("add-services") }}', formData, function (res) {
-        if (res.status === 'success') {
-          Swal.fire('Success!', res.message, 'success');
-          $('#addUserModal').addClass('hidden');
-          $('#addUserForm')[0].reset();
-          serviceslist(currentPage);
-        } else {
-          Swal.fire('Error', res.message, 'error');
+      $.ajax({
+        url: '{{ route("add-services") }}',
+        method: 'POST',
+        data: formData,
+        success: function (res) {
+          if (res.status === 'success') {
+            Swal.fire('Success!', res.message, 'success');
+            $('#addUserModal').addClass('hidden');
+            $('#addUserForm')[0].reset();
+            serviceslist(currentPage);
+          } else {
+            Swal.fire('Error', res.message, 'error');
+          }
+        },
+        error: function (xhr) {
+          let msg = 'Something went wrong. Please try again.';
+          if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+            msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+          } else if (xhr.responseJSON && xhr.responseJSON.message) {
+            msg = xhr.responseJSON.message;
+          }
+          Swal.fire('Error', msg, 'error');
         }
       });
     });

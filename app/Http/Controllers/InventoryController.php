@@ -65,11 +65,73 @@ public function store(Request $request)
         'unit' => 'required|string',
         'price' => 'required|numeric',
         'description' => 'nullable|string',
+        'batch_quantity' => 'nullable|integer|min:1',
+        'batch_expiration_date' => 'nullable|date',
     ]);
 
-    medicines::create($request->all());
+    $medicine = medicines::create([
+        'name' => $request->name,
+        'unit' => $request->unit,
+        'price' => $request->price,
+        'description' => $request->description,
+    ]);
+
+    // Create initial batch if quantity and expiration provided
+    if ($request->filled('batch_quantity') && $request->filled('batch_expiration_date')) {
+        \App\Models\medicine_batches::create([
+            'medicine_id' => $medicine->id,
+            'store_id' => session('active_branch_id'),
+            'quantity' => $request->batch_quantity,
+            'expiration_date' => $request->batch_expiration_date,
+            'status' => 'active',
+        ]);
+    }
 
     return response()->json(['status' => 'success','message'=>'Medicine added']);
+}
+
+public function update(Request $request, medicines $medicine)
+{
+    $request->validate([
+        'name'        => 'required|string',
+        'unit'        => 'required|string',
+        'price'       => 'required|numeric',
+        'description' => 'nullable|string',
+    ]);
+
+    $medicine->update($request->only(['name', 'unit', 'price', 'description']));
+
+    return response()->json(['status' => 'success', 'message' => 'Medicine updated']);
+}
+
+public function destroy(medicines $medicine)
+{
+    // Only ACTIVE batches with remaining stock should block deletion.
+    // Expired/suspended batches are hidden from the inventory UI and represent
+    // unusable stock, so they must not prevent removing a medicine that shows
+    // as empty across all branches.
+    $hasStock = $medicine->batches()
+        ->where('status', 'active')
+        ->where('quantity', '>', 0)
+        ->exists();
+    if ($hasStock) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Cannot delete: this medicine still has active batches with stock. Mark them expired or stock-out first.',
+        ], 422);
+    }
+
+    $hasSales = \App\Models\SaleItem::where('medicine_id', $medicine->id)->exists();
+    if ($hasSales) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Cannot delete: this medicine has sales history. Deletion would erase those records.',
+        ], 422);
+    }
+
+    $medicine->delete();
+
+    return response()->json(['status' => 'success', 'message' => 'Medicine deleted']);
 }
 
 public function show(medicines $medicine)

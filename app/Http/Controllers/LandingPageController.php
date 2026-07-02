@@ -12,10 +12,10 @@ class LandingPageController extends Controller
     public function index()
     {
         // Doctors
-        $doctors = User::where('position', 'dentist')->get();
+        $doctors = User::where('position', 'Dentist')->get();
 
         // Receptionists
-        $receptionists = User::where('position', 'receptionist')->get();
+        $receptionists = User::where('position', 'Receptionist')->get();
          $services = Service::all();
         // Branches
         $branches = Store::all();

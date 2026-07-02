@@ -3,361 +3,461 @@
 namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\newuser;
+use App\Models\PatientRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use App\Mail\SendOtp;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+
 class AuthUi extends Controller
-{   
-    public function GetBranchLogin (Request $request){
-        $branches =Auth::user()->stores;
-         return view('auth.SelectBranch', compact('branches'));
+{
+    // ===============================
+    // HELPER: Euclidean Distance
+    // ===============================
+    private function euclideanDistance(array $a, array $b): float
+    {
+        $sum = 0;
+        foreach ($a as $i => $val) {
+            $sum += pow($val - ($b[$i] ?? 0), 2);
+        }
+        return sqrt($sum);
     }
-     public function SelectBranchLogin (Request $request){
+
+    /**
+     * Patient login redirect:
+     *  - No consent yet  → consent page
+     *  - Has consent but no completed PDA profile → PDA form (cforms)
+     *  - Otherwise → booking dashboard
+     */
+    private function patientLoginRedirect(User $user): string
+    {
+        if (empty($user->is_consent)) {
+            return route('CConsent');
+        }
+
+        $hasCompletedProfile = PatientRecord::where('user_id', $user->id)
+            ->where('profile_completed', true)
+            ->exists();
+
+        if (!$hasCompletedProfile) {
+            return route('CForms');
+        }
+
+        return route('CBookingo');
+    }
+
+    // ===============================
+    // VIEWS
+    // ===============================
+    public function GetBranchLogin(Request $request)
+    {
+        $branches = Auth::user()->stores;
+        return view('auth.SelectBranch', compact('branches'));
+    }
+
+    public function SelectBranchLogin(Request $request)
+    {
         $request->validate(['branch_id' => 'required|exists:stores,id']);
         session(['active_branch_id' => $request->branch_id]);
         return redirect()->intended('/dashboard');
     }
-    public function SignUpUi(Request $request){
+
+    public function SignUpUi(Request $request)
+    {
         return view('auth.signup');
     }
-     public function Qr(Request $request){
+
+    public function Qr(Request $request)
+    {
         return view('auth.qrlogin');
     }
-    public function LoginUi(Request $request){
+
+    public function LoginUi(Request $request)
+    {
         return view('auth.login');
     }
 
-    public function FaceUi(Request $request){
+    public function FaceUi(Request $request)
+    {
         return view('auth.face');
     }
 
-    public function SignUpForm(Request $request){
-      $validated = $request->validate([
-            'name' => 'required',
-          
-            'email' => 'required|email',
-            'password' => 'required',
-            'contact_number' => 'required',
-            'account_type' => 'required',
-            'user' => 'required|unique:users,user',
+    // ===============================
+    // NORMAL LOGIN
+    // ===============================
+    public function LoginForm(Request $request)
+    {
+        $credentials = $request->only('user', 'password');
 
-        ]);
-
-            // Hash password
-        $otp = rand(100000, 999999);
-
-    // Hash the password
-    $validated['password'] = bcrypt($validated['password']);
-    $validated['otp_code'] = $otp;
-    $validated['otp_expires_at'] = Carbon::now()->addMinutes(10); // OTP valid for 10 mins
-    $validated['is_verified'] = false;
-
-    // Create user
-    $user = newuser::create($validated);
-
-    if ($user) {
-        // Send OTP to user's email
-        Mail::to($user->email)->send(new \App\Mail\SendOtp($otp));
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Account created successfully. An OTP has been sent to your email for verification.',
-            'user_id' => $user->id
-        ]);
-    } else {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to create account.'
-        ], 500);
-    }
-    }
-
-    public function LoginForm(Request $request){
-        $credentials = $request->only('user','password');
-
-        if(Auth::attempt($credentials)){
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-            
+
+            $next = $request->input('next');
+            if ($next && str_starts_with($next, url('/'))) {
+                return response()->json(['status' => 'success', 'redirect' => $next]);
+            }
+
             if ($user->position == 'admin') {
                 session(['active_branch_id' => 'admin']);
                 $redirectUrl = route('dashboard');
-
-            }elseif ($user->account_type == 'patient') {
-               $formstatus = $user->is_consent;
-
-               if ($formstatus == 0) {
-                     $redirectUrl = route('CConsent');
-               }else{
-                $redirectUrl = route('CBookingo');
-               }
-            } else { 
+            } elseif ($user->account_type == 'patient') {
+                $redirectUrl = $this->patientLoginRedirect($user);
+            } else {
                 $redirectUrl = match ($user->account_type) {
-                'admin' => route('GetBranchLogin'),
-                'patient' => route('CBookingo'),
-                default => route('login')
-
-                 };
+                    'admin'   => route('GetBranchLogin'),
+                    'patient' => route('CBookingo'),
+                    default   => route('login'),
+                };
             }
-            // Choose redirect URL based on account type
-          
-           
-           
-            return response()->json(['status' => 'success','redirect' => $redirectUrl]);
+
+            return response()->json(['status' => 'success', 'redirect' => $redirectUrl]);
         }
+
         return response()->json(['status' => 'error', 'message' => 'Invalid credentials']);
     }
 
-    // private $apiKey = 'd6oKAAzVLTtgRyeecdED4eHFi9wfmq3I';
-    // private $apiSecret = 'qe_nYezzGtNwf4WN_drOcrxfeg0ryJ7S';
-
-    private $apiKey = '-2y7KYjX1JuFECsjI_ANCAM5pugEm5R0';
-    private $apiSecret = 'QHRO96q2sagJUJ-4DAgVgmBDa2-H3n8v';
-
-
-
-public function loginFace(Request $request)
-{
-    $request->validate([
-        'image_base64' => 'required',
-    ]);
-
     // ===============================
-    // 1. Decode base64 image
+    // FACE LOGIN
     // ===============================
-    $imageData = $request->input('image_base64');
-    $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $imageData);
-    $imageData = base64_decode($imageData);
-
-    if (!$imageData) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Invalid image data.'
-        ]);
-    }
-
-    $tempImagePath = storage_path('app/temp_login_face.jpg');
-    file_put_contents($tempImagePath, $imageData);
-
-    // ===============================
-    // 2. Detect face (Face++)
-    // ===============================
-    $detectResponse = Http::attach(
-        'image_file',
-        file_get_contents($tempImagePath),
-        'temp_login_face.jpg'
-    )->post('https://api-us.faceplusplus.com/facepp/v3/detect', [
-        'api_key' => $this->apiKey,
-        'api_secret' => $this->apiSecret,
-    ]);
-
-    $detectData = $detectResponse->json();
-
-    if (empty($detectData['faces'][0]['face_token'])) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'No face detected.'
-        ]);
-    }
-
-    $scannedFaceToken = $detectData['faces'][0]['face_token'];
-
-    // ===============================
-    // 3. Compare with ALL users
-    // ===============================
-    $users = User::whereNotNull('face_token')->get();
-
-    $matchedUser = null;
-    $highestConfidence = 0;
-
-    foreach ($users as $user) {
-        $verifyResponse = Http::asForm()->post(
-            'https://api-us.faceplusplus.com/facepp/v3/compare',
-            [
-                'api_key'      => $this->apiKey,
-                'api_secret'   => $this->apiSecret,
-                'face_token1'  => $user->face_token,
-                'face_token2'  => $scannedFaceToken,
-            ]
-        );
-
-        $verifyData = $verifyResponse->json();
-
-        if (
-            isset($verifyData['confidence']) &&
-            $verifyData['confidence'] > $highestConfidence
-        ) {
-            $highestConfidence = $verifyData['confidence'];
-            $matchedUser = $user;
-        }
-    }
-
-    // ===============================
-    // 4. Threshold check
-    // ===============================
-    if (!$matchedUser || $highestConfidence < 80) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Face not recognized.'
-        ]);
-    }
-
-    // ===============================
-    // 5. Login user
-    // ===============================
-    Auth::login($matchedUser);
-
-    // ===============================
-    // 6. Redirect logic
-    // ===============================
-    if ($matchedUser->position === 'admin') {
-        session(['active_branch_id' => 'admin']);
-        $redirectUrl = route('dashboard');
-    } else {
-        $redirectUrl = match ($matchedUser->account_type) {
-            'admin'   => route('GetBranchLogin'),
-            'patient' => route('CProfile'),
-            default   => route('login'),
-        };
-    }
-
-    return response()->json([
-        'status'     => 'success',
-        'message'    => 'Login successful!',
-        'confidence' => $highestConfidence,
-        'redirect'   => $redirectUrl
-    ]);
-}
-
-
-
-
-
-
-public function sendOtp(Request $request)
-{
+    public function loginFace(Request $request)
+    {
         $request->validate([
-                'name' => 'required',
-                'middlename' => 'nullable|string',
-                'lastname' => 'required|string',
-                'suffix' => 'nullable|string|max:10',
-                'birth_date' => 'required|date',
-                'birthplace' => 'required|string',
-                'current_address' => 'required|string',
-                'email' => 'required|email|unique:users,email|unique:newusers,email',
-                'password' => 'required',
-                'contact_number' => 'required',
-                'account_type' => 'required',
-                'user' => 'required|unique:users,user|unique:newusers,user',
-                'verification_id' => 'required|image|mimes:jpg,jpeg,png|max:2048', // max 2MB
-            
-            ]);
-
-    $otp = rand(100000, 999999);
-
-    $uploadedFile = $request->file('verification_id');
-    $filename = uniqid('verify_') . '.' . $uploadedFile->getClientOriginalExtension();
-    $uploadedFile->storeAs('temp_verifications', $filename, 'public'); // Store in `storage/app/temp_verifications`
-
-    // Save both file name and user info
-    Session::put('pending_user', array_merge($request->except('verification_id'), ['verification_id' => $filename]));
-    Session::put('signup_otp', $otp);
-
-    Mail::to($request->email)->send(new SendOtp($otp));
-
-    return response()->json(['message' => 'OTP sent to your email.']);
-}
-
-public function verifyOtp(Request $request)
-{
-    if ($request->otp != Session::get('signup_otp')) {
-        return response()->json(['message' => 'Invalid OTP.'], 400);
-    }
-
-    // OTP is valid → just return success
-    // The user is not created yet; frontend will submit to finalSignup
-    return response()->json([
-        'status' => 'success',
-        'message' => 'OTP verified successfully.',
-    ]);
-}
-
-
-public function finalSignup(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string',
-        'lastname' => 'required|string',
-        'birth_date' => 'required|date',
-        'birthplace' => 'required|string',
-        'current_address' => 'required|string',
-        'email' => 'required|email|unique:users,email',
-        'user' => 'required|string|unique:users,user',
-        'password' => 'required|string|min:6',
-        'face_token' => 'required|string',
-    ]);
-
-
-
-    // START SCRIP
-
-        $validated = $request->validate([
-            'name' => 'required',
-          
-            'email' => 'required|email',
-            'password' => 'required',
-            'contact_number' => 'required',
-            'account_type' => 'required',
-            'user' => 'required|unique:users,user',
-
+            'face_descriptor' => 'required|string',
         ]);
 
-            // Hash password
+        $scannedDescriptor = json_decode($request->input('face_descriptor'), true);
+
+        if (!$scannedDescriptor || count($scannedDescriptor) !== 128) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Invalid face descriptor.',
+            ]);
+        }
+
+        $users          = User::whereNotNull('face_descriptor')->get();
+        $matchedUser    = null;
+        $lowestDistance = PHP_FLOAT_MAX;
+
+        foreach ($users as $user) {
+            $storedDescriptor = json_decode($user->face_descriptor, true);
+            if (!$storedDescriptor || count($storedDescriptor) !== 128) continue;
+
+            $distance = $this->euclideanDistance($scannedDescriptor, $storedDescriptor);
+
+            if ($distance < $lowestDistance) {
+                $lowestDistance = $distance;
+                $matchedUser    = $user;
+            }
+        }
+
+        if (!$matchedUser || $lowestDistance > 0.5) {
+            return response()->json([
+                'status'          => 'error',
+                'message'         => 'Face not recognized.',
+                'lowest_distance' => $lowestDistance,
+            ]);
+        }
+
+        Auth::login($matchedUser);
+
+        if ($matchedUser->position === 'admin') {
+            session(['active_branch_id' => 'admin']);
+            $redirectUrl = route('dashboard');
+        } elseif ($matchedUser->account_type === 'patient') {
+            $redirectUrl = $this->patientLoginRedirect($matchedUser);
+        } else {
+            $redirectUrl = match ($matchedUser->account_type) {
+                'admin'   => route('GetBranchLogin'),
+                'patient' => route('CBookingo'),
+                default   => route('login'),
+            };
+        }
+
+        return response()->json([
+            'status'   => 'success',
+            'message'  => 'Login successful!',
+            'distance' => $lowestDistance,
+            'redirect' => $redirectUrl,
+        ]);
+    }
+
+    // ===============================
+    // SIGNUP - Send OTP
+    // FIX: Added face_descriptor validation rule so it
+    //      passes through validation without being stripped.
+    //      Also stored in session so finalSignup() can
+    //      use it as fallback if request body is missing it.
+    // ===============================
+    /**
+     * Per-step validation for the signup wizard.
+     * Returns 422 with field-level errors if validation fails, 200 otherwise.
+     */
+    public function validateSignupStep(Request $request)
+    {
+        $step = (int) $request->input('step', 0);
+
+        $rulesByStep = [
+            1 => [
+                'name'                    => 'required|string',
+                'middlename'              => 'nullable|string',
+                'lastname'                => 'required|string',
+                'suffix'                  => 'nullable|string|max:10',
+                'birth_date'              => 'required|date|before:today',
+                'birthplace_municipality' => 'required|string',
+                'birthplace_province'     => 'required|string',
+                'address_street'          => 'required|string',
+                'address_barangay'        => 'required|string',
+                'address_municipality'    => 'required|string',
+                'address_province'        => 'required|string',
+                'address_house_number'    => 'nullable|string',
+                'address_other_details'   => 'nullable|string',
+            ],
+            2 => [
+                'email'            => 'required|email|unique:users,email|unique:newusers,email',
+                'contact_number'   => 'required|string',
+                'user'             => 'required|string|unique:users,user|unique:newusers,user',
+                'password'         => 'required|string|min:6',
+                'confirm_password' => 'required|same:password',
+            ],
+            3 => [
+                'face_descriptor' => 'required|string',
+            ],
+        ];
+
+        if (!isset($rulesByStep[$step])) {
+            return response()->json(['message' => 'Invalid step.'], 422);
+        }
+
+        $messages = [
+            'birth_date.before'       => 'Birthdate must be in the past.',
+            'confirm_password.same'   => 'Passwords do not match.',
+            'email.unique'            => 'This email is already registered.',
+            'user.unique'             => 'This username is already taken.',
+            'password.min'            => 'Password must be at least 6 characters.',
+            'face_descriptor.required'=> 'Please capture your face before continuing.',
+        ];
+
+        $request->validate($rulesByStep[$step], $messages);
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
+            'name'            => 'required',
+            'middlename'      => 'nullable|string',
+            'lastname'        => 'required|string',
+            'suffix'          => 'nullable|string|max:10',
+            'birth_date'      => 'required|date',
+            'birthplace_municipality' => 'required|string',
+            'birthplace_province'     => 'required|string',
+            'address_street'          => 'required|string',
+            'address_barangay'        => 'required|string',
+            'address_municipality'    => 'required|string',
+            'address_province'        => 'required|string',
+            'address_house_number'    => 'nullable|string',
+            'address_other_details'   => 'nullable|string',
+            'email'           => 'required|email|unique:users,email|unique:newusers,email',
+            'password'        => 'required',
+            'contact_number'  => 'required',
+            'account_type'    => 'required',
+            'user'            => 'required|unique:users,user|unique:newusers,user',
+            'verification_id' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'face_descriptor' => 'required|string',
+        ]);
+
+        $otp      = rand(100000, 999999);
+        $filename = null;
+
+        if ($request->hasFile('verification_id')) {
+            $uploadedFile = $request->file('verification_id');
+            $filename     = uniqid('verify_') . '.' . $uploadedFile->getClientOriginalExtension();
+            $uploadedFile->storeAs('temp_verifications', $filename, 'public');
+        }
+
+        // FIX: explicitly include face_descriptor in the session
+        //      so it's available as a fallback in finalSignup()
+        Session::put('pending_user', array_merge(
+            $request->except(['verification_id', '_token']),
+            ['verification_id' => $filename]
+        ));
+        Session::put('signup_otp', $otp);
+
+        Mail::to($request->email)->send(new SendOtp($otp));
+
+        return response()->json(['message' => 'OTP sent to your email.']);
+    }
+
+    // ===============================
+    // SIGNUP - Verify OTP
+    // ===============================
+    public function verifyOtp(Request $request)
+    {
+        if ($request->otp != Session::get('signup_otp')) {
+            return response()->json(['message' => 'Invalid OTP.'], 400);
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'OTP verified successfully.',
+        ]);
+    }
+
+    // ===============================
+    // SIGNUP - Final (save user)
+    // FIX: face_descriptor is read from $request first.
+    //      If missing (edge case), falls back to session.
+    //      Either way it must be a valid 128-value descriptor.
+    // ===============================
+    public function finalSignup(Request $request)
+    {
+        $request->validate([
+            'name'            => 'required|string',
+            'middlename'      => 'nullable|string',
+            'lastname'        => 'required|string',
+            'suffix'          => 'nullable|string|max:10',
+            'birth_date'      => 'required|date',
+            'birthplace_municipality' => 'required|string',
+            'birthplace_province'     => 'required|string',
+            'address_house_number'    => 'nullable|string',
+            'address_street'          => 'required|string',
+            'address_barangay'        => 'required|string',
+            'address_municipality'    => 'required|string',
+            'address_province'        => 'required|string',
+            'address_other_details'   => 'nullable|string',
+            'email'           => 'required|email|unique:users,email',
+            'contact_number'  => 'nullable|string',
+            'user'            => 'required|string|unique:users,user',
+            'password'        => 'required|string|min:6',
+            'account_type'    => 'required|string',
+            'face_descriptor' => 'required|string',
+        ]);
+
+        // Build combined fields for backward compatibility
+        $birthplace = $request->birthplace_municipality . ', ' . $request->birthplace_province;
+        $currentAddress = implode(', ', array_filter([
+            $request->address_other_details,
+            $request->address_house_number,
+            $request->address_street,
+            $request->address_barangay,
+            $request->address_municipality,
+            $request->address_province,
+        ]));
+
+        // FIX: prefer $request value; fall back to session if somehow missing
+        $faceDescriptorRaw = $request->face_descriptor
+            ?? Session::get('pending_user.face_descriptor');
+
+        if (!$faceDescriptorRaw) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Face descriptor is missing. Please go back and capture your face again.',
+            ], 422);
+        }
+
+        $descriptorArray = json_decode($faceDescriptorRaw, true);
+
+        if (!$descriptorArray || count($descriptorArray) !== 128) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Invalid face descriptor. Please go back and capture your face again.',
+            ], 400);
+        }
+
+        // Check if face already registered to another user
+        $existingUsers = User::whereNotNull('face_descriptor')->get();
+
+        foreach ($existingUsers as $existingUser) {
+            $storedDescriptor = json_decode($existingUser->face_descriptor, true);
+            if (!$storedDescriptor || count($storedDescriptor) !== 128) continue;
+
+            $distance = $this->euclideanDistance($descriptorArray, $storedDescriptor);
+
+            if ($distance < 0.5) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'This face is already registered to another account.',
+                ], 409);
+            }
+        }
+
+        // Create user — face_descriptor saved here
+        $user = User::create([
+            'name'            => $request->name,
+            'middlename'      => $request->middlename ?? null,
+            'lastname'        => $request->lastname,
+            'suffix'          => $request->suffix ?? null,
+            'birth_date'      => $request->birth_date,
+            'birthplace'      => $birthplace,
+            'birthplace_municipality' => $request->birthplace_municipality,
+            'birthplace_province'     => $request->birthplace_province,
+            'current_address' => $currentAddress,
+            'address_other_details'   => $request->address_other_details,
+            'address_house_number'    => $request->address_house_number,
+            'address_street'          => $request->address_street,
+            'address_barangay'        => $request->address_barangay,
+            'address_municipality'    => $request->address_municipality,
+            'address_province'        => $request->address_province,
+            'email'           => $request->email,
+            'contact_number'  => $request->contact_number ?? null,
+            'user'            => $request->user,
+            'password'        => bcrypt($request->password),
+            'account_type'    => $request->account_type,
+            // FIX: save the raw JSON string (not the decoded array)
+            'face_descriptor' => $faceDescriptorRaw,
+        ]);
+
+        // Clear signup session data
+        Session::forget(['pending_user', 'signup_otp']);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Account created successfully!',
+            'user'    => $user,
+        ], 201);
+    }
+
+    // ===============================
+    // OLD SIGNUP (kept for reference)
+    // ===============================
+    public function SignUpForm(Request $request)
+    {
+        $validated = $request->validate([
+            'name'           => 'required',
+            'email'          => 'required|email',
+            'password'       => 'required',
+            'contact_number' => 'required',
+            'account_type'   => 'required',
+            'user'           => 'required|unique:users,user',
+        ]);
+
         $otp = rand(100000, 999999);
 
-        // Hash the password
-        $validated['password'] = bcrypt($validated['password']);
-        $validated['otp_code'] = $otp;
-        $validated['otp_expires_at'] = Carbon::now()->addMinutes(10); // OTP valid for 10 mins
-        $validated['is_verified'] = false;
+        $validated['password']       = bcrypt($validated['password']);
+        $validated['otp_code']       = $otp;
+        $validated['otp_expires_at'] = Carbon::now()->addMinutes(10);
+        $validated['is_verified']    = false;
 
-        // Create user
         $user = newuser::create($validated);
-    //END SCRIPT
 
+        if ($user) {
+            Mail::to($user->email)->send(new \App\Mail\SendOtp($otp));
 
-    
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Account created successfully. An OTP has been sent to your email for verification.',
+                'user_id' => $user->id,
+            ]);
+        }
 
-    $user = User::create([
-        'name' => $request->name,
-        'middlename' => $request->middlename ?? null,
-        'lastname' => $request->lastname,
-        'suffix' => $request->suffix ?? null,
-        'birth_date' => $request->birth_date,
-        'birthplace' => $request->birthplace,
-        'current_address' => $request->current_address,
-        'email' => $request->email,
-        'contact_number' => $request->contact_number ?? null,
-        'user' => $request->user,
-        'password' => bcrypt($request->password),
-        'account_type' => 'patient',
-        'face_token' => $request->face_token,
-    ]);
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Account created successfully!',
-        'user' => $user,
-    ], 201);
-}
-
-
-
-
-//qr 
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Failed to create account.',
+        ], 500);
+    }
 }

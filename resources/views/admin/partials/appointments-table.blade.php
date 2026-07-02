@@ -44,6 +44,13 @@
 
     <td>{{ $appointment->desc }}</td>
     <td class="status">{{ ucfirst($appointment->status) }}</td>
+    <td>
+        @if($appointment->arrived_at)
+            {{ \Carbon\Carbon::parse($appointment->arrived_at)->format('h:i A') }}
+        @else
+            <span class="text-gray-400">—</span>
+        @endif
+    </td>
    <td>
     @if ($appointment->status == 'pending')
         <button type="button"
@@ -68,7 +75,11 @@
                 Change Time
             </button>
 
-
+        <a href="{{ route('appointments.view', $appointment->id) }}"
+           class="bg-blue-500 text-white px-3 py-1 rounded">
+            View
+        </a>
+    @elseif (in_array($appointment->status, ['completed','cancelled','no_show']))
         <a href="{{ route('appointments.view', $appointment->id) }}"
            class="bg-blue-500 text-white px-3 py-1 rounded">
             View

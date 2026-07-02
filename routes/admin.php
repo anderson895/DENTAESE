@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitLogController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -127,6 +128,14 @@ Route::post('/branch/{store}/remove-user', [BranchController::class, 'removeUser
 Route::get('/branch/deletebranch', [BranchController::class, 'DeleteBranch'])->name('DeleteBranch');
 Route::post('/branch/update-schedule/{id}', [BranchController::class, 'updateSchedule']);
 
+// Calendar-based schedule (clinic open days + doctor schedules)
+Route::get('/schedule/calendar', [ScheduleController::class, 'index'])->name('schedule.calendar');
+Route::get('/schedule/events', [ScheduleController::class, 'events'])->name('schedule.events');
+Route::post('/schedule/clinic-override', [ScheduleController::class, 'saveClinicOverride'])->name('schedule.clinic.save');
+Route::delete('/schedule/clinic-override/{override}', [ScheduleController::class, 'deleteClinicOverride'])->name('schedule.clinic.delete');
+Route::post('/schedule/doctor', [ScheduleController::class, 'saveDoctorSchedule'])->name('schedule.doctor.save');
+Route::delete('/schedule/doctor/{schedule}', [ScheduleController::class, 'deleteDoctorSchedule'])->name('schedule.doctor.delete');
+
 //branch selection
 
 
@@ -134,6 +143,7 @@ Route::post('/branch/update-schedule/{id}', [BranchController::class, 'updateSch
 Route::get('/appointments', [AdminBookingController::class, 'showBookings'])->name('admin.booking');
 Route::put('/appointments/{id}/approve', [AdminBookingController::class, 'approveBooking'])->name('appointments.approve');
 Route::get('/appointments/{id}/view', [AdminBookingController::class, 'view'])->name('appointments.view');
+Route::put('/appointments/{id}/change-dentist', [AdminBookingController::class, 'changeDentist'])->name('appointments.changeDentist');
 Route::post('/appointments/{id}/settle', [AdminBookingController::class, 'settle'])->name('appointments.settle');
 Route::get('/appointments/fetch', [AdminBookingController::class, 'fetch'])->name('appointments.fetch');
 Route::get('/admin/bookings/history', [AdminBookingController::class, 'showHistory'])->name('admin.booking.history');
@@ -159,6 +169,8 @@ Route::post('/scan-face', [VisitLogController::class, 'handleFaceScan'])->name('
 //inventory
 Route::get('/inventorylist', [InventoryController::class,'InventoryList'])->name('InventoryList')->middleware('auth');
 Route::post('/medicines', [InventoryController::class, 'store'])->name('medicines.store');
+Route::put('/medicines/{medicine}', [InventoryController::class, 'update'])->name('medicines.update');
+Route::delete('/medicines/{medicine}', [InventoryController::class, 'destroy'])->name('medicines.destroy');
 
 Route::get('/medicines/{medicine}', [InventoryController::class, 'show'])->name('medicines.show');
 Route::post('/medicines/{medicine}/batch', [InventoryController::class, 'addBatch'])->name('medicines.addBatch');

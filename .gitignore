@@ -5,8 +5,10 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/app/public/qr_codes/*
+!/storage/app/public/qr_codes/.gitkeep
 /vendor
-# .env
+.env
 .env.backup
 .env.production
 .phpactor.json

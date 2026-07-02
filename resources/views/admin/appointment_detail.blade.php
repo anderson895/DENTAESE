@@ -8,8 +8,18 @@
 <style>
     [x-cloak] { display: none !important; }
 </style>
-<div x-data="{ tab: localStorage.getItem('activeTab') || 'info', openReceiptModal: true }" 
-     x-init="$watch('tab', value => localStorage.setItem('activeTab', value))">
+@php
+    $authPosition  = auth()->user()->position ?? '';
+    $isReceptionist = $authPosition === 'Receptionist';
+    // Receptionist always lands on "checkin" first; Dentist/Admin land on Dental Chart
+    // and may persist their last-active tab via localStorage.
+    $defaultTab = $isReceptionist ? 'checkin' : 'info';
+@endphp
+<div x-data="{
+        tab: (new URLSearchParams(window.location.search).get('tab')) || (@js($isReceptionist) ? @js($defaultTab) : (localStorage.getItem('activeTab') || @js($defaultTab))),
+        openReceiptModal: false
+     }"
+     x-init="$watch('tab', value => { if (!@js($isReceptionist)) localStorage.setItem('activeTab', value); })">
 
     <h1 class="text-2xl font-bold mb-4">Appointment #{{ $appointment->id }}</h1>
 
@@ -18,6 +28,7 @@
         <button @click="tab='info'" :class="tab==='info' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Dental Chart</button>
         <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='rx'" :class="tab==='rx' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">RX</button>
+        <button @click="tab='pos'" :class="tab==='pos' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">POS</button>
         <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
         <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
     </div>
@@ -63,18 +74,43 @@
             {{ $appointment->user->suffix ?? '' }}
         </p>
 
-        <p><strong>Dentist:</strong> {{ $appointment->dentist->name ?? 'N/A' }}</p>
-
         @php
             use Carbon\Carbon;
 
             $date  = Carbon::parse($appointment->appointment_date)->format('F j, Y');
             $start = Carbon::parse($appointment->appointment_time)->format('g:i A');
             $end   = Carbon::parse($appointment->booking_end_time)->format('g:i A');
+            $arrived = $appointment->arrived_at ? Carbon::parse($appointment->arrived_at)->format('g:i A') : null;
         @endphp
+
+        <div class="mt-2 mb-2">
+            <strong>Dentist:</strong>
+            @if(in_array($appointment->status, ['pending', 'approved', 'arrived']) && (auth()->user()->position === 'Receptionist' || auth()->user()->position === 'admin'))
+                <select id="changeDentistSelect"
+                        data-id="{{ $appointment->id }}"
+                        class="border rounded p-1 ml-2">
+                    @foreach($branchDentists as $d)
+                        <option value="{{ $d->id }}" {{ $appointment->dentist_id == $d->id ? 'selected' : '' }}>
+                            {{ $d->name }} {{ $d->lastname }}
+                        </option>
+                    @endforeach
+                </select>
+                <button id="saveDentistBtn" type="button" class="ml-2 px-3 py-1 bg-blue-600 text-white rounded text-sm">Save</button>
+            @else
+                {{ $appointment->dentist->name ?? 'N/A' }} {{ $appointment->dentist->lastname ?? '' }}
+            @endif
+        </div>
 
         <p><strong>Date:</strong> {{ $date }}</p>
         <p><strong>Time:</strong> {{ $start }} - {{ $end }}</p>
+        <p>
+            <strong>Arrived at:</strong>
+            @if($arrived)
+                <span class="text-green-700 font-semibold">{{ $arrived }}</span>
+            @else
+                <span class="text-gray-500 italic">Not yet arrived</span>
+            @endif
+        </p>
         <p><strong>Branch:</strong> {{ $appointment->store->name ?? 'N/A' }}</p>
         <p><strong>Description:</strong> {{ $appointment->desc }}</p>
 
@@ -152,24 +188,13 @@
             {{-- ACTION BUTTONS --}}
 
             <div class="mt-6">
-                    <div class="flex flex-row gap-5" id="action-buttons">
-                        <button type="submit"
-                                class="bg-green-600 text-white px-4 py-2 rounded"
-                                data-status="completed">
-                            Complete
-                        </button>
-
-                        <button type="submit"
-                                class="bg-red-600 text-white px-4 py-2 rounded"
-                                data-status="no_show">
-                            No Show
-                        </button>
-                    </div>
-            </div>
-            <!-- <div class="mt-6">
                 @if ($appointment->status === 'completed')
                     <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
-                        Completed
+                        Paid
+                    </span>
+                @elseif ($appointment->status === 'no_show')
+                    <span class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded font-semibold">
+                        No Show
                     </span>
                 @else
                     <div class="flex flex-row gap-5" id="action-buttons">
@@ -186,12 +211,90 @@
                         </button>
                     </div>
                 @endif
-            </div> -->
+            </div>
 
         </form>
     </div>
 </div>
 
+
+    <div x-show="tab==='pos'" x-cloak>
+        <div class="bg-white p-6 rounded shadow">
+            <div class="flex items-center mt-2 mb-4">
+                <h2 class="text-xl font-bold">POS — Medicine Purchase</h2>
+                <button
+                    @click="tab='treatment'"
+                    class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    Next
+                </button>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-4">
+                Open the POS to record medicine purchases for
+                <strong>{{ $appointment->user->name }} {{ $appointment->user->lastname }}</strong>.
+                The total ay automatic na rin makukuha sa Treatment Record at sa final receipt.
+            </p>
+
+            @php
+                $patientSales = \App\Models\Sale::with('items.medicine')
+                    ->where('patient_id', $appointment->user_id)
+                    ->where('store_id', $appointment->store_id)
+                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->get();
+                $patientMedicineTotal = $patientSales->sum('total_amount');
+            @endphp
+
+            <div class="mb-4">
+                <a href="{{ route('pos.index', ['store' => $appointment->store_id, 'patient_id' => $appointment->user_id, 'appointment_id' => $appointment->id]) }}"
+                   class="inline-block bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded">
+                    Open POS for this Patient
+                </a>
+            </div>
+
+            <h3 class="font-semibold text-gray-700 mb-2">Medicine Purchases for this Visit</h3>
+            <table class="w-full border-collapse border border-gray-300 text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-3 py-2 text-left">Receipt #</th>
+                        <th class="border px-3 py-2 text-left">Items</th>
+                        <th class="border px-3 py-2 text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($patientSales as $sale)
+                        <tr>
+                            <td class="border px-3 py-2">{{ $sale->id }}</td>
+                            <td class="border px-3 py-2">
+                                <ul class="list-disc pl-4">
+                                    @foreach($sale->items as $item)
+                                        <li>
+                                            {{ $item->medicine->name ?? '—' }}
+                                            ({{ $item->quantity }} × ₱{{ number_format($item->price, 2) }})
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                            <td class="border px-3 py-2 text-right">₱{{ number_format($sale->total_amount, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center text-gray-500 py-4">
+                                No medicine purchases yet for this visit.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                @if($patientMedicineTotal > 0)
+                    <tfoot class="bg-gray-50">
+                        <tr>
+                            <td colspan="2" class="border px-3 py-2 text-right font-semibold">Medicine Total</td>
+                            <td class="border px-3 py-2 text-right font-semibold">₱{{ number_format($patientMedicineTotal, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
 
     <div x-show="tab==='treatment'" x-cloak>
         <div id="printable-treatment">
@@ -240,15 +343,11 @@
         <div id="ack-receipt-print" class="print-area">
 
             <!-- HEADER -->
-            <div style="text-align:center; line-height:1.4;">
-                <strong>Santiago – Amancio Dental Clinic</strong><br>
-                <span style="font-size:10pt;">
-                    {{ $appointment->store->address ?? 'N/A' }}<br>
-                    {{ $appointment->store->name ?? 'N/A' }}
-                </span>
-            </div>
-
-            <hr style="margin:10px 0;">
+            @include('partials.print-header', [
+                'title'   => 'Acknowledgement Receipt',
+                'meta'    => ($appointment->store->name ?? '').' — '.($appointment->store->address ?? ''),
+                'address' => $appointment->store->address ?? null,
+            ])
 
             <!-- TITLE -->
             <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -299,6 +398,55 @@
                 </div>
             </div>
 
+            @php
+                $combinedSales = \App\Models\Sale::with('items.medicine')
+                    ->where('patient_id', $appointment->user_id)
+                    ->where('store_id', $appointment->store_id)
+                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->get();
+                $combinedMedTotal = $combinedSales->sum('total_amount');
+                $combinedTreatmentTotal = (float) ($appointment->total_price ?? 0);
+                $combinedGrandTotal = $combinedTreatmentTotal + $combinedMedTotal;
+            @endphp
+
+            @if($combinedSales->count() > 0 || $combinedTreatmentTotal > 0)
+                <hr style="margin:14px 0;">
+                <div style="font-size:11pt;">
+                    <strong>Itemized Charges</strong>
+                    <table style="width:100%; border-collapse:collapse; margin-top:6px; font-size:10pt;">
+                        <thead>
+                            <tr>
+                                <th style="border:1px solid #000; padding:3px; text-align:left;">Description</th>
+                                <th style="border:1px solid #000; padding:3px; text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if($combinedTreatmentTotal > 0)
+                                <tr>
+                                    <td style="border:1px solid #000; padding:3px;">Treatment / Services</td>
+                                    <td style="border:1px solid #000; padding:3px; text-align:right;">₱{{ number_format($combinedTreatmentTotal, 2) }}</td>
+                                </tr>
+                            @endif
+                            @foreach($combinedSales as $sale)
+                                @foreach($sale->items as $item)
+                                    <tr>
+                                        <td style="border:1px solid #000; padding:3px;">
+                                            Medicine: {{ $item->medicine->name ?? '—' }}
+                                            ({{ $item->quantity }} × ₱{{ number_format($item->price, 2) }})
+                                        </td>
+                                        <td style="border:1px solid #000; padding:3px; text-align:right;">₱{{ number_format($item->subtotal ?? ($item->quantity * $item->price), 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            @endforeach
+                            <tr>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">Grand Total</td>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">₱{{ number_format($combinedGrandTotal, 2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
             <!-- SIGNATURE -->
             <div style="margin-top:40px; text-align:right;">
                 <strong>By:</strong>
@@ -337,6 +485,28 @@
 {{-- Scripts --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@if(session('open_receipt'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        window.dispatchEvent(new CustomEvent('open-receipt'));
+    });
+</script>
+@endif
+@if(session('success'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: @json(session('success')),
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
+    });
+</script>
+@endif
 <script>
 function printCheckinReceipt() {
     const receipt = document.getElementById('ack-receipt-print');
@@ -386,6 +556,37 @@ function printCheckinReceipt() {
 
 
 <script>
+$(document).on('click', '#saveDentistBtn', function () {
+    const select = $('#changeDentistSelect');
+    const id = select.data('id');
+    const dentistId = select.val();
+
+    Swal.fire({
+        title: 'Change Dentist?',
+        text: 'Reassign this appointment to the selected dentist?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, save'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        $.ajax({
+            url: `/appointments/${id}/change-dentist`,
+            type: 'PUT',
+            data: {
+                _token: '{{ csrf_token() }}',
+                dentist_id: dentistId,
+            },
+            success: function (res) {
+                Swal.fire('Saved', res.message, 'success');
+            },
+            error: function (xhr) {
+                Swal.fire('Error', xhr.responseJSON?.message || 'Failed to update dentist.', 'error');
+            }
+        });
+    });
+});
+
 $(document).on('input', 'input[name="total_price"]', function () {
     let value = parseFloat($(this).val());
 
@@ -457,6 +658,12 @@ $(document).on('input', 'input[name="total_price"]', function () {
                     processData: false,
                     contentType: false,
                     success: function (res) {
+                        // Clear local drafts on successful save
+                        try {
+                            localStorage.removeItem('appt_draft_{{ $appointment->id }}');
+                            localStorage.removeItem('rx_draft_{{ $appointment->id }}');
+                        } catch (e) {}
+
                         Swal.fire(
                             'Success',
                             res.message ?? 'Appointment completed successfully!',
@@ -464,18 +671,33 @@ $(document).on('input', 'input[name="total_price"]', function () {
                         ).then(() => {
 
                             // UI-only update (Blade remains untouched)
-                            if ($('#status').val() === 'completed') {
+                            const newStatus = $('#status').val();
+                            if (newStatus === 'completed') {
                                 $('#action-buttons').replaceWith(`
                                     <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded font-semibold">
-                                        Completed
+                                        Paid
+                                    </span>
+                                `);
+                            } else if (newStatus === 'no_show') {
+                                $('#action-buttons').replaceWith(`
+                                    <span class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded font-semibold">
+                                        No Show
                                     </span>
                                 `);
                             }
 
                             window.dispatchEvent(new CustomEvent('open-receipt'));
                         });
+                    },
+                    error: function (xhr) {
+                        let msg = xhr.responseJSON?.message || 'Failed to finalize appointment.';
+                        const errs = xhr.responseJSON?.errors;
+                        if (errs) {
+                            msg = Object.values(errs).flat().join(' ');
+                        }
+                        Swal.fire('Error', msg, 'error');
                     }
-                }); 
+                });
             });
         });
 
@@ -524,7 +746,70 @@ $(document).on('input', 'input[name="total_price"]', function () {
         }, 200);
     }
     </script>
-    
 
-   
+<script>
+// =========================================================================
+// Local draft persistence for Check-in form + RX list, scoped per appointment.
+// Restores values when the user leaves and comes back (e.g. via POS).
+// =========================================================================
+(function () {
+    const APPT_KEY = 'appt_draft_{{ $appointment->id }}';
+    const RX_KEY   = 'rx_draft_{{ $appointment->id }}';
+
+    function checkinFields() {
+        return [
+            document.querySelector('#finalizeAppointmentForm textarea[name="work_done"]'),
+            document.querySelector('#finalizeAppointmentForm select[name="paytype"]'),
+            document.querySelector('#finalizeAppointmentForm input[name="total_price"]'),
+        ].filter(Boolean);
+    }
+
+    function saveCheckinDraft() {
+        const data = {};
+        checkinFields().forEach(el => { data[el.name] = el.value; });
+        try { localStorage.setItem(APPT_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function restoreCheckinDraft() {
+        let data;
+        try { data = JSON.parse(localStorage.getItem(APPT_KEY) || '{}'); } catch (e) { return; }
+        checkinFields().forEach(el => {
+            if (data[el.name] !== undefined && data[el.name] !== '' && !el.value) {
+                el.value = data[el.name];
+            }
+        });
+    }
+
+    function saveRxDraft() {
+        const list = document.getElementById('rx-list');
+        if (!list) return;
+        try { localStorage.setItem(RX_KEY, list.innerHTML); } catch (e) {}
+    }
+
+    function restoreRxDraft() {
+        const list = document.getElementById('rx-list');
+        if (!list) return;
+        const html = localStorage.getItem(RX_KEY);
+        if (html && !list.innerHTML.trim()) {
+            list.innerHTML = html;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        restoreCheckinDraft();
+        restoreRxDraft();
+
+        checkinFields().forEach(el => {
+            el.addEventListener('input', saveCheckinDraft);
+            el.addEventListener('change', saveCheckinDraft);
+        });
+
+        const rxList = document.getElementById('rx-list');
+        if (rxList) {
+            new MutationObserver(saveRxDraft).observe(rxList, { childList: true, subtree: true });
+        }
+    });
+})();
+</script>
+
 @endsection

@@ -8,6 +8,7 @@ use App\Models\SaleItem;
 use App\Models\medicine_batches;
 use App\Models\MedicineMovement;
 use App\Models\Store;
+use App\Models\Appointment;
 
 use Illuminate\Support\Facades\DB;
 
@@ -15,12 +16,12 @@ class POSController extends Controller
 {
     //
 
-      public function index($storeId)
+      public function index(Request $request, $storeId)
     {
        $medicines = medicine_batches::with('medicine')
     ->where('store_id', $storeId)
     ->where('quantity', '>', 0)
-    ->where('status', 'active') 
+    ->where('status', 'active')
     ->get()
     ->groupBy('medicine_id')
     ->map(function ($batches) {
@@ -35,7 +36,31 @@ class POSController extends Controller
     });
 
     $store = Store::find($storeId);
-        return view('admin.pos.index', compact('medicines', 'storeId', 'store'));
+    $preselectedPatientId = $request->input('patient_id') ?: session('pos_patient_id');
+    $appointmentId        = $request->input('appointment_id') ?: session('pos_appointment_id');
+
+    if ($request->has('appointment_id')) {
+        $aid = $request->input('appointment_id');
+        if ($aid === '' || $aid === null) {
+            session()->forget('pos_appointment_id');
+        } else {
+            session()->put('pos_appointment_id', $aid);
+        }
+    }
+
+    return view('admin.pos.index', compact('medicines', 'storeId', 'store', 'preselectedPatientId', 'appointmentId'));
+    }
+
+    private function rememberPatient(Request $request): void
+    {
+        if ($request->has('patient_id')) {
+            $pid = $request->input('patient_id');
+            if ($pid === '' || $pid === null) {
+                session()->forget('pos_patient_id');
+            } else {
+                session()->put('pos_patient_id', $pid);
+            }
+        }
     }
 
     // Add to cart 
@@ -45,6 +70,8 @@ class POSController extends Controller
         'medicine_id' => 'required|integer',
         'quantity'    => 'required|integer|min:1',
     ]);
+
+    $this->rememberPatient($request);
 
     $batch = medicine_batches::where('medicine_id', $request->medicine_id)
         ->where('store_id', $storeId)
@@ -94,12 +121,19 @@ class POSController extends Controller
     $sale = null;
 
     DB::transaction(function () use ($cart, $storeId, $request, &$sale) {
+        $totalAmount = collect($cart)->sum('subtotal');
+        $amountGiven = $request->amount_given ? floatval($request->amount_given) : null;
+        $changeAmount = $amountGiven ? max(0, $amountGiven - $totalAmount) : null;
+
         $sale = Sale::create([
-            'store_id'     => $storeId,
-            'user_id'      => auth()->id(),   
-            'patient_id'   => $request->patient_id, 
-            'total_amount' => collect($cart)->sum('subtotal'),
-            'status'       => 'completed',
+            'store_id'       => $storeId,
+            'user_id'        => auth()->id(),
+            'patient_id'     => $request->patient_id,
+            'total_amount'   => $totalAmount,
+            'amount_given'   => $amountGiven,
+            'change_amount'  => $changeAmount,
+            'payment_method' => $request->payment_method,
+            'status'         => 'completed',
         ]);
 
         foreach ($cart as $item) {
@@ -132,10 +166,21 @@ class POSController extends Controller
         }
     });
 
-    
-    session()->forget('cart');
 
- 
+    session()->forget('cart');
+    session()->forget('pos_patient_id');
+
+    // If POS was opened from a specific appointment ("Open POS for this Patient"),
+    // return to that appointment's POS tab so the user can see the recorded purchase.
+    $appointmentId = session()->pull('pos_appointment_id');
+    if ($appointmentId) {
+        $appointment = Appointment::find($appointmentId);
+        if ($appointment) {
+            return redirect()->route('appointments.view', ['id' => $appointment->id, 'tab' => 'pos'])
+                ->with('success', 'Sale recorded for this appointment.');
+        }
+    }
+
   return redirect()->route('pos.index', $storeId)
     ->with('receipt', $sale->load('items.medicine', 'patient', 'user'));
 }
@@ -146,6 +191,8 @@ class POSController extends Controller
         'index' => 'required|integer',
         'quantity' => 'required|integer|min:1',
     ]);
+
+    $this->rememberPatient($request);
 
     $cart = session()->get('cart', []);
     if (!isset($cart[$request->index])) {
@@ -176,10 +223,12 @@ public function removeFromCart(Request $request, $storeId)
         'index' => 'required|integer',
     ]);
 
+    $this->rememberPatient($request);
+
     $cart = session()->get('cart', []);
     if (isset($cart[$request->index])) {
         unset($cart[$request->index]);
-        session()->put('cart', array_values($cart)); 
+        session()->put('cart', array_values($cart));
     }
 
     return back()->with('success', 'Item removed from cart!');

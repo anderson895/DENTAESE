@@ -6,7 +6,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 
-<div class="flex h-screen">
+<div class="flex h-[calc(100vh-8.5rem)] min-h-[400px] rounded-lg overflow-hidden shadow">
 
   <!-- ================= SIDEBAR ================= -->
   <div class="w-1/4 bg-sky-100 border-r border-sky-300 flex flex-col">

@@ -12,7 +12,7 @@ class TransactionController extends Controller
     //
     public function index(Request $request, $storeId)
     {
-        $query = Sale::with('patient', 'items.batch.medicine', 'items.medicine')
+        $query = Sale::with('patient', 'user', 'items.batch.medicine', 'items.medicine')
             ->where('store_id', $storeId);
 
         // Date filter
@@ -20,6 +20,39 @@ class TransactionController extends Controller
             $from = Carbon::parse($request->from)->startOfDay();
             $to = Carbon::parse($request->to)->endOfDay();
             $query->whereBetween('created_at', [$from, $to]);
+        }
+
+        // Patient name filter
+        if ($request->filled('patient')) {
+            $query->whereHas('patient', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->patient . '%')
+                  ->orWhere('lastname', 'like', '%' . $request->patient . '%');
+            });
+        }
+
+        // Cashier name filter
+        if ($request->filled('cashier')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->cashier . '%')
+                  ->orWhere('lastname', 'like', '%' . $request->cashier . '%');
+            });
+        }
+
+        // Medicine name filter
+        if ($request->filled('medicine')) {
+            $query->whereHas('items.medicine', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->medicine . '%');
+            });
+        }
+
+        // Payment method filter
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         $sales = $query->latest()->paginate(15);

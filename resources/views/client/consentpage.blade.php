@@ -29,49 +29,12 @@
         <p class="mt-4">I understand that dentistry is not an exact science and that no dentist can properly guarantee accurate results all the time.</p>
 
         <p class="mt-4">Thereby, I authorize any of the doctors/dental auxiliaries to proceed with & perform the dental restorations & treatments as explained to me. I understand that these are subject to modification depending on undiagnosable circumstances that may arise during the course of treatment. I understand that regardless of any dental insurance coverage I may have, I am responsible for payment of dental fees. I agree to pay any attorney's fees, collection fee, or court costs that may be incurred to satisfy any obligation to this office. All treatment were properly explained to me & any untoward circumstances that may arise during the procedure, the attending dentist will not be held liable since it is my free will, with full trust & confidence in him/her, to undergo dental treatment under his/her care.</p>
-        <br> Note: <ul class="list-disc ml-6  mb-4">
-    <li class="mt-4">
-        Missed appointments without prior notice ("No-Show") may result in a 
-        <strong>no-show fee (200 Pesos)</strong>, which will be collected on your next scheduled visit.
-    </li>
-
-    <li class="mt-4">
-        If you need to reschedule or cancel, please notify us at least 
-        <strong>24 hours before</strong> your appointment time.
-    </li>
-
-    <li class="mt-4">
-        Repeated no-shows may affect your ability to book future appointments.
-    </li>
-</ul>
 <!-- Clinic Policies -->
 <div class="pt-4">
     <strong>Clinic Policies & Appointment Guidelines</strong>
 
     <ul class="list-disc ml-6 mt-3 space-y-3 text-sm text-justify">
-        <li>
-            All patients must use the clinic's official appointment system to make appointments in advance.
-            Patients who walk in are dependent on availability.
-        </li>
-
-        <li>
-            Patients are unable to set a new appointment unless it is an emergency or urgent.
-        </li>
-
-        <li>
-            Patients are expected to arrive at least 10 minutes before their scheduled appointment.
-            If you are more than fifteen minutes late, the clinic may decide to reschedule or cancel.
-        </li>
-
-        <li>
-            Cancellations of appointments must be made at least 48 hours before the scheduled time.
-            Penalties or limitations on future reservations may be imposed for failure to notify the clinic.
-        </li>
-
-        <li>
-            All dental services must be paid for in full right after treatment,
-            unless the clinic management specifies.
-        </li>
+       
 
         <li>
             Payments for completed services are nonrefundable.

@@ -4,11 +4,22 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @section('main-content')
 
+@if(session('success'))
+    <div class="m-4 p-4 rounded bg-green-100 text-green-800 border border-green-300">
+        {{ session('success') }}
+    </div>
+@endif
 
-{{-- <form id="faceLoginForm" enctype="multipart/form-data">
-    <input type="file" name="login_face_image" accept="image/*" required>
-    <button type="submit">Login with Face</button>
-</form> --}}
+@if($errors->any())
+    <div class="m-4 p-4 rounded bg-red-100 text-red-800 border border-red-300">
+        <ul class="list-disc pl-5 text-sm">
+            @foreach($errors->all() as $err)
+                <li>{{ $err }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div id="response"></div>
 <script>
     document.getElementById('faceLoginForm').addEventListener('submit', async function (e) {

@@ -8,8 +8,18 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DentalChartController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MedicalFormController;
+use App\Http\Controllers\ParentalControlController;
 
 Route::get('/crecord', [Clientside::class,'record'])->name('crecord')->middleware('auth');
+
+// Parental control
+Route::middleware(['auth'])->group(function () {
+    Route::get('/parental',                  [ParentalControlController::class, 'index'])->name('parental.index');
+    Route::post('/parental/add-dependent',   [ParentalControlController::class, 'addDependent'])->name('parental.addDependent');
+    Route::delete('/parental/unlink/{link}', [ParentalControlController::class, 'unlink'])->name('parental.unlink');
+    Route::post('/parental/switch-to',       [ParentalControlController::class, 'switchTo'])->name('parental.switchTo');
+    Route::post('/parental/switch-back',     [ParentalControlController::class, 'switchBack'])->name('parental.switchBack');
+});
 
 Route::post('/notifications/mark-as-read', function () {
     auth()->user()->unreadNotifications->markAsRead();
@@ -31,11 +41,8 @@ Route::middleware(['auth', Client::class])->group(function(){
 
 
     Route::post('/cremove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
-    Route::get('/cprofile', [ProfileController::class, 'showProfile'])->name('CProfile');
-   
 
-   
-//medical form
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/medical-form', [MedicalFormController::class, 'store'])->name('medical-form.store');
@@ -46,11 +53,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/consentstore', [DentalChartController::class, 'store'])->name('consent.store');
 });
 
-});
-
-
 
 Route::post('/profile/upload', [ProfileController::class, 'uploadprofileimage'])->name('profile.upload');
+
+Route::get('/cprofile', [ProfileController::class, 'showProfile'])->name('CProfile')->middleware('auth');
 
 
 

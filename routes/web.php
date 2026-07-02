@@ -22,11 +22,7 @@ use App\Http\Controllers\DentalToothController;
 Route::post('/dental/tooth/save', [DentalToothController::class, 'store'])->name('dental.tooth.save');
 
 Route::get('/dental/tooth/{patient}', [DentalToothController::class, 'fetch'])->name('dental.tooth.fetch');
-
-// Route::get('/', function () {
-//     return view('auth.login');
-// })->name('login');
-
+// 9847239847
 Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
@@ -106,6 +102,11 @@ Route::post('/cregister-face-registration', [FaceRecognitionController::class, '
 Route::get('/qr',[AuthUi::class, 'Qr'])->name('Qr');
 Route::post('/qr-login', [QrController::class, 'LoginQr'])->name('qr.login');
 
+Route::middleware('auth')->group(function () {
+    Route::post('/qr/regenerate/{user}', [QrController::class, 'regenerateForUser'])->name('qr.regenerate');
+    Route::post('/qr/regenerate-mine', [QrController::class, 'regenerateMyQr'])->name('qr.regenerate.mine');
+});
+
 
 //signup form
 
@@ -115,6 +116,7 @@ Route::post('/login-face', [AuthUi::class, 'loginFace'])->name('login-face');
 
 
 // web.php
+Route::post('/signup/validate-step', [AuthUi::class, 'validateSignupStep'])->name('signup.validateStep');
 Route::post('/signup/send-otp', [AuthUi::class, 'sendOtp'])->name('send.otp');
 Route::get('/signup/verify-otp', [AuthUi::class, 'verifyOtp'])->name('verify.otp');
 
@@ -129,7 +131,7 @@ Route::get('/logouts', [AdminController::class,'Logout'])->name('Logout')->middl
 
 Route::get('/dental-chart/{patient}', function (User $patient) {
     return view('admin.dental-chart.index', compact('patient'));
-});
+})->name('dental-chart.index');
 
 // ADMIN
 Route::middleware('auth')->group(function () {
