@@ -55,6 +55,7 @@ class User extends Authenticatable
         'user',
         'password',
         'account_type',
+        'is_managed',
         'position',
         'status',
         'verification_id',
@@ -75,6 +76,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'is_managed'        => 'boolean',
         ];
     }
 
@@ -116,12 +118,6 @@ class User extends Authenticatable
                     ->withPivot('relationship', 'status')
                     ->wherePivot('status', 'active')
                     ->withTimestamps();
-    }
-
-    public function pendingChildLinks()
-    {
-        return $this->hasMany(\App\Models\ParentChildLink::class, 'parent_user_id')
-                    ->where('status', 'pending');
     }
 
     public function parents()
