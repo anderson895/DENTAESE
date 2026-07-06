@@ -155,6 +155,53 @@
 <canvas id="monthlyAppointmentsChart"></canvas> --}}
 @endif
  @if (session('active_branch_id') != "admin")
+
+    {{-- PENDING APPOINTMENTS FOR APPROVAL --}}
+    <div class="bg-white border-l-4 border-yellow-400 border border-gray-200 shadow-md p-6 rounded-md mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <div class="font-medium flex items-center gap-2">
+                <i class="fa-solid fa-hourglass-half text-yellow-500"></i>
+                Pending Appointments — For Approval
+                <span class="text-xs px-2 py-0.5 rounded-full {{ $pendingApprovals->count() ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-500' }} font-semibold">
+                    {{ $pendingApprovals->count() }}
+                </span>
+            </div>
+            <a href="{{ route('admin.booking', ['status' => 'pending']) }}" class="text-sm text-primary hover:underline font-medium">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[540px]">
+                <tbody>
+                    @forelse ($pendingApprovals->take(5) as $pendingAppointment)
+                    <tr class="hover:bg-yellow-50 cursor-pointer transition"
+                        onclick="window.location='{{ route('admin.booking', ['status' => 'pending']) }}'">
+                        <td class="py-2 px-4 border-b border-gray-100">
+                            <span class="text-gray-600 text-sm font-medium">
+                                {{ $pendingAppointment->user->full_name ?? 'Unknown' }}
+                            </span>
+                        </td>
+                        <td class="py-2 px-4 border-b border-gray-100">
+                            <span class="text-[13px] font-medium text-gray-400">
+                                {{ \Carbon\Carbon::parse($pendingAppointment->appointment_date)->format('M d, Y') }}
+                                {{ \Carbon\Carbon::parse($pendingAppointment->appointment_time)->format('h:i A') }}
+                            </span>
+                        </td>
+                        <td class="py-2 px-4 border-b border-gray-100">
+                            <span class="text-[13px] font-medium text-gray-400">{{ $pendingAppointment->service_name }}</span>
+                        </td>
+                        <td class="py-2 px-4 border-b border-gray-100 text-right">
+                            <span class="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800 font-semibold">Pending</span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="py-2 px-4 text-center text-gray-400 text-sm">No pending appointments for approval. 🎉</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="p-6 relative flex flex-col min-w-0 mb-4 lg:mb-0 break-words bg-gray-50  w-full shadow-lg rounded">
             <div class="rounded-t mb-0 px-0 border-0">
@@ -249,7 +296,12 @@
                     <option value="monthly">This Month</option>
                 </select>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                <a href="{{ route('admin.booking', ['status' => 'pending']) }}"
+                   class="rounded-md border border-dashed border-yellow-300 bg-yellow-50 p-4 hover:bg-yellow-100 hover:border-yellow-500 transition cursor-pointer block">
+                    <div class="text-xl font-semibold text-yellow-600" id="pending-count">0</div>
+                    <span class="text-yellow-700 text-sm">Pending Approval</span>
+                </a>
                 <a href="{{ route('admin.booking', ['status' => 'approved']) }}"
                    class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="active-count">0</div>
@@ -291,7 +343,8 @@ function loadAppointmentStats(filter = 'daily') {
             $('#active-count').text(data.active);
             $('#completed-count').text(data.completed);
             $('#canceled-count').text(data.canceled);
-            $('#noshow-count').text(data.nowshow);
+            $('#noshow-count').text(data.noshow);
+            $('#pending-count').text(data.pending);
         }
     });
 }
