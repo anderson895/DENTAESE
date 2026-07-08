@@ -59,12 +59,12 @@
 </div>
 
 <div id="profile-tab" class="tab-content">
-<div class="flex flex-col lg:flex-row gap-5 items-start">
+<div class="flex flex-col lg:flex-row gap-5 items-stretch">
 
     {{-- LEFT: Profile Card --}}
-    <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="h-24 bg-gradient-to-r from-sky-400 to-primary"></div>
-        <div class="px-6 pb-6 -mt-12 flex flex-col items-center">
+    <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div class="h-36 bg-gradient-to-r from-sky-400 to-primary"></div>
+        <div class="px-6 pb-6 -mt-10 flex flex-col items-center flex-1">
             @if (Auth::user()->profile_image == null)
                 <img src="{{ asset('images/defaultp.jpg') }}" alt="Profile picture"
                     class="w-24 h-24 rounded-full object-cover border-4 border-white shadow bg-white">
@@ -225,7 +225,6 @@
 
             </div>
         </div>
-        </div>
 
         {{-- Update Profile Form --}}
         <div class="bg-white rounded-xl shadow-sm p-5">
@@ -267,6 +266,7 @@
         </div>
     </div>
 
+</div>
 </div>
 
 <div id="medical-tab" class="tab-content hidden">

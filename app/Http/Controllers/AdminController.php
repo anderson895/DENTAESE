@@ -70,6 +70,15 @@ class AdminController extends Controller
         ->orderBy('appointment_time')
         ->get();
 
+    // Pending appointments awaiting approval (today onwards)
+    $pendingApprovals = Appointment::with('user')
+        ->where('store_id', $branchId)
+        ->where('status', 'pending')
+        ->whereDate('appointment_date', '>=', Carbon::today())
+        ->orderBy('appointment_date')
+        ->orderBy('appointment_time')
+        ->get();
+
     // Expiring medicines
     $expiringSoon = medicine_batches::with('medicine')
         ->where('store_id', $branchId)
@@ -191,6 +200,7 @@ $monthlyAppointmentsArr = collect(range(1,12))->map(function($m) use ($monthlyAp
     'patientCount',
     'branchCount',
     'appointmentsToday',
+    'pendingApprovals',
       'monthlySalesTotal',
         'monthlyAppointmentTotal',
          'monthlySales',

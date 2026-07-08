@@ -31,15 +31,15 @@ class DashboardController extends Controller
     $active = (clone $query)->where('status', 'approved')->count();
     $completed = (clone $query)->where('status', 'completed')->count();
     $canceled = (clone $query)->where('status', 'cancelled')->count();
-        $noshow = (clone $query)->where('status', 'no_show')->count();
-
-        
+    $noshow = (clone $query)->where('status', 'no_show')->count();
+    $pending = (clone $query)->where('status', 'pending')->count();
 
     return response()->json([
         'active' => $active,
         'completed' => $completed,
         'canceled' => $canceled,
         'noshow' => $noshow,
+        'pending' => $pending,
     ]);
 }
 

@@ -84,6 +84,35 @@
                 </div>
             </div>
 
+            <div class="flex items-center space-x-5">
+                <!-- Notifications -->
+                <div class="relative">
+                    <button id="notificationToggle" class="relative focus:outline-none">
+                        <i class="fa-solid fa-bell text-xl text-white"></i>
+                        @if(Auth::user()->unreadNotifications->count())
+                            <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                        @endif
+                    </button>
+
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50">
+                        <div class="p-4 border-b">
+                            <h3 class="text-sm font-bold text-gray-700">Notifications</h3>
+                        </div>
+                        <ul class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                            @forelse(Auth::user()->notifications->take(10) as $notification)
+                                <li class="px-4 py-3 hover:bg-gray-100 transition">
+                                    <p class="text-sm text-gray-800 font-medium">
+                                        {{ $notification->data['message'] ?? 'You have a new notification.' }}
+                                    </p>
+                                    <span class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
+                                </li>
+                            @empty
+                                <li class="px-4 py-3 text-center text-sm text-gray-500">No notifications</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
+
             <!-- User Dropdown -->
             <div class="relative">
                 <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white">
@@ -106,6 +135,7 @@
                     <li><a href="/profile" class="block px-4 py-2 hover:bg-gray-100 text-sm"><i class="fa-regular fa-user mr-2"></i>Profile</a></li>
                     <li><a href="/logouts" class="block px-4 py-2 text-red-500 hover:bg-red-100 text-sm"><i class="fa-solid fa-right-from-bracket mr-2"></i>Logout</a></li>
                 </ul>
+            </div>
             </div>
         </header>
 
@@ -192,6 +222,34 @@
         $(window).on('click', function (e) {
             if (!toggleBtn[0].contains(e.target) && !dropdown[0].contains(e.target)) {
                 dropdown.addClass('hidden');
+            }
+        });
+
+        // Notification bell
+        const notifToggle = $('#notificationToggle');
+        const notifDropdown = $('#notificationDropdown');
+        let notifMarked = false;
+
+        notifToggle.on('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.toggleClass('hidden');
+            if (!notifMarked && !notifDropdown.hasClass('hidden')) {
+                fetch("{{ route('notifications.markAsRead') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": '{{ csrf_token() }}',
+                        "Content-Type": "application/json"
+                    }
+                }).then(() => {
+                    notifMarked = true;
+                    notifToggle.find('span').remove();
+                });
+            }
+        });
+
+        $(window).on('click', function (e) {
+            if (notifToggle.length && !notifToggle[0].contains(e.target) && !notifDropdown[0].contains(e.target)) {
+                notifDropdown.addClass('hidden');
             }
         });
 

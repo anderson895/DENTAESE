@@ -2,16 +2,7 @@
 
 @section('title', 'Profile')
 @section('main-content')
-    <style>
-        input {
-            border: 1px;
-            background-color: #F5F5F5;
-            padding: 8px;
-            border-radius: 6px;
-            
-        }
-    </style>
-<button onclick="history.back()" 
+<button onclick="history.back()"
     class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 transition">
     ⬅ Back
 </button>
@@ -23,25 +14,25 @@
         <ul class="flex space-x-6 text-sm font-medium text-center text-gray-600" id="tabs">
             <li>
                 <button
-                    class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600 active"
+                    class="tab-button border-b-2 py-2 px-4 hover:text-primary hover:border-primary active border-primary text-primary"
                     data-tab="profile-tab">Profile</button>
             </li>
 
             @if ($user->account_type == 'patient')
                 <li>
-                   
-                    <button 
-                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+
+                    <button
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="printable-patient">Patient Information</button>
                 </li>
                 <li>
                     <button
-                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="printable-info">Dental Chart</button>
                 </li>
                 <li>
                     <button
-                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="record-tab">Treatment Record</button>
                 </li>
             @endif
@@ -51,106 +42,145 @@
 
     <div id="profile-tab" class="tab-content">
         <div class="flex flex-col h-full">
-            <div class="flex flex-row h-full gap-5">
+            <div class="flex flex-col lg:flex-row gap-5 items-start">
+
                 <!-- Profile Card -->
-                <div class="rounded-md flex flex-col basis-[30%] bg-white shadow p-4">
-                    <div class="h-40 w-full bg-cover bg-center rounded"
-                        style="background-image: url('{{ $user->profile_image ? asset('storage/profile_pictures/' . $user->profile_image) : asset('images/defaultp.jpg') }}')">
-                    </div>
-                    <div class="flex flex-col pt-5 overflow-y-auto gap-5">
-                        <form class="flex flex-col gap-3">
-                            <label for="lastname">Last Name:</label>
-                            <input type="text" name="lastname" id="lastname" value="{{ $user->lastname }}">
+                <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="h-36 bg-gradient-to-r from-sky-400 to-primary"></div>
+                    <div class="px-6 pb-6 -mt-10 flex flex-col items-center">
+                        <img src="{{ $user->profile_image ? asset('storage/profile_pictures/' . $user->profile_image) : asset('images/defaultp.jpg') }}"
+                            alt="Profile picture"
+                            class="w-24 h-24 rounded-full object-cover border-4 border-white shadow bg-white">
+                        <h2 class="mt-3 text-lg font-bold text-gray-800 text-center">{{ $user->name }} {{ $user->lastname }}</h2>
+                        <span class="text-xs px-2 py-0.5 mt-1 rounded-full bg-sky-50 text-primary font-medium capitalize">{{ $user->position ?: $user->account_type }}</span>
+                        @if (!is_null($user->deleted_at))
+                            <span class="text-xs px-2 py-0.5 mt-1 rounded-full bg-red-50 text-red-600 font-medium">Archived</span>
+                        @endif
 
-                            <label for="name">Name:</label>
-                            <input type="text" name="name" id="name" value="{{ $user->name }}">
-
-                            <label for="middlename">Middle Name:</label>
-                            <input type="text" name="middlename" id="middlename" value="{{ $user->middlename }}">
-
-                            <label class="font-semibold">Suffix</label>
-                            <select name="suffix" class="w-full border p-2 rounded">
-                                <option value="">-- Select Suffix --</option>
-                                <option value="Jr." {{ old('suffix', $user->suffix ?? '') == 'Jr.' ? 'selected' : '' }}>
-                                    Jr.</option>
-                                <option value="Sr." {{ old('suffix', $user->suffix ?? '') == 'Sr.' ? 'selected' : '' }}>
-                                    Sr.</option>
-                                <option value="II" {{ old('suffix', $user->suffix ?? '') == 'II' ? 'selected' : '' }}>
-                                    II</option>
-                                <option value="III" {{ old('suffix', $user->suffix ?? '') == 'III' ? 'selected' : '' }}>
-                                    III</option>
-                                <option value="IV" {{ old('suffix', $user->suffix ?? '') == 'IV' ? 'selected' : '' }}>
-                                    IV</option>
-                                <option value="V" {{ old('suffix', $user->suffix ?? '') == 'V' ? 'selected' : '' }}>V
-                                </option>
-                            </select>
-
-                            <label for="birthdate">Birth Day</label>
-                            <input type="date" name="birthdate" id="birthdate" value="{{ $user->birth_date }}">
+                        <form class="w-full mt-5 space-y-4">
+                            <div>
+                                <label for="lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" name="lastname" id="lastname" value="{{ $user->lastname }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" name="name" id="name" value="{{ $user->name }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="middlename" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                <input type="text" name="middlename" id="middlename" value="{{ $user->middlename }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
+                                <select name="suffix"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                    <option value="">-- Select Suffix --</option>
+                                    <option value="Jr." {{ old('suffix', $user->suffix ?? '') == 'Jr.' ? 'selected' : '' }}>Jr.</option>
+                                    <option value="Sr." {{ old('suffix', $user->suffix ?? '') == 'Sr.' ? 'selected' : '' }}>Sr.</option>
+                                    <option value="II" {{ old('suffix', $user->suffix ?? '') == 'II' ? 'selected' : '' }}>II</option>
+                                    <option value="III" {{ old('suffix', $user->suffix ?? '') == 'III' ? 'selected' : '' }}>III</option>
+                                    <option value="IV" {{ old('suffix', $user->suffix ?? '') == 'IV' ? 'selected' : '' }}>IV</option>
+                                    <option value="V" {{ old('suffix', $user->suffix ?? '') == 'V' ? 'selected' : '' }}>V</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
+                                <input type="date" name="birthdate" id="birthdate" value="{{ $user->birth_date }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
                         </form>
-                       @if (is_null($user->deleted_at))
-    <!-- Archive Button -->
-    <button id="archiveBtn" data-id="{{ $user->id }}"
-        class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow">
-        Archive
-    </button>
-@else
-    <div class="flex gap-2">
-        <!-- Restore Button -->
-        <button id="restoreBtn" data-id="{{ $user->id }}"
-            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
-            Restore
-        </button>
 
-        <!-- Permanent Delete Button -->
-        <button id="permanentDeleteBtn" data-id="{{ $user->id }}"
-            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow">
-            Permanent Delete
-        </button>
-    </div>
-@endif
+                        <div class="w-full mt-4">
+                            @if (is_null($user->deleted_at))
+                                <!-- Archive Button -->
+                                <button id="archiveBtn" data-id="{{ $user->id }}"
+                                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                                    <i class="fa-solid fa-box-archive mr-1"></i> Archive
+                                </button>
+                            @else
+                                <div class="flex gap-2">
+                                    <!-- Restore Button -->
+                                    <button id="restoreBtn" data-id="{{ $user->id }}"
+                                        class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                                        <i class="fa-solid fa-rotate-left mr-1"></i> Restore
+                                    </button>
 
+                                    <!-- Permanent Delete Button -->
+                                    <button id="permanentDeleteBtn" data-id="{{ $user->id }}"
+                                        class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                                        <i class="fa-solid fa-trash-can mr-1"></i> Delete
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
                 <!-- Right Panel -->
-                <div class="flex flex-col basis-[70%] gap-5">
-                    <div class="rounded-md bg-white shadow p-5">
-                        <div class="flex flex-col items-center mb-5 gap-3">
+                <div class="w-full lg:w-2/3 flex flex-col gap-5">
+
+                    <!-- QR Code Card -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
+                            <i class="fa-solid fa-qrcode text-primary"></i> QR Code
+                        </h3>
+                        <div class="flex flex-col items-center gap-3">
                             @php
                                 $qrPath = $user->qr_code ? 'qr_codes/' . $user->qr_code : null;
                                 $qrExists = $qrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($qrPath);
                             @endphp
                             @if($qrExists)
-                                <img id="userQrImage" src="{{ asset('storage/qr_codes/' . $user->qr_code) }}" alt="User QR Code" class="h-40">
+                                <img id="userQrImage" src="{{ asset('storage/qr_codes/' . $user->qr_code) }}" alt="User QR Code"
+                                    class="w-40 h-40 object-contain border border-gray-200 p-2 rounded-lg">
                             @else
-                                <img id="userQrImage" src="" alt="QR not available" class="h-40 hidden">
-                                <div id="qrMissingMsg" class="h-40 w-40 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded">
+                                <img id="userQrImage" src="" alt="QR not available" class="w-40 h-40 object-contain border border-gray-200 p-2 rounded-lg hidden">
+                                <div id="qrMissingMsg" class="w-40 h-40 flex items-center justify-center border border-dashed border-red-400 text-red-600 text-xs text-center px-2 rounded-lg">
                                     QR file is missing.<br>Click "Regenerate QR" to create a new one.
                                 </div>
                             @endif
                             <button type="button" id="regenerateQrBtn" data-id="{{ $user->id }}"
-                                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded shadow text-sm">
+                                class="inline-flex items-center justify-center border border-orange-300 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg text-sm font-medium transition">
                                 <i class="fa-solid fa-arrows-rotate mr-1"></i> Regenerate QR
                             </button>
                         </div>
-                        <form id="updateProfile" class="flex flex-col gap-3">
+                    </div>
+
+                    <!-- Account Settings Card -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
+                            <i class="fa-solid fa-user-gear text-primary"></i> Account Settings
+                        </h3>
+                        <form id="updateProfile" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="hidden" name="id" id="id" value="{{ $user->id }}">
 
-                            <label for="email">Email</label>
-                            <input type="text" name="email" id="email" value="{{ $user->email }}">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="text" name="email" id="email" value="{{ $user->email }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                                <input type="number" name="contact" id="contact" value="{{ $user->contact_number }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" name="user" id="user" value="{{ $user->user }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <input type="password" name="password" id="password" placeholder="Leave blank to keep current password"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
 
-                            <label for="contact">Contact Number</label>
-                            <input type="number" name="contact" id="contact" value="{{ $user->contact_number }}">
-
-                            <label for="user">User</label>
-                            <input type="text" name="user" id="user" value="{{ $user->user }}">
-
-                            <label for="password">Password</label>
-                            <input type="password" name="password" id="password">
-
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow w-max"
-                                type="submit">Update</button>
+                            <div class="md:col-span-2 flex justify-end">
+                                <button class="bg-primary hover:bg-sky-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition"
+                                    type="submit"><i class="fa-solid fa-floppy-disk mr-1"></i> Update</button>
+                            </div>
                         </form>
                     </div>
                 </div>

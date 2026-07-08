@@ -141,6 +141,13 @@ public function getUsersByPosition(Request $request)
 }
 public function removeUser(Request $request, $storeId)
 {
+    if (auth()->user()->position !== 'admin') {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'You are not allowed to remove staff from a branch.',
+        ], 403);
+    }
+
     $userId = $request->input('user_id');
 
     $store = Store::findOrFail($storeId);
@@ -155,6 +162,13 @@ public function removeUser(Request $request, $storeId)
     ]);
 }
  public function DeleteBranch(Request $request){
+            if (auth()->user()->position !== 'admin') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You are not allowed to delete a branch.',
+                ], 403);
+            }
+
             $id = $request->id;
             $user = Store::find($id);
             if ($user) {
