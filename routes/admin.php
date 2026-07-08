@@ -124,8 +124,8 @@ Route::get('/branchlist', [BranchController::class,'Branchlist'])->name('Branchl
 Route::get('/branch-details', [BranchController::class, 'getBranchDetails']);
 Route::post('/branch/{branch}/add-user', [BranchController::class, 'addUser'])->middleware('auth');
 Route::get('/branch/users-by-position', [BranchController::class, 'getUsersByPosition']);
-Route::post('/branch/{store}/remove-user', [BranchController::class, 'removeUser']);
-Route::get('/branch/deletebranch', [BranchController::class, 'DeleteBranch'])->name('DeleteBranch');
+Route::post('/branch/{store}/remove-user', [BranchController::class, 'removeUser'])->middleware('auth');
+Route::get('/branch/deletebranch', [BranchController::class, 'DeleteBranch'])->name('DeleteBranch')->middleware('auth');
 Route::post('/branch/update-schedule/{id}', [BranchController::class, 'updateSchedule']);
 
 // Calendar-based schedule (clinic open days + doctor schedules)

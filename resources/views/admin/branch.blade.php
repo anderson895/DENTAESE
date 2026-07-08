@@ -14,14 +14,16 @@
     </button>
   </div>
 
+  @if (auth()->user()->position === 'admin')
   <div>
-    <input 
-      type="text" 
-      id="searchInput" 
-      placeholder="Search..." 
-      class="p-2 border rounded {{ session('active_branch_id') !== 'admin' ? 'opacity-50 cursor-not-allowed' : '' }}" 
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search..."
+      class="p-2 border rounded {{ session('active_branch_id') !== 'admin' ? 'opacity-50 cursor-not-allowed' : '' }}"
       {{ session('active_branch_id') !== 'admin' ? 'disabled' : '' }}>
   </div>
+  @endif
 </div>
 {{-- Modal Add User --}}
 <div id="addUserModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
@@ -63,7 +65,9 @@
             </div>
             <p class="mb-4 text-gray-700">Address: <span id="modalBranchAddress"></span></p>
             <input type="hidden" id="BranchId" name="branch_id">
+            @if (auth()->user()->position === 'admin')
             <button id="deletebtn"  class="border rounded-md p-3 bg-[#FF0000] text-white" type="submit">Delete</button>
+            @endif
           </div>
           <div class="basis-[70%]">
             
@@ -338,11 +342,15 @@ function openBranchModal(branchId) {
       $('#dentistList').empty();
 
       // Add users to respective lists
+      const isAdmin = @json(auth()->user()->position === 'admin');
       branch.staff.forEach(user => {
+        let deleteBtn = isAdmin
+          ? `<button class="text-red-500 text-sm" onclick="removeUser(${user.id})">Delete</button>`
+          : '';
         let item = `
           <li class="flex justify-between items-center border p-2 rounded mb-2">
             <span>${user.name}</span>
-            <button class="text-red-500 text-sm" onclick="removeUser(${user.id})">Delete</button>
+            ${deleteBtn}
           </li>
         `;
 
