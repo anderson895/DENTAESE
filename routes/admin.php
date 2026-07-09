@@ -35,7 +35,7 @@ Route::put(
 )->name('admin.booking.history.update');
 
 
-Route::post('/remove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
+Route::post('/remove-face-token', [Facerecognition::class, 'removeFaceToken'])->middleware('auth');
 Route::patch('/updateProfile', [ProfileController::class, 'updateProfile'])->middleware('auth')->name('updateProfile');
 
 Route::middleware(['web', 'auth', Admin::class])->group(function () {

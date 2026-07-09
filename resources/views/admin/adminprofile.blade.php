@@ -86,9 +86,11 @@
                     <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800">
                         <i class="fa-solid fa-face-smile text-primary"></i> Face Recognition
                     </h3>
-                    <button id="removeFaceToken" class="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
-                        <i class="fa-solid fa-trash-can mr-1"></i>Remove
-                    </button>
+                    @if(Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== "")
+                        <button id="removeFaceToken" class="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i>Remove
+                        </button>
+                    @endif
                 </div>
 
                 <div id="loadingSpinner" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
@@ -96,7 +98,7 @@
                 </div>
 
                 <div class="flex flex-col items-center justify-center flex-1 text-center gap-3 py-4">
-                    @if(Auth::user()->face_token !== null && Auth::user()->face_token !== "")
+                    @if(Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== "")
                         <span class="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                             <i class="fa-solid fa-check text-xl"></i>
                         </span>
@@ -373,7 +375,7 @@
     });
 
     ///remove face token
-    document.getElementById('removeFaceToken').addEventListener('click', () => {
+    document.getElementById('removeFaceToken')?.addEventListener('click', () => {
         Swal.fire({
             title: 'Are you sure?',
             text: "This will remove your registered face.",

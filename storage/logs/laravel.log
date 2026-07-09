@@ -1967,3 +1967,6 @@
 #71 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php(23): require_once('C:\\\\Users\\\\Deskto...')
 #72 {main}
 "} 
+[2026-07-09 11:56:44] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-09 11:57:38] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-09 12:01:43] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 

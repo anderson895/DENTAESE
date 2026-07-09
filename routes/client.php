@@ -40,7 +40,7 @@ Route::middleware(['auth', Client::class])->group(function(){
 
 
 
-    Route::post('/cremove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
+    Route::post('/cremove-face-token', [Facerecognition::class, 'removeFaceToken'])->middleware('auth');
 
 });
 
