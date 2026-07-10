@@ -412,6 +412,12 @@ public function modalDetails($id)
         ['user_id' => $user->id]
     );
 
+    // Current medications the patient is taking (monitored by the doctor)
+    $currentMedications = PatientMedication::where('user_id', $user->id)
+        ->orderByDesc('start_date')
+        ->orderByDesc('id')
+        ->get();
+
     return view('admin.partials.usermodaldetail', compact(
         'user',
         'completedAppointments',
@@ -419,7 +425,8 @@ public function modalDetails($id)
         'record',
         'patient',
         'patientinfo',
-        'medicines'
+        'medicines',
+        'currentMedications'
     ));
 }
 }

@@ -41,6 +41,10 @@
         </li>
         <li>
             <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
+                data-tab="medication-tab">Current Medication</button>
+        </li>
+        <li>
+            <button class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                 data-tab="consent-tab">Consent</button>
         </li>
     </ul>
@@ -52,6 +56,10 @@
     @else
         <p>No treatment record available.</p>
     @endif
+</div>
+
+<div id="medication-tab" class="tab-content hidden">
+    @include('client.current-medication', ['currentMedications' => $currentMedications])
 </div>
 
 <div id="consent-tab" class="tab-content hidden">
@@ -281,7 +289,8 @@
 
 <div id="chart-tab" class="tab-content hidden">
     @if($patient)
-        @include('admin.dental-chart.index', ['patient' => $patient])
+        {{-- View-only: patients can see their dental chart but never edit it --}}
+        @include('admin.dental-chart.index', ['patient' => $patient, 'chartReadonly' => true])
     @else
         <p>No dental chart available.</p>
     @endif
