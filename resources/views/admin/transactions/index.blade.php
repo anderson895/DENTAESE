@@ -26,7 +26,6 @@
             <option value="">-- Payment Method --</option>
             <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
             <option value="gcash" {{ request('payment_method') == 'gcash' ? 'selected' : '' }}>GCash</option>
-            <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Card</option>
         </select>
         <select name="status" class="border rounded p-2">
             <option value="">-- Status --</option>

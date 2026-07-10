@@ -315,7 +315,7 @@
                 <a href="{{ route('admin.booking', ['status' => 'cancelled']) }}"
                    class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="canceled-count">0</div>
-                    <span class="text-gray-400 text-sm">Canceled</span>
+                    <span class="text-gray-400 text-sm">Cancelled</span>
                 </a>
                 <a href="{{ route('admin.booking', ['status' => 'no_show']) }}"
                    class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">

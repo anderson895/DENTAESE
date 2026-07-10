@@ -150,7 +150,6 @@
                 <select name="payment_method" id="payment_method" class="border rounded p-2 w-full">
                     <option value="cash">Cash</option>
                     <option value="gcash">GCash</option>
-                    <option value="card">Card</option>
                 </select>
 
                 <label for="amount_given" class="block text-sm font-medium">Amount Given</label>
