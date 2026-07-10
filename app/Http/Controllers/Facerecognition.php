@@ -94,6 +94,7 @@ class Facerecognition extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $user->face_descriptor = null;
+        $user->face_token = null; // clear legacy column too
         $user->save();
 
         return response()->json([

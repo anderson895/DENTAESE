@@ -1,34 +1,26 @@
 
-<style>
-    input{
-        border: 1px;
-        background-color:#F5F5F5;
-        padding: 2px;
-    }
-</style>
-
    <div class="mb-6 border-b border-gray-300">
         <ul class="flex space-x-6 text-sm font-medium text-center text-gray-600" id="tabs">
             <li>
                 <button
-                    class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600 active"
+                    class="tab-button border-b-2 py-2 px-4 hover:text-primary hover:border-primary active border-primary text-primary"
                     data-tab="profile-tab">Profile</button>
             </li>
 
             @if ($user->account_type == 'patient')
                 <li>
                     <button
-                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="medical-tab">Patient Information</button>
                 </li>
                 {{-- <li>
                     <button
-                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="chart-tab">Dental Chart</button>
                 </li> --}}
                 <li>
                     <button
-                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-blue-600 hover:border-blue-600"
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="record-tab">Treatment Record</button>
                 </li>
             @endif
@@ -38,71 +30,116 @@
 
     <div id="profile-tab" class="tab-content">
         <div class="flex flex-col h-full">
-            <div class="flex flex-row h-full gap-5">
-                <!-- Profile Card -->
-                <div class="rounded-md flex flex-col basis-[30%] bg-white shadow p-4">
-                    <div class="h-40 w-full bg-cover bg-center rounded"
-                        style="background-image: url('{{ $user->profile_image ? asset('storage/profile_pictures/' . $user->profile_image) : asset('images/defaultp.jpg') }}')">
-                    </div>
-                    <div class="flex flex-col pt-5 overflow-y-auto gap-5">
-                        <form class="flex flex-col gap-3">
-                            <label for="lastname">Last Name:</label>
-                            <input type="text" name="lastname" id="lastname" value="{{ $user->lastname }}">
+            <div class="flex flex-col lg:flex-row gap-5 items-stretch">
 
-                            <label for="name">Name:</label>
-                            <input type="text" name="name" id="name" value="{{ $user->name }}">
+                {{-- LEFT: Profile Card --}}
+                <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    <div class="h-36 bg-gradient-to-r from-sky-400 to-primary"></div>
+                    <div class="px-6 pb-6 -mt-10 flex flex-col items-center flex-1">
+                        <img src="{{ $user->profile_image ? asset('storage/profile_pictures/' . $user->profile_image) : asset('images/defaultp.jpg') }}"
+                            alt="Profile picture"
+                            class="w-24 h-24 rounded-full object-cover border-4 border-white shadow bg-white">
+                        <h2 class="mt-3 text-lg font-bold text-gray-800 text-center">{{ $user->name }} {{ $user->lastname }}</h2>
+                        <span class="text-xs text-gray-500 capitalize">{{ $user->account_type }}</span>
 
-                            <label for="middlename">Middle Name:</label>
-                            <input type="text" name="middlename" id="middlename" value="{{ $user->middlename }}">
-
-                            <label class="font-semibold">Suffix</label>
-                            <select name="suffix" class="w-full border p-2 rounded">
-                                <option value="">-- Select Suffix --</option>
-                                <option value="Jr." {{ old('suffix', $user->suffix ?? '') == 'Jr.' ? 'selected' : '' }}>
-                                    Jr.</option>
-                                <option value="Sr." {{ old('suffix', $user->suffix ?? '') == 'Sr.' ? 'selected' : '' }}>
-                                    Sr.</option>
-                                <option value="II" {{ old('suffix', $user->suffix ?? '') == 'II' ? 'selected' : '' }}>
-                                    II</option>
-                                <option value="III" {{ old('suffix', $user->suffix ?? '') == 'III' ? 'selected' : '' }}>
-                                    III</option>
-                                <option value="IV" {{ old('suffix', $user->suffix ?? '') == 'IV' ? 'selected' : '' }}>
-                                    IV</option>
-                                <option value="V" {{ old('suffix', $user->suffix ?? '') == 'V' ? 'selected' : '' }}>V
-                                </option>
-                            </select>
-
-                            <label for="birthdate">Birth Day</label>
-                            <input type="date" name="birthdate" id="birthdate" value="{{ $user->birth_date }}">
+                        <form class="w-full mt-5 space-y-4">
+                            <div>
+                                <label for="lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" name="lastname" id="lastname" value="{{ $user->lastname }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" name="name" id="name" value="{{ $user->name }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="middlename" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                <input type="text" name="middlename" id="middlename" value="{{ $user->middlename }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="suffix" class="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
+                                <select name="suffix" id="suffix"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white">
+                                    <option value="">-- Select Suffix --</option>
+                                    <option value="Jr." {{ old('suffix', $user->suffix ?? '') == 'Jr.' ? 'selected' : '' }}>Jr.</option>
+                                    <option value="Sr." {{ old('suffix', $user->suffix ?? '') == 'Sr.' ? 'selected' : '' }}>Sr.</option>
+                                    <option value="II" {{ old('suffix', $user->suffix ?? '') == 'II' ? 'selected' : '' }}>II</option>
+                                    <option value="III" {{ old('suffix', $user->suffix ?? '') == 'III' ? 'selected' : '' }}>III</option>
+                                    <option value="IV" {{ old('suffix', $user->suffix ?? '') == 'IV' ? 'selected' : '' }}>IV</option>
+                                    <option value="V" {{ old('suffix', $user->suffix ?? '') == 'V' ? 'selected' : '' }}>V</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
+                                <input type="date" name="birthdate" id="birthdate" value="{{ $user->birth_date }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
                         </form>
                         <button id="deletebtn" data-id="{{ $user->id }}"
-                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow">Delete</button>
+                            class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Delete
+                        </button>
                     </div>
                 </div>
 
-                <!-- Right Panel -->
-                <div class="flex flex-col basis-[70%] gap-5">
-                    <div class="rounded-md bg-white shadow p-5">
-                        <div class="flex justify-center mb-5">
-                            <img src="{{ asset('storage/qr_codes/' . $user->qr_code) }}" alt="User QR Code" class="h-40">
+                {{-- RIGHT: QR + Account Settings --}}
+                <div class="w-full lg:w-2/3 flex flex-col gap-5">
+
+                    {{-- QR Code --}}
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
+                            <i class="fa-solid fa-qrcode text-primary"></i> QR Code
+                        </h3>
+                        <div class="flex flex-col items-center">
+                            @php
+                                $userQrPath = $user->qr_code ? 'qr_codes/' . $user->qr_code : null;
+                                $userQrExists = $userQrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($userQrPath);
+                            @endphp
+                            @if($userQrExists)
+                                <img src="{{ asset('storage/qr_codes/' . $user->qr_code) }}" alt="User QR Code"
+                                    class="w-40 h-40 object-contain border border-gray-200 p-2 rounded-lg" />
+                            @else
+                                <div class="w-40 h-40 flex items-center justify-center border border-dashed border-gray-300 text-gray-400 text-xs text-center px-2 rounded-lg">
+                                    No QR code available.
+                                </div>
+                            @endif
                         </div>
-                        <form id="updateProfile" class="flex flex-col gap-3">
+                    </div>
+
+                    {{-- Account Settings --}}
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
+                            <i class="fa-solid fa-user-gear text-primary"></i> Account Settings
+                        </h3>
+                        <form id="updateProfile" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="hidden" name="id" id="id" value="{{ $user->id }}">
-
-                            <label for="email">Email</label>
-                            <input type="text" name="email" id="email" value="{{ $user->email }}">
-
-                            <label for="contact">Contact Number</label>
-                            <input type="number" name="contact" id="contact" value="{{ $user->contact_number }}">
-
-                            <label for="user">User</label>
-                            <input type="text" name="user" id="user" value="{{ $user->user }}">
-
-                            <label for="password">Password</label>
-                            <input type="password" name="password" id="password">
-
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow w-max"
-                                type="submit">Update</button>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="text" name="email" id="email" value="{{ $user->email }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                                <input type="number" name="contact" id="contact" value="{{ $user->contact_number }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" name="user" id="user" value="{{ $user->user }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <input type="password" name="password" id="password" placeholder="Leave blank to keep current password"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+                            <div class="md:col-span-2 flex justify-end">
+                                <button class="bg-primary hover:bg-sky-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition" type="submit">
+                                    <i class="fa-solid fa-floppy-disk mr-1"></i> Update
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -176,10 +213,12 @@
                 const tab = button.dataset.tab;
 
                 // Remove active class from all buttons
-                document.querySelectorAll(".tab-button").forEach(btn =>
-                    btn.classList.remove("active", "border-blue-600", "text-blue-600")
-                );
-                button.classList.add("active", "border-blue-600", "text-blue-600");
+                document.querySelectorAll(".tab-button").forEach(btn => {
+                    btn.classList.remove("active", "border-primary", "text-primary");
+                    btn.classList.add("border-transparent");
+                });
+                button.classList.remove("border-transparent");
+                button.classList.add("active", "border-primary", "text-primary");
 
                 // Hide all tab content
                 document.querySelectorAll(".tab-content").forEach(tc =>
@@ -191,33 +230,6 @@
             });
         });
     </script>
-    <script>
-        const openBtn = document.getElementById('capturemodal');
-        const modal = document.getElementById('modal');
-        const closeBtn = document.getElementById('closemodal');
-
-        openBtn.addEventListener('click', () => {
-            modal.classList.remove('hidden');
-            if (window.isSecureContext) {
-                navigator.mediaDevices.getUserMedia({
-                        video: true
-                    })
-                    .then(stream => {
-                        video.srcObject = stream;
-                    })
-                    .catch(error => {
-                        console.error("Error accessing media devices.", error);
-                    });
-            } else {
-                console.error("getUserMedia requires a secure context (HTTPS).");
-            }
-        });
-
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    </script>
-
     <script>
         $('#deletebtn').click(function(e) {
             e.preventDefault(); // prevent default if inside a form or link
@@ -263,64 +275,6 @@
                     });
                 }
             });
-        });
-
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const captureButton = document.getElementById('capture');
-        const context = canvas.getContext('2d');
-
-
-        captureButton.addEventListener('click', () => {
-            // Draw video frame onto canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convert canvas to Blob
-            canvas.toBlob(function(blob) {
-                let formData = new FormData();
-                formData.append('face_image', blob, 'face_capture.jpg');
-
-                // Show loading spinner
-                document.getElementById('loadingSpinner').classList.remove('hidden');
-
-                fetch('/register-face', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}' // for Laravel Blade
-                        },
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data);
-                        // Hide loading spinner
-                        document.getElementById('loadingSpinner').classList.add('hidden');
-
-                        // Show SweetAlert success
-                        Swal.fire({
-                            title: 'Success!',
-                            text: data.message || 'Face registered!',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            // Close modal (optional)
-
-                            document.getElementById('modal').classList.add('hidden');
-                            location.reload();
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        document.getElementById('loadingSpinner').classList.add('hidden');
-
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'Failed to register face.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    });
-            }, 'image/jpeg');
         });
     </script>
 
@@ -390,39 +344,6 @@
                 }
             });
         })
-
-
-        ///remove face token
-        document.getElementById('removeFaceToken').addEventListener('click', () => {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This will remove your registered face.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, remove it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch('/remove-face-token', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            Swal.fire('Removed!', data.message, 'success').then(() => {
-                                location.reload(); // Optional: refresh to reflect change
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            Swal.fire('Error', 'Failed to remove face token.', 'error');
-                        });
-                }
-            });
-        });
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

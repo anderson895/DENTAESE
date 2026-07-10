@@ -12,6 +12,7 @@ use App\Mail\AppointmentRescheduledMail;
 use App\Models\MedicalForm;
 use App\Models\medicines;
 use App\Models\PatientRecord;
+use App\Models\PatientMedication;
 use App\Models\Service;
 use App\Models\StoreStaff;
 use Illuminate\Support\Facades\Mail;
@@ -172,6 +173,12 @@ public function view($id)
     );
     $medicines = medicines::get();
 
+    // Current medications the patient is taking (monitored by the doctor)
+    $currentMedications = PatientMedication::where('user_id', $patient->id)
+        ->orderByDesc('start_date')
+        ->orderByDesc('id')
+        ->get();
+
    $serviceNames = \App\Models\Service::whereIn('id', $appointment->service_ids ?? [])
     ->pluck('name');
 
@@ -195,6 +202,7 @@ public function view($id)
         'patient',
         'patientinfo',
         'medicines',
+        'currentMedications',
         'serviceNames',
         'servicePrices',
         'totalPrice',

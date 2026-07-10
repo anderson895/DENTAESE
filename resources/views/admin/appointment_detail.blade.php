@@ -29,6 +29,7 @@
         <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='rx'" :class="tab==='rx' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">RX</button>
         <button @click="tab='pos'" :class="tab==='pos' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">POS</button>
+        <button @click="tab='medication'" :class="tab==='medication' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Current Medication</button>
         <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
         <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
     </div>
@@ -223,7 +224,7 @@
             <div class="flex items-center mt-2 mb-4">
                 <h2 class="text-xl font-bold">POS — Medicine Purchase</h2>
                 <button
-                    @click="tab='treatment'"
+                    @click="tab='medication'"
                     class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
                     Next
                 </button>
@@ -294,6 +295,10 @@
                 @endif
             </table>
         </div>
+    </div>
+
+    <div x-show="tab==='medication'" x-cloak>
+        @include('admin.dental-chart.current-medication', ['currentMedications' => $currentMedications, 'medicines' => $medicines, 'appointment' => $appointment])
     </div>
 
     <div x-show="tab==='treatment'" x-cloak>
@@ -806,7 +811,7 @@ $(document).on('input', 'input[name="total_price"]', function () {
 
         const rxList = document.getElementById('rx-list');
         if (rxList) {
-            new MutationObserver(saveRxDraft).observe(rxList, { childList: true, subtree: true });
+            new MutationObserver(saveRxDraft).observe(rxList, { childList: true, subtree: true, attributes: true });
         }
     });
 })();

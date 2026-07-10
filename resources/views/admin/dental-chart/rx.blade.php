@@ -94,6 +94,63 @@
 
 <script>
 const medicines = @json($medicines);
+const RX_CSRF_TOKEN = '{{ csrf_token() }}';
+const RX_PATIENT_ID = {{ $appointment->user_id }};
+const RX_APPOINTMENT_ID = {{ $appointment->id }};
+
+// Parse a free-text duration like "for 2 weeks" into an end date (Y-m-d), or null if unparseable
+function rxParseDurationToEndDate(duration) {
+    const m = (duration || '').toLowerCase().match(/(\d+)\s*(day|week|month)/);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    const d = new Date();
+    if (m[2] === 'day') d.setDate(d.getDate() + n);
+    if (m[2] === 'week') d.setDate(d.getDate() + n * 7);
+    if (m[2] === 'month') d.setMonth(d.getMonth() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+// Auto-record the prescribed medicine to the patient's Current Medication list
+function rxSyncToCurrentMedication(rxDiv, med, qty, freq, time, duration) {
+    const notes = [qty, time, duration].filter(Boolean).join(', ');
+
+    fetch('/patient-medications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': RX_CSRF_TOKEN,
+        },
+        body: JSON.stringify({
+            user_id: RX_PATIENT_ID,
+            appointment_id: RX_APPOINTMENT_ID,
+            medicine_name: `${med.name} (${med.unit})`,
+            dosage: null,
+            frequency: (freq || '').replace(' a day', ' daily') || null,
+            start_date: new Date().toISOString().slice(0, 10),
+            end_date: rxParseDurationToEndDate(duration),
+            notes: notes || null,
+        }),
+    })
+    .then(r => r.ok ? r.json() : Promise.reject(r))
+    .then(res => {
+        // Remember the medication id on the RX entry so removing it also removes the record
+        rxDiv.dataset.medId = res.medication.id;
+        if (window.addMedicationRow) window.addMedicationRow(res.medication);
+        if (window.Swal) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Added to Current Medication',
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true,
+            });
+        }
+    })
+    .catch(() => console.warn('Failed to sync prescribed medicine to Current Medication.'));
+}
 
 // Searchable medicine input
 const searchInput = document.getElementById('medicine-search');
@@ -166,6 +223,9 @@ addMedicineBtn.addEventListener('click', function() {
 
     rxList.appendChild(div);
 
+    // Also save to the patient's Current Medication list (monitored by the doctor)
+    rxSyncToCurrentMedication(div, med, qty, freq, time, duration);
+
     // Clear inputs
     searchInput.value = '';
     selectedMedId.value = '';
@@ -181,7 +241,23 @@ const rxListEl = document.getElementById('rx-list');
 if (rxListEl) {
 rxListEl.addEventListener('click', function(e) {
     if (e.target.classList.contains('remove-medicine')) {
-        e.target.parentElement.remove();
+        const row = e.target.parentElement;
+        const medId = row.dataset.medId;
+
+        // Also remove the auto-recorded entry from Current Medication
+        if (medId) {
+            fetch(`/patient-medications/${medId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': RX_CSRF_TOKEN,
+                },
+            })
+            .then(() => { if (window.removeMedicationRow) window.removeMedicationRow(medId); })
+            .catch(() => {});
+        }
+
+        row.remove();
     }
 });
 }

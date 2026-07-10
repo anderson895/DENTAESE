@@ -21,6 +21,7 @@ use App\Http\Controllers\SaleReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitLogController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\PatientMedicationController;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -35,7 +36,7 @@ Route::put(
 )->name('admin.booking.history.update');
 
 
-Route::post('/remove-face-token', [AdminController::class, 'removeFaceToken'])->middleware('auth');
+Route::post('/remove-face-token', [Facerecognition::class, 'removeFaceToken'])->middleware('auth');
 Route::patch('/updateProfile', [ProfileController::class, 'updateProfile'])->middleware('auth')->name('updateProfile');
 
 Route::middleware(['web', 'auth', Admin::class])->group(function () {
@@ -149,6 +150,11 @@ Route::get('/appointments/fetch', [AdminBookingController::class, 'fetch'])->nam
 Route::get('/admin/bookings/history', [AdminBookingController::class, 'showHistory'])->name('admin.booking.history');
 
 Route::get('/user/details/{id}', [AdminBookingController::class, 'modalDetails']);
+
+//current medication (patient medication monitoring)
+Route::post('/patient-medications', [PatientMedicationController::class, 'store'])->name('patient-medications.store');
+Route::put('/patient-medications/{id}', [PatientMedicationController::class, 'update'])->name('patient-medications.update');
+Route::delete('/patient-medications/{id}', [PatientMedicationController::class, 'destroy'])->name('patient-medications.destroy');
 
 //Services
 
