@@ -77,12 +77,6 @@
 
 
 
-            <!-- Description -->
-            <div>
-                <label for="desc" class="block font-semibold">Appointment Description</label>
-                <textarea class="w-full p-2 border rounded" rows="10" cols="30" id="desc" name="desc"></textarea>
-            </div>
-
                         <!-- Submit -->
             <button type="button"
                 onclick="$('#bookingModal').addClass('hidden')"
@@ -91,17 +85,18 @@
             </button>
 
             <button type="submit" name="appointment_type" id="normal" value="normal"
-                class="bg-blue-600 text-white px-4 py-2 rounded">
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
                 Book Appointment
             </button>
 
+            {{-- Walk-in and Emergency stay clickable but use faded colors --}}
             <button type="submit" name="appointment_type" id="walkin" value="walkin"
-                class="bg-green-600 text-white px-4 py-2 rounded">
+                class="bg-green-300 hover:bg-green-400 text-white px-4 py-2 rounded">
                 Walk-in
             </button>
 
             <button type="submit" name="appointment_type" id="emergency" value="emergency"
-                class="bg-red-600 text-white px-4 py-2 rounded">
+                class="bg-red-300 hover:bg-red-400 text-white px-4 py-2 rounded">
                 Emergency
             </button>
 
@@ -368,7 +363,6 @@ $('#bookingForm').on('submit', function(e) {
         dentist_id: $('.dentist_id').val(), 
         appointment_date: $('#appointment_date').val(),
         appointment_time: $('#appointment_time').val(),
-        desc: $('#desc').val(),
         appt_type: clickedButton
     };
 

@@ -115,7 +115,7 @@
 
             <!-- User Dropdown -->
             <div class="relative">
-                <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white">
+                <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white rounded-lg px-2 py-1 hover:bg-sky-600 transition duration-150">
                     <div class="w-10 h-10 rounded-full bg-white overflow-hidden border">
                         @if(Auth::user()->profile_image)
                             <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_image) }}" class="object-cover w-full h-full">
@@ -176,7 +176,13 @@
                         <x-nav-link href="/pos/{{ session('active_branch_id') }}" icon="fa-solid fa-cash-register" label="POS" />
                         <x-nav-link href="/reports/sales" icon="fa-solid fa-chart-line" label="POS Reports" />
                         <x-nav-link href="/reports/appointments" icon="fa-solid fa-chart-line" label="Appointment Reports" />
-                        <x-nav-link href="/chat" icon="fa-solid fa-comments" label="Message" />
+                        @php
+                            $unreadStaffMessages = \App\Models\Message::where('store_id', session('active_branch_id'))
+                                ->where('is_read', false)
+                                ->whereHas('sender', fn ($q) => $q->where('account_type', 'patient'))
+                                ->count();
+                        @endphp
+                        <x-nav-link href="/chat" icon="fa-solid fa-comments" label="Message" :badge="$unreadStaffMessages" />
                     @endif
                 </nav>
             </aside>

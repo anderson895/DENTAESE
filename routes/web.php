@@ -112,6 +112,12 @@ Route::middleware('auth')->group(function () {
 
 Route::post('/signupform', [AuthUi::class, 'SignUpForm'])->name('signupform');
 Route::post('/loginform', [AuthUi::class, 'LoginForm'])->name('loginform');
+
+// Forgot password (OTP-based)
+Route::get('/forgot-password', [AuthUi::class, 'ForgotPasswordUi'])->name('password.forgot');
+Route::post('/forgot-password/send-otp', [AuthUi::class, 'forgotPasswordSendOtp'])->name('password.sendOtp');
+Route::post('/forgot-password/verify-otp', [AuthUi::class, 'forgotPasswordVerifyOtp'])->name('password.verifyOtp');
+Route::post('/forgot-password/reset', [AuthUi::class, 'forgotPasswordReset'])->name('password.reset');
 Route::post('/login-face', [AuthUi::class, 'loginFace'])->name('login-face');
 
 

@@ -5,9 +5,9 @@
 
 <div class="bg-white p-6 rounded shadow">
     <div class="flex items-center mt-2 mb-4">
-        <h2 class="text-xl font-bold">Current Medication</h2>
+        <h2 class="text-xl font-bold">Current Status</h2>
         <button
-            @click="tab='treatment'"
+            @click="tab='info'"
             class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
             Next
         </button>

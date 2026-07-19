@@ -31,11 +31,15 @@ public function branches()
         ->limit(1);
     }])
     ->get()
-    ->map(function ($branch) {
+    ->map(function ($branch) use ($patientId) {
         return [
             'id' => $branch->id,
             'name' => $branch->name,
             'latest_message' => $branch->messages->first(),
+            'unread_count' => Message::where('store_id', $branch->id)
+                ->where('receiver_id', $patientId)
+                ->where('is_read', false)
+                ->count(),
         ];
     })
     //  Sort newest to oldest based on message timestamp
@@ -50,6 +54,12 @@ public function branches()
 
     public function fetch($storeId, $userId)
     {
+        // Staff opened this conversation → mark patient's messages as read
+        Message::where('store_id', $storeId)
+            ->where('sender_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
         $messages = Message::where('store_id', $storeId)
             ->where(function ($q) use ($userId) {
                 $q->where('sender_id', $userId)
@@ -57,7 +67,7 @@ public function branches()
             })
             ->orderBy('created_at', 'asc')
             ->get();
-    
+
         return response()->json($messages);
     }
     
@@ -114,7 +124,11 @@ public function patients()
                     ? $latestMessage->created_at->diffForHumans()
                     : null,
                 'branch_name' => $latestMessage?->store?->name,
-                'sort_time' => $latestMessage?->created_at ?? now()->subYears(100)
+                'sort_time' => $latestMessage?->created_at ?? now()->subYears(100),
+                'unread_count' => \App\Models\Message::where('store_id', $storeId)
+                    ->where('sender_id', $patient->id)
+                    ->where('is_read', false)
+                    ->count(),
             ];
         })
         // ✅ Sort by latest message timestamp descending (new → old)
@@ -133,6 +147,13 @@ public function patientIndex()
 public function patientMessages($storeId)
 {
     $userId = Auth::id(); // logged-in patient
+
+    // Patient opened this conversation → mark branch messages as read
+    Message::where('store_id', $storeId)
+        ->where('receiver_id', $userId)
+        ->where('is_read', false)
+        ->update(['is_read' => true]);
+
     $messages = Message::where('store_id', $storeId)
         ->where(function ($q) use ($userId) {
             $q->where('sender_id', $userId)

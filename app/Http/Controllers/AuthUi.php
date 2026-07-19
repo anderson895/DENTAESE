@@ -92,7 +92,7 @@ class AuthUi extends Controller
     {
         $credentials = $request->only('user', 'password');
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -118,6 +118,106 @@ class AuthUi extends Controller
         }
 
         return response()->json(['status' => 'error', 'message' => 'Invalid credentials']);
+    }
+
+    // ===============================
+    // FORGOT PASSWORD (OTP-based)
+    // ===============================
+    public function ForgotPasswordUi(Request $request)
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function forgotPasswordSendOtp(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No account found with this email.',
+            ], 404);
+        }
+
+        $otp = rand(100000, 999999);
+
+        Session::put('reset_email', $user->email);
+        Session::put('reset_otp', $otp);
+        Session::put('reset_otp_expires_at', Carbon::now()->addMinutes(10)->toDateTimeString());
+
+        Mail::to($user->email)->send(new SendOtp($otp));
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'OTP sent to your email.',
+        ]);
+    }
+
+    public function forgotPasswordVerifyOtp(Request $request)
+    {
+        $request->validate(['otp' => 'required']);
+
+        $expiresAt = Session::get('reset_otp_expires_at');
+
+        if (!$expiresAt || Carbon::now()->gt(Carbon::parse($expiresAt))) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'OTP expired. Please request a new one.',
+            ], 400);
+        }
+
+        if ($request->otp != Session::get('reset_otp')) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Invalid OTP.',
+            ], 400);
+        }
+
+        Session::put('reset_otp_verified', true);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'OTP verified successfully.',
+        ]);
+    }
+
+    public function forgotPasswordReset(Request $request)
+    {
+        $request->validate([
+            'password'         => 'required|string|min:6',
+            'confirm_password' => 'required|same:password',
+        ], [
+            'confirm_password.same' => 'Passwords do not match.',
+            'password.min'          => 'Password must be at least 6 characters.',
+        ]);
+
+        if (!Session::get('reset_otp_verified') || !Session::get('reset_email')) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Please verify the OTP first.',
+            ], 403);
+        }
+
+        $user = User::where('email', Session::get('reset_email'))->first();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Account not found.',
+            ], 404);
+        }
+
+        $user->password = bcrypt($request->password);
+        $user->save();
+
+        Session::forget(['reset_email', 'reset_otp', 'reset_otp_expires_at', 'reset_otp_verified']);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Password reset successfully. You can now log in.',
+        ]);
     }
 
     // ===============================

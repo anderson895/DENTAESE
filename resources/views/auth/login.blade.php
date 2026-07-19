@@ -44,6 +44,14 @@
             </div>
           </div>
 
+        <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2 text-gray-700 cursor-pointer">
+                <input type="checkbox" name="remember" id="rememberInput" class="rounded border-sky-300 text-sky-500 focus:ring-sky-400">
+                Remember password
+            </label>
+            <a href="{{ route('password.forgot') }}" class="text-blue-500 hover:text-blue-700 underline transition">Forgot Password?</a>
+        </div>
+
         <div class="flex justify-end">
             <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white font-medium rounded-md px-4 py-2 transition duration-150">
                 Login
@@ -86,6 +94,7 @@ $(document).ready(function () {
         var formData = {
             user: $('input[name="user"]').val(),
             password: $('input[name="password"]').val(),
+            remember: $('#rememberInput').is(':checked') ? 1 : 0,
             next: $('input[name="next"]').val(),
             _token: '{{ csrf_token() }}'
         };

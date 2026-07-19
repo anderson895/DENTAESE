@@ -24,7 +24,7 @@ class DentalChartBoard extends Component
 
    public function updated($propertyName, $value)
 {
-    if ($this->readonly) {
+    if ($this->readonly || $this->userCannotEditChart()) {
         return;
     }
 
@@ -39,6 +39,19 @@ class DentalChartBoard extends Component
         $data
     );
 }
+    /**
+     * Only dentists/doctors may modify the dental chart.
+     * Admins, receptionists and patients are view-only.
+     */
+    private function userCannotEditChart(): bool
+    {
+        $user = auth()->user();
+
+        return !$user
+            || $user->account_type === 'patient'
+            || in_array($user->position, ['admin', 'Receptionist'], true);
+    }
+
     public function render()
     {
         return view('livewire.dental-chart-board');

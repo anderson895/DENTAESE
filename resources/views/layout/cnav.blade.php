@@ -98,7 +98,7 @@
 
         <!-- Profile Dropdown -->
         <div class="relative">
-          <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white">
+          <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white rounded-lg px-2 py-1 hover:bg-sky-600 transition duration-150">
             <div class="w-10 h-10 rounded-full bg-white overflow-hidden border">
               @if(Auth::user()->profile_image)
                 <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_image) }}" class="object-cover w-full h-full">
@@ -132,7 +132,10 @@
         {{-- Uncomment if needed --}}
         {{-- <x-nav-link href="/cforms" icon="fa-solid fa-file-medical" label="Medical History Update" /> --}}
         {{-- <x-nav-link href="/cprofile" icon="fa-solid fa-user" label="Profile" /> --}}
-        <x-nav-link href="/patient/chat" icon="fa-solid fa-comments" label="Message" />
+        @php
+            $unreadMessages = \App\Models\Message::where('receiver_id', Auth::id())->where('is_read', false)->count();
+        @endphp
+        <x-nav-link href="/patient/chat" icon="fa-solid fa-comments" label="Message" :badge="$unreadMessages" />
         <x-nav-link href="/parental" icon="fa-solid fa-people-roof" label="Parental Control" />
 
         @if(session('parent_user_id'))

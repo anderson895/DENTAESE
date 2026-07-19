@@ -30,6 +30,9 @@ public function showBookings(Request $request)
 {
     $user = auth()->user();
 
+    // Fallback auto-cancel of lapsed pending appointments (in case cron is down)
+    Appointment::expireLapsedPending();
+
     $stores = Store::all();
     $services = Service::all();
     $clients = User::where('account_type', 'patient')->orderBy('name')->get();

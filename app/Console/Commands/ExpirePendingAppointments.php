@@ -15,30 +15,15 @@ class ExpirePendingAppointments extends Command
 
     public function handle()
     {
-        $expired = Appointment::with(['user', 'store'])
-            ->where('status', 'pending')
-            ->whereDate('appointment_date', '<', now()->toDateString())
-            ->get();
+        // Shared logic lives on the model so web requests can also
+        // trigger the cleanup as a fallback when cron is down.
+        $count = Appointment::expireLapsedPending();
 
-        if ($expired->isEmpty()) {
+        if ($count === 0) {
             $this->info('No lapsed pending appointments to expire.');
             return;
         }
 
-        foreach ($expired as $appointment) {
-            $appointment->update(['status' => 'cancelled']);
-
-            if ($appointment->user) {
-                $date   = Carbon::parse($appointment->appointment_date)->format('M d, Y');
-                $branch = $appointment->store->name ?? 'the clinic';
-
-                $appointment->user->notify(new AppointmentNotification([
-                    'title'   => 'Appointment Cancelled',
-                    'message' => "Your appointment on {$date} at {$branch} was not approved in time and has been automatically cancelled. We apologize for the inconvenience — you may book a new appointment anytime.",
-                ]));
-            }
-        }
-
-        $this->info("Auto-cancelled {$expired->count()} lapsed pending appointment(s).");
+        $this->info("Auto-cancelled {$count} lapsed pending appointment(s).");
     }
 }

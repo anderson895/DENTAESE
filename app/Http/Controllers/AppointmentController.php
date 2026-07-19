@@ -363,6 +363,9 @@ if ($nextBooking) {
         return response()->json(['status' => 'error', 'message' => 'Booking ends after store closing time.']);
     }
 
+    // Clean up lapsed pending appointments first so they never block new bookings
+    Appointment::expireLapsedPending();
+
     $userHasPending = Appointment::where('user_id', auth()->id())
         ->whereNotIn('status', ['completed', 'no_show', 'cancelled'])
         ->exists();
@@ -512,6 +515,9 @@ public function appointmentadmin(Request $request)
 
     // Only check pending appointments if NOT emergency
     if ($type !== 'emergency') {
+        // Clean up lapsed pending appointments first so they never block new bookings
+        Appointment::expireLapsedPending();
+
         $userHasPending = Appointment::where('user_id', $user->id)
             ->whereNotIn('status', ['completed', 'no_show', 'cancelled'])
             ->exists();
@@ -534,6 +540,12 @@ public function appointmentadmin(Request $request)
         default     => 'approved',
     };
 
+    $appointmentType = match($type) {
+        'walkin'    => 'walkin',
+        'emergency' => 'emergency',
+        default     => 'scheduled',
+    };
+
     $appointment = Appointment::create([
         'store_id' => $store->id,
         'user_id' => $user->id,
@@ -544,6 +556,7 @@ public function appointmentadmin(Request $request)
         'booking_end_time' => $bookingEnd->format('H:i'),
         'desc' => $validated['desc'],
         'status' => $status,
+        'appointment_type' => $appointmentType,
     ]);
 
     // Redirect immediately for walk-in/emergency

@@ -90,9 +90,15 @@ function renderPatientList(patients) {
       ${currentPatient === p.id ? 'bg-sky-300' : ''}
     `;
 
+    const unreadBadge = p.unread_count > 0
+      ? `<span class="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">${p.unread_count}</span>`
+      : "";
+
     li.innerHTML = `
-      <strong>${p.full_name}</strong><br>
-      <small class="text-gray-600">
+      <div class="flex items-center justify-between">
+        <strong>${p.full_name}</strong>${unreadBadge}
+      </div>
+      <small class="${p.unread_count > 0 ? 'text-gray-900 font-semibold' : 'text-gray-600'}">
         ${p.latest_message ?? 'No messages yet'}
       </small>
     `;
@@ -101,6 +107,7 @@ function renderPatientList(patients) {
       currentPatient = p.id;
       document.getElementById("chatHeader").textContent = p.full_name;
       loadMessages(currentStore, p.id);
+      loadPatients(); // refresh unread badges
     };
 
     list.appendChild(li);

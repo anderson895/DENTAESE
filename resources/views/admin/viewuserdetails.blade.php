@@ -698,12 +698,19 @@
     
         // Replace body with cloned content + print styles
         document.body.innerHTML = `
-        
+
             <style>
                 @media print {
-                    @page { margin: 0; }
-                    body { margin: 1mm; font-family: system-ui, sans-serif; }
+                    /* Default print setup: Legal paper, single page at ~72% scale */
+                    @page { size: legal; margin: 0; }
+                    body { margin: 1mm; font-family: system-ui, sans-serif; zoom: 72%; }
                     .no-print { display: none !important; }
+                    /* Keep legend/status colors visible on the printable layout */
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                    }
                 }
                 body { font-family: system-ui, sans-serif; margin: 5mm; }
             </style>

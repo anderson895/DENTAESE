@@ -2,7 +2,8 @@
     $authUser       = auth()->user();
     $isPatient      = $authUser && $authUser->account_type === 'patient';
     $isReceptionist = $authUser && $authUser->position === 'Receptionist';
-    $chartReadonly  = $isPatient || $isReceptionist || !empty($readonly);
+    $isAdminUser    = $authUser && $authUser->position === 'admin';
+    $chartReadonly  = $isPatient || $isReceptionist || $isAdminUser || !empty($readonly);
 @endphp
 
 <div class="space-y-6">
@@ -19,7 +20,7 @@
         @if(!$isReceptionist)
         <!-- Next button (right) -->
         <button
-            @click="tab='checkin'"
+            @click="tab='rx'"
             class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
         >
             Next

@@ -152,7 +152,7 @@
                 <th class="px-4 py-2 border">Date</th>
                 <th class="px-4 py-2 border">Start</th>
                 <th class="px-4 py-2 border">End</th>
-                <th class="px-4 py-2 border">Description</th>
+                <th class="px-4 py-2 border">Type</th>
                 <th class="px-4 py-2 border">Status</th>
                 <th class="px-4 py-2 border">Arrived</th>
                 <th class="px-4 py-2 border">Action</th>

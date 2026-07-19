@@ -63,10 +63,15 @@ class AdminController extends Controller
 
      $branchId = session('active_branch_id');
 
-    // Appointments today
+    // Fallback auto-cancel of lapsed pending appointments (in case cron is down)
+    Appointment::expireLapsedPending();
+
+    // Appointments today — only active ones
+    // (cancelled / no-show / completed are hidden from this widget)
     $appointmentsToday = Appointment::with('user')
         ->where('store_id', $branchId)
         ->whereDate('appointment_date', Carbon::today())
+        ->whereIn('status', ['pending', 'approved', 'arrived'])
         ->orderBy('appointment_time')
         ->get();
 
