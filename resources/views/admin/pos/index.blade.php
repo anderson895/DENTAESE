@@ -238,30 +238,47 @@
 
 <script>
 function printReceipt() {
-    let modalContent = document.getElementById("receipt-modal").innerHTML;
-    let printWindow = window.open("", "", "width=800,height=600");
-    printWindow.document.write(`
-        <html>
-        <head>
-            <style>
-                @page { margin: 10mm; }
-                body { font-family: Arial, sans-serif; margin: 0; padding: 10px; font-size: 12px; }
-                h1 { font-size: 16px; margin: 0; }
-                table { border-collapse: collapse; width: 100%; }
-                td, th { border: 1px solid #000; padding: 4px; font-size: 12px; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-            </style>
-        </head>
-        <body>
-            <div class="receipt">${modalContent}</div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+    const modal = document.getElementById("receipt-modal");
+    if (!modal) return;
+
+    // Hidden iframe + DOM APIs only (walang doc.write at closing-tag literals —
+    // hinahati ng HTML optimizer ng host ang inline script sa closing-body string,
+    // at hinaharang naman ng popup blocker ang window.open).
+    const oldFrame = document.getElementById('pos-print-frame');
+    if (oldFrame) oldFrame.remove();
+
+    const frame = document.createElement('iframe');
+    frame.id = 'pos-print-frame';
+    frame.style.position = 'fixed';
+    frame.style.right = '0';
+    frame.style.bottom = '0';
+    frame.style.width = '0';
+    frame.style.height = '0';
+    frame.style.border = '0';
+    document.body.appendChild(frame);
+
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.title = 'Receipt';
+
+    const style = doc.createElement('style');
+    style.textContent = '@page { margin: 10mm; } ' +
+        'body { font-family: Arial, sans-serif; margin: 0; padding: 10px; font-size: 12px; } ' +
+        'h1 { font-size: 16px; margin: 0; } ' +
+        'table { border-collapse: collapse; width: 100%; } ' +
+        'td, th { border: 1px solid #000; padding: 4px; font-size: 12px; } ' +
+        '.text-right { text-align: right; } ' +
+        '.text-center { text-align: center; }';
+    doc.head.appendChild(style);
+
+    const wrapper = doc.createElement('div');
+    wrapper.className = 'receipt';
+    wrapper.innerHTML = modal.innerHTML;
+    doc.body.appendChild(wrapper);
+
+    setTimeout(function () {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    }, 300);
 }
 
 const POS_MEDICINES = @json($medicines->values());

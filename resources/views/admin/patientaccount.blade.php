@@ -244,8 +244,8 @@
               .clinic-name { font-size: 16pt; font-weight: bold; letter-spacing: 0.5px; }
               .clinic-sub { font-size: 9pt; color: #444; }
               .print-meta { text-align: right; font-size: 9pt; color: #444; }
-            </style>
-          </head>
+            <\/style>
+          <\/head>
           <body>
             <div class="clinic-header">
               <div>
@@ -280,10 +280,10 @@
         });
 
         content += `
-              </tbody>
-            </table>
-          </body>
-          </html>
+              <\/tbody>
+            <\/table>
+          <\/body>
+          <\/html>
         `;
 
         printWindow.document.write(content);

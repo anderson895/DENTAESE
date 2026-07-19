@@ -89,16 +89,21 @@
                 Book Appointment
             </button>
 
-            {{-- Walk-in and Emergency stay clickable but use faded colors --}}
             <button type="submit" name="appointment_type" id="walkin" value="walkin"
-                class="bg-green-300 hover:bg-green-400 text-white px-4 py-2 rounded">
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
                 Walk-in
             </button>
 
             <button type="submit" name="appointment_type" id="emergency" value="emergency"
-                class="bg-red-300 hover:bg-red-400 text-white px-4 py-2 rounded">
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
                 Emergency
             </button>
+
+            {{-- Policy note: lumalabas kapag ang napiling branch ay hindi ang active branch --}}
+            <p id="walkinPolicyNote" class="hidden text-sm text-red-600 mt-2">
+                <strong>Note:</strong> Walk-in and Emergency bookings are only allowed for your current branch
+                ({{ $branch->name ?? 'your branch' }}). For other branches, use <strong>Book Appointment</strong> instead.
+            </p>
 
     
         </form>
@@ -133,37 +138,28 @@ const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 
 let flatpickrInstance;
 
+// Kapag hindi active branch ang napili, hindi pwede ang walk-in/emergency —
+// pero clickable pa rin ang buttons para maipaliwanag kung bakit (hindi silent).
+let walkinAllowed = true;
+const activeBranchId = '{{ $branch->id }}';
+
+function updateWalkinPolicy(storeId) {
+    // Walang branch pa = hayaan ang required-field validation ang humarang;
+    // may branch pero hindi active = ipakita ang policy note.
+    walkinAllowed = !storeId || storeId == activeBranchId;
+    $('#walkinPolicyNote').toggleClass('hidden', walkinAllowed);
+}
+
 $('#store_id').on('change', function () {
     const storeId = $(this).val();
 
+    updateWalkinPolicy(storeId);
 
-
-    // Disable buttons by default
-const walkinBtn = $('#walkin');
-const emergencyBtn = $('#emergency');
-
-if (!storeId) {
-    walkinBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
-    emergencyBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
-    $('#storedetail').html('');
-    $('#appointment_date').prop('disabled', true);
-    return;
-}
-
-// Check if selected branch is the active branch
-const activeBranchId = '{{ $branch->id }}';
-if (storeId != activeBranchId) {
-    // Disable buttons and add disabled style
-    walkinBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
-    emergencyBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
-} else {
-    // Enable buttons and remove disabled style
-    walkinBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
-    emergencyBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
-}
-
-
-    if (!storeId) return;
+    if (!storeId) {
+        $('#storedetail').html('');
+        $('#appointment_date').prop('disabled', true);
+        return;
+    }
 
    $.get(`/store/${storeId}/schedule`, function (data) {
     if (data.status === 'success') {
@@ -319,16 +315,30 @@ $(document).on('change', '#appointment_date', function () {
 
 let clickedButton = null;
 
-$('button[type="submit"]').on('click', function () {
-    clickedButton = $(this).val(); // "normal" or "walkin"
+$('button[type="submit"]').on('click', function (e) {
+    clickedButton = $(this).val(); // "normal", "walkin", or "emergency"
 
-    if (clickedButton === 'walkin') {
+    // Policy: walk-in/emergency ay para lang sa active branch ng receptionist.
+    // Ipaliwanag kung bakit imbes na walang mangyari.
+    if (['walkin', 'emergency'].includes(clickedButton) && !walkinAllowed) {
+        e.preventDefault();
+        $('#walkinPolicyNote').removeClass('hidden');
+        Swal.fire(
+            'Not Allowed',
+            'Walk-in and Emergency bookings are only allowed for your current branch. For other branches, please use "Book Appointment" instead.',
+            'warning'
+        );
+        return;
+    }
+
+    if (clickedButton === 'walkin' || clickedButton === 'emergency') {
+        // Date/time ay auto-now sa server para sa walk-in/emergency
         $('#datetimeWrapper').hide();
         $('#appointment_date, #appointment_time').prop('required', false);
     } else if (clickedButton === 'normal') {
         $('#datetimeWrapper').show();
         $('#appointment_date, #appointment_time').prop('required', true);
-        
+
     }
 });
 

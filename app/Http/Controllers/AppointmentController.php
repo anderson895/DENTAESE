@@ -382,7 +382,7 @@ if ($nextBooking) {
         'appointment_date' => $validated['appointment_date'],
         'appointment_time' => $validated['appointment_time'],
         'booking_end_time' => $appointmentEnd->format('H:i'),
-        'desc' => $validated['desc'],
+        'desc' => $validated['desc'] ?? null,
         'status' => 'pending',
     ]);
 
@@ -426,30 +426,48 @@ public function appointmentadmin(Request $request)
     $appointmentTime = Carbon::parse($appointmentDate->format('Y-m-d') . ' ' . $validated['appointment_time']);
     $bookingEnd = $appointmentTime->copy()->addMinutes($service->approx_time);
 
+    // Walk-in/emergency: nasa clinic na mismo ang pasyente at receptionist,
+    // kaya hindi na hinaharang ng closed-day / dentist-off / store-hours checks.
+    $isWalkinOrEmergency = in_array($type, ['walkin', 'emergency']);
+
+    // Policy: walk-in/emergency ay para lamang sa active branch ng staff
+    if ($isWalkinOrEmergency && (string) $validated['store_id'] !== (string) session('active_branch_id')) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Walk-in and Emergency bookings are only allowed for your current branch. For other branches, please use "Book Appointment" instead.'
+        ]);
+    }
+
     // Per-date clinic override (calendar-based) takes precedence
     $clinicOverride = StoreScheduleOverride::where('store_id', $store->id)
         ->where('schedule_date', $appointmentDate->toDateString())->first();
-    if ($clinicOverride) {
-        if (!$clinicOverride->is_open) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Clinic is closed on this date.'
-            ]);
-        }
-    } else {
-        $dayOfWeek = strtolower($appointmentDate->format('D'));
-        if (!in_array($dayOfWeek, $store->open_days ?? [])) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Store is closed on this day.'
-            ]);
+
+    if (!$isWalkinOrEmergency) {
+        if ($clinicOverride) {
+            if (!$clinicOverride->is_open) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Clinic is closed on this date.'
+                ]);
+            }
+        } else {
+            $dayOfWeek = strtolower($appointmentDate->format('D'));
+            $openDays = is_array($store->open_days)
+                ? $store->open_days
+                : (json_decode($store->open_days ?? '[]', true) ?: []);
+            if (!in_array($dayOfWeek, $openDays)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Store is closed on this day.'
+                ]);
+            }
         }
     }
 
     // Doctor schedule override
     $docSchedule = DoctorSchedule::where('dentist_id', $validated['dentist_id'])
         ->where('schedule_date', $appointmentDate->toDateString())->first();
-    if ($docSchedule && $docSchedule->status === 'off') {
+    if (!$isWalkinOrEmergency && $docSchedule && $docSchedule->status === 'off') {
         return response()->json([
             'status' => 'error',
             'message' => 'Selected dentist is off on this date.'
@@ -472,13 +490,14 @@ public function appointmentadmin(Request $request)
     $storeClosing = Carbon::parse($appointmentDate->format('Y-m-d') . ' ' . Carbon::parse($closingTime)->format('H:i'));
 
     // Adjust walk-in/emergency appointments if before opening
-    if (in_array($type, ['walkin', 'emergency']) && $appointmentTime < $storeOpening) {
+    if ($isWalkinOrEmergency && $appointmentTime < $storeOpening) {
         $appointmentTime = $storeOpening->copy();
         $bookingEnd = $appointmentTime->copy()->addMinutes($service->approx_time);
     }
 
-    // Check if appointment is within store hours
-    if ($appointmentTime < $storeOpening || $bookingEnd > $storeClosing) {
+    // Check if appointment is within store hours (walk-in/emergency exempted —
+    // nandiyan na ang pasyente kahit lampas o labas sa naka-set na store hours)
+    if (!$isWalkinOrEmergency && ($appointmentTime < $storeOpening || $bookingEnd > $storeClosing)) {
         return response()->json([
             'status' => 'error',
             'message' => 'Appointment time is outside of store hours.',
@@ -554,7 +573,7 @@ public function appointmentadmin(Request $request)
         'appointment_date' => $validated['appointment_date'],
         'appointment_time' => $appointmentTime->format('H:i'),
         'booking_end_time' => $bookingEnd->format('H:i'),
-        'desc' => $validated['desc'],
+        'desc' => $validated['desc'] ?? null,
         'status' => $status,
         'appointment_type' => $appointmentType,
     ]);

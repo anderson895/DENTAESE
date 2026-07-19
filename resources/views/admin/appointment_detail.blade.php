@@ -600,35 +600,27 @@ function printCheckinReceipt() {
     frame.style.border = '0';
     document.body.appendChild(frame);
 
+    // Build the iframe document via DOM APIs only.
+    // IMPORTANT: walang doc.write at walang literal na closing body/html tag
+    // strings dito — hinahati ng HTML optimizer ng host ang inline script sa
+    // unang closing-body na makita nito, kaya lumalabas ang code bilang text.
     const doc = frame.contentDocument || frame.contentWindow.document;
-    doc.open();
-    doc.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Acknowledgement Receipt</title>
-            <style>
-                @page { margin: 10mm; }
-                body { font-family: system-ui, sans-serif; margin: 0; }
-                .no-print { display: none !important; }
-            </style>
-        </head>
-        <body>${receipt.outerHTML}</body>
-        </html>
-    `);
-    doc.close();
 
-    let printed = false;
-    const doPrint = function () {
-        if (printed) return;
-        printed = true;
+    doc.title = 'Acknowledgement Receipt';
+
+    const style = doc.createElement('style');
+    style.textContent = '@page { margin: 10mm; } ' +
+        'body { font-family: system-ui, sans-serif; margin: 0; } ' +
+        '.no-print { display: none !important; }';
+    doc.head.appendChild(style);
+
+    doc.body.appendChild(doc.importNode(receipt, true));
+
+    // Give the iframe a tick to apply styles before printing
+    setTimeout(function () {
         frame.contentWindow.focus();
         frame.contentWindow.print();
-    };
-
-    frame.onload = doPrint;
-    // Fallback in case onload already fired before the handler was attached
-    setTimeout(doPrint, 700);
+    }, 300);
 }
 </script>
 
