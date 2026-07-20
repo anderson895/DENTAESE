@@ -73,6 +73,14 @@ class DentalChartController extends Controller
     // Store or update patient record (PDA format)
     public function storeOrUpdatePatientRecord(Request $request)
     {
+        // Admin ay view-only sa Patient Information — walang access mag-update.
+        if (auth()->check() && auth()->user()->position === 'admin') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Admin accounts are not allowed to update patient information.',
+            ], 403);
+        }
+
         $data = $request->validate([
             'user_id' => 'required',
 

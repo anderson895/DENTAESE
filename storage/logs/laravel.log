@@ -2132,3 +2132,17 @@
 #67 {main}
 "} 
 [2026-07-19 20:07:00] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-20 12:15:14] local.ERROR: Command "artisan" is not defined. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"artisan\" is not defined. at C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\vendor\\symfony\\console\\Application.php:726)
+[stacktrace]
+#0 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\vendor\\symfony\\console\\Application.php(284): Symfony\\Component\\Console\\Application->find('artisan')
+#1 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\vendor\\symfony\\console\\Application.php(193): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#2 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(197): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1234): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#5 {main}
+"} 
+[2026-07-20 12:18:36] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-20 12:19:15] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-20 12:19:17] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-20 12:19:51] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
+[2026-07-20 12:46:25] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["3","pending","approved","arrived",26]} 

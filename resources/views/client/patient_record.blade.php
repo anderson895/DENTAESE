@@ -1,5 +1,7 @@
 @php
-    $isReadonly = isset($readonly) && $readonly;
+    // Admin ay view-only sa Patient Information — walang access mag-update.
+    // NOTE: lahat ng staff ay account_type=='admin', kaya position ang totoong tseke.
+    $isReadonly = (isset($readonly) && $readonly) || (auth()->user()->position === 'admin');
     $u = $patientinfo->user ?? auth()->user();
     $age = '';
     if (!empty($patientinfo->birthdate)) {
@@ -455,6 +457,7 @@
         </div>
 
         {{-- Submit --}}
+        @unless($isReadonly)
         <div class="pt-4 flex justify-end gap-3">
             @if($firstLogin && auth()->user()->account_type == 'patient')
                 <a href="/logouts" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded">Cancel</a>
@@ -463,6 +466,7 @@
                 {{ $firstLogin ? 'Submit & Continue' : 'Save' }}
             </button>
         </div>
+        @endunless
     </form>
 </div>
 
@@ -473,6 +477,17 @@
     (function () {
         const form = document.getElementById('patient-form');
         if (!form) return;
+
+        // View-only mode (e.g. admin): i-disable lahat ng inputs at pigilan ang submit.
+        const isReadonly = @json($isReadonly);
+        if (isReadonly) {
+            form.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+                if (el.id === 'age-display') return; // age display stays as-is
+                el.disabled = true;
+            });
+            form.addEventListener('submit', function (e) { e.preventDefault(); });
+            return; // huwag na i-attach ang save handler
+        }
 
         // Auto-update Age display from birthdate
         const bday = form.querySelector('input[name="birthdate"]');

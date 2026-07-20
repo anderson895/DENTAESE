@@ -25,26 +25,20 @@
   </div>
   @endif
 </div>
-{{-- Modal Add User --}}
-<div id="addUserModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
-  <div class="flex flex-col"  style="background:#fff; padding:20px; margin:100px auto; width:50%; position:relative;">
-    <h3>Add Branch</h3>
-    <form class="flex flex-col p-2 gap-2" id="addUserForm">
-      <label>Branch Name:</label>
-      <input type="text" name="Branch" placeholder="Branch" required>
-      <label>Address:</label>
-      <input type="text" name="Address" placeholder="Address" required>
-     
-      <div class="flex flex-row mt-5 gap-3">
-       
-        <div class="flex flex-row mt-5 gap-3">
-        <button type="submit">Save</button>
-        <button type="button" id="closeModalBtn">Cancel</button>
+{{-- Modal Add Branch --}}
+<div id="addBranchModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow p-6 w-full max-w-lg">
+    <h3 class="text-xl font-bold mb-4 text-blue-700">Add Branch</h3>
+    <form id="addBranchForm" class="space-y-3">
+      <input type="text" name="Branch" placeholder="Branch Name" required class="w-full border p-2 rounded">
+      <textarea name="Address" placeholder="Address" required rows="3" class="w-full border p-2 rounded"></textarea>
+
+      <div class="flex justify-end gap-2 pt-4">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+        <button type="button" id="closeBranchModalBtn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>
       </div>
-     
     </form>
   </div>
-</div>
 </div>
 
 
@@ -247,8 +241,10 @@
         _token: '{{ csrf_token() }}'
       },
       success: function (response) {
-        Swal.fire('Success', 'Branch schedule updated.', 'success');
-        // Optional: Close modal or refresh data
+        Swal.fire('Success', 'Branch schedule updated.', 'success').then(() => {
+          // Isara ang branch modal pagkatapos i-click ang "OK"
+          $('#branchModal').removeClass('flex').addClass('hidden');
+        });
       },
       error: function (xhr) {
         Swal.fire('Error', 'Something went wrong!', 'error');
@@ -511,7 +507,7 @@ function viewUser(id) {
                         <td class="border px-2 py-1">${branch.name}</td>
                         <td class="border px-2 py-1">${branch.address}</td>
                       
-                     <td class="border px-2 py-1"><button class="text-blue-600 underline" onclick="openBranchModal(${branch.id})">View</button></td>
+                     <td class="border px-2 py-1"><button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="openBranchModal(${branch.id})">Update</button></td>
                     </tr>
                     `;
                 });
@@ -551,28 +547,28 @@ function viewUser(id) {
   $(document).ready(function() {
     // Show modal
     $('#addUserBtn').click(function() {
-      $('#addUserModal').show();
+      $('#addBranchModal').removeClass('hidden').addClass('flex');
     });
 
     // Hide modal
-    $('#closeModalBtn').click(function() {
-      $('#addUserModal').hide();
+    $('#closeBranchModalBtn').click(function() {
+      $('#addBranchModal').removeClass('flex').addClass('hidden');
     });
 
     // Optional: Hide modal on outside click
     $(window).click(function(e) {
-      if ($(e.target).is('#addUserModal')) {
-        $('#addUserModal').hide();
+      if ($(e.target).is('#addBranchModal')) {
+        $('#addBranchModal').removeClass('flex').addClass('hidden');
       }
     });
 
-   
-    $('#addUserForm').submit(function (e) {
+
+    $('#addBranchForm').submit(function (e) {
     e.preventDefault();
 
     const formData = {
-      branch: $('input[name="Branch"]').val(),
-      address: $('input[name="Address"]').val(),
+      branch: $('#addBranchForm [name="Branch"]').val(),
+      address: $('#addBranchForm [name="Address"]').val(),
      
       _token: '{{ csrf_token() }}' // Laravel CSRF token
     };
@@ -584,8 +580,8 @@ function viewUser(id) {
       success: function (response) {
         if (response.status ==='success') {
           Swal.fire('Success!', response.message, 'success');
-        $('#addUserModal').fadeOut();
-        $('#addUserForm')[0].reset();
+        $('#addBranchModal').removeClass('flex').addClass('hidden');
+        $('#addBranchForm')[0].reset();
         branchlist(currentPage);
         }else{
           Swal.fire({

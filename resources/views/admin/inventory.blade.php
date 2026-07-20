@@ -197,19 +197,19 @@
   <td class="border py-2 px-4">${item.description ?? ''}</td>
   <td class="border py-2 px-4 whitespace-nowrap">
     @if(session('active_branch_id') === 'admin')
-      <a href="/medicines/${item.id}" class="text-blue-600 hover:underline" disabled>View</a>
+      <a href="/medicines/${item.id}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2" disabled>View</a>
     @else
-      <a href="/medicines/${item.id}" class="text-blue-600 hover:underline mr-2">View</a>
+      <a href="/medicines/${item.id}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2">View</a>
     @endif
     <button type="button"
-            class="text-amber-600 hover:underline mr-2 editBtn"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded mr-2 editBtn"
             data-id="${item.id}"
             data-name="${(item.name ?? '').replace(/"/g, '&quot;')}"
             data-unit="${item.unit ?? ''}"
             data-price="${item.price ?? ''}"
             data-description="${safeDesc}">Edit</button>
     <button type="button"
-            class="text-red-600 hover:underline deleteBtn"
+            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded deleteBtn"
             data-id="${item.id}"
             data-name="${(item.name ?? '').replace(/"/g, '&quot;')}">Delete</button>
   </td>
