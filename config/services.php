@@ -28,6 +28,13 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    'semaphore' => [
+        'key'         => env('SEMAPHORE_API_KEY'),
+        'sender_name' => env('SEMAPHORE_SENDER_NAME', 'DENTAEASE'),
+        'enabled'     => env('SEMAPHORE_SMS_ENABLED', true),
+        'timeout'     => env('SEMAPHORE_TIMEOUT', 10),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

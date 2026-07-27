@@ -2146,3 +2146,6 @@
 [2026-07-20 12:19:17] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
 [2026-07-20 12:19:51] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["1","pending","approved","arrived",26]} 
 [2026-07-20 12:46:25] local.DEBUG: Appointments SQL {"sql":"select * from `appointments` where `store_id` = ? and `status` in (?, ?, ?) and `dentist_id` = ? order by `appointment_date` asc, `appointment_time` asc","bindings":["3","pending","approved","arrived",26]} 
+[2026-07-27 22:46:19] local.INFO: Semaphore SMS sent. {"endpoint":"messages","number":"639454454744"} 
+[2026-07-27 22:49:02] local.ERROR: Semaphore SMS rejected. {"endpoint":"messages","number":"639454454744","status":200,"body":"{\"sendername\":[\"The selected sendername is invalid.\"]}"} 
+[2026-07-27 22:53:52] local.ERROR: Semaphore SMS rejected. {"endpoint":"messages","number":"639454454744","status":500,"body":"[{\"senderName\":\"The senderName supplied is not valid\"}]"} 

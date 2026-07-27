@@ -15,6 +15,7 @@ use App\Models\PatientRecord;
 use App\Models\PatientMedication;
 use App\Models\Service;
 use App\Models\StoreStaff;
+use App\Services\AppointmentSms;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\AppointmentNotification;
    use Illuminate\Support\Facades\Schema;
@@ -148,6 +149,10 @@ public function approveBooking(Request $request, $id)
         'title' => $title,
         'message' => $message,
     ]));
+
+    //  SMS via Semaphore (best-effort, hindi nakaka-block ng approval)
+    $sms = app(AppointmentSms::class);
+    $isReschedule ? $sms->rescheduled($appointment) : $sms->approved($appointment);
 
     //  Response with custom message
     return response()->json([
@@ -295,10 +300,12 @@ public function cancelBooking($id)
     $appointment->status = 'cancelled';
     $appointment->save();
     $appointment->user->notify(new AppointmentNotification([
-    'title' => 'Appointment Approved',
+    'title' => 'Appointment Cancelled',
     'message' => 'Your appointment at '. $appointment->store->name . ' has been cancelled.',
     // 'url' => '/messages'
 ]));
+
+    app(AppointmentSms::class)->cancelled($appointment);
 
     return response()->json(['message' => 'Appointment cancelled.']);
 }

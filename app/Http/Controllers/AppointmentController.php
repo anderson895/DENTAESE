@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\DoctorSchedule;
 use App\Models\StoreScheduleOverride;
+use App\Services\AppointmentSms;
 use Illuminate\Support\Facades\Auth;
 class AppointmentController extends Controller
 {
@@ -385,6 +386,9 @@ if ($nextBooking) {
         'desc' => $validated['desc'] ?? null,
         'status' => 'pending',
     ]);
+
+    // Best-effort SMS; hindi hinaharangan ang booking kapag pumalya ang gateway.
+    app(AppointmentSms::class)->booked($appointment);
 
     return response()->json([
         'status' => 'success',
