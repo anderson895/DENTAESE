@@ -158,6 +158,7 @@
 
                     @if (session('active_branch_id') == "admin")
                         <x-nav-link href="/useraccount" icon="fa-solid fa-user-gear" label="Staff Accounts" />
+                        <x-nav-link href="/sms-logs" icon="fa-solid fa-comment-sms" label="SMS Notifications" />
                     @endif
 
                     <x-nav-link href="/patientaccount" icon="fa-solid fa-hospital-user" label="Patient Accounts" />

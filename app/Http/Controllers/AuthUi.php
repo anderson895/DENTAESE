@@ -7,7 +7,7 @@ use App\Models\PatientRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\SendOtp;
-use App\Services\SemaphoreSms;
+use App\Services\SmsGateway;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
@@ -150,10 +150,11 @@ class AuthUi extends Controller
 
         Mail::to($user->email)->send(new SendOtp($otp));
 
-        $smsSent = app(SemaphoreSms::class)->sendOtp(
+        $smsSent = app(SmsGateway::class)->sendOtp(
             $user->contact_number,
             'DentalEase: Your password reset code is {otp}. Valid for 10 minutes. Do not share this code with anyone.',
-            $otp
+            $otp,
+            'password_reset_otp'
         );
 
         return response()->json([
@@ -400,10 +401,11 @@ class AuthUi extends Controller
         Mail::to($request->email)->send(new SendOtp($otp));
 
         // Step 4 ng signup wizard: ipadala rin ang OTP sa contact number.
-        $smsSent = app(SemaphoreSms::class)->sendOtp(
+        $smsSent = app(SmsGateway::class)->sendOtp(
             $request->contact_number,
             'DentalEase: Your verification code is {otp}. Do not share this code with anyone.',
-            $otp
+            $otp,
+            'signup_otp'
         );
 
         return response()->json([

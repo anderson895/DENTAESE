@@ -6,6 +6,7 @@ use App\Models\DoctorSchedule;
 use App\Models\Store;
 use App\Models\StoreScheduleOverride;
 use App\Models\User;
+use App\Services\Notifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -113,12 +114,36 @@ class ScheduleController extends Controller
             ]
         );
 
+        $store = Store::find($data['store_id']);
+        $date  = Carbon::parse($data['schedule_date'])->format('M d, Y');
+        $state = $data['is_open'] ? 'OPEN' : 'CLOSED';
+
+        Notifier::staffAndAdmins(
+            $data['store_id'],
+            'Schedule Calendar Updated',
+            ($store->name ?? 'The clinic') . " is marked {$state} on {$date}."
+                . (!empty($data['reason']) ? " Reason: {$data['reason']}." : ''),
+            route('schedule.calendar')
+        );
+
         return response()->json(['status' => 'success', 'data' => $override]);
     }
 
     public function deleteClinicOverride(StoreScheduleOverride $override)
     {
+        $storeId = $override->store_id;
+        $date    = Carbon::parse($override->schedule_date)->format('M d, Y');
+        $store   = Store::find($storeId);
+
         $override->delete();
+
+        Notifier::staffAndAdmins(
+            $storeId,
+            'Schedule Calendar Updated',
+            ($store->name ?? 'The clinic') . " schedule override for {$date} was removed. Regular hours apply.",
+            route('schedule.calendar')
+        );
+
         return response()->json(['status' => 'success']);
     }
 
@@ -151,12 +176,35 @@ class ScheduleController extends Controller
             ]
         );
 
+        $dentist = User::find($data['dentist_id']);
+        $name    = $dentist ? trim($dentist->name . ' ' . $dentist->lastname) : 'A dentist';
+        $date    = Carbon::parse($data['schedule_date'])->format('M d, Y');
+
+        $detail = $data['status'] === 'off'
+            ? "{$name} is marked OFF on {$date}."
+            : "{$name} is available on {$date}"
+                . (!empty($data['start_time']) ? " ({$data['start_time']} - {$data['end_time']})" : '') . '.';
+
+        // Ipaalam sa dentista mismo at sa branch staff/admin
+        Notifier::user($dentist, 'Your Schedule Was Updated', $detail, route('schedule.calendar'));
+        Notifier::staffAndAdmins($data['store_id'] ?? null, 'Doctor Schedule Updated', $detail, route('schedule.calendar'));
+
         return response()->json(['status' => 'success', 'data' => $schedule]);
     }
 
     public function deleteDoctorSchedule(DoctorSchedule $schedule)
     {
+        $dentist = User::find($schedule->dentist_id);
+        $name    = $dentist ? trim($dentist->name . ' ' . $dentist->lastname) : 'A dentist';
+        $date    = Carbon::parse($schedule->schedule_date)->format('M d, Y');
+        $storeId = $schedule->store_id;
+
         $schedule->delete();
+
+        $detail = "The schedule entry for {$name} on {$date} was removed.";
+        Notifier::user($dentist, 'Your Schedule Was Updated', $detail, route('schedule.calendar'));
+        Notifier::staffAndAdmins($storeId, 'Doctor Schedule Updated', $detail, route('schedule.calendar'));
+
         return response()->json(['status' => 'success']);
     }
 }

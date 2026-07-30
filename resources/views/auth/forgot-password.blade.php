@@ -7,7 +7,6 @@
 
     <div class="text-center mb-5">
         <h2 class="text-2xl font-bold text-sky-600">Forgot Password</h2>
-        <p class="text-sm text-gray-600 mt-1">We'll send a one-time code to your email.</p>
     </div>
 
     <!-- STEP 1: Email -->
@@ -44,13 +43,27 @@
     <form id="resetForm" class="flex-col gap-5 hidden" style="display:none;">
         <div>
             <label class="text-gray-700 text-sm font-medium">New Password</label>
-            <input type="password" name="password" id="newPasswordInput"
-                class="mt-1 w-full border border-sky-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
+            <div class="relative">
+                <input type="password" name="password" id="newPasswordInput"
+                    class="mt-1 w-full border border-sky-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
+                <button type="button" onclick="togglePasswordField('newPasswordInput', this)"
+                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                    aria-label="Show password">
+                    @include('partials.eye-icon')
+                </button>
+            </div>
         </div>
         <div class="mt-3">
-            <label class="text-gray-700 text-sm font-medium">Confirm Password</label>
-            <input type="password" name="confirm_password" id="confirmPasswordInput"
-                class="mt-1 w-full border border-sky-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
+            <label class="text-gray-700 text-sm font-medium">Retype Password</label>
+            <div class="relative">
+                <input type="password" name="confirm_password" id="confirmPasswordInput"
+                    class="mt-1 w-full border border-sky-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
+                <button type="button" onclick="togglePasswordField('confirmPasswordInput', this)"
+                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                    aria-label="Show password">
+                    @include('partials.eye-icon')
+                </button>
+            </div>
         </div>
         <div class="flex justify-end mt-4">
             <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white font-medium rounded-md px-4 py-2 transition duration-150">
@@ -68,6 +81,17 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// Show/hide password gamit ang eye icon
+function togglePasswordField(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.querySelector('.eye-open')?.classList.toggle('hidden', isHidden);
+    btn.querySelector('.eye-closed')?.classList.toggle('hidden', !isHidden);
+    btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+}
+
 $(document).ready(function () {
     const token = '{{ csrf_token() }}';
 

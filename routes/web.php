@@ -9,6 +9,7 @@ use  App\Models\User;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SmsLogController;
 
 use function Laravel\Prompts\password;
 use Illuminate\Support\Facades\Storage;
@@ -141,6 +142,8 @@ Route::get('/dental-chart/{patient}', function (User $patient) {
 
 // ADMIN
 Route::middleware('auth')->group(function () {
+    Route::get('/sms-logs', [SmsLogController::class, 'index'])->name('sms-logs.index');
+
     Route::get('/chat', [MessageController::class, 'index'])->name('chat.index');
     Route::get('/patients', [MessageController::class, 'patients'])->name('patients.list');
     Route::get('/messages/{storeId}/{userId}', [MessageController::class, 'fetch'])->name('messages.fetch');

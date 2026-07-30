@@ -27,7 +27,8 @@
 }
 </style>
 
-<div x-data="{ tab: 'sales' }" 
+{{-- Panatilihin ang aktibong tab pagkatapos mag-filter (GET reload) --}}
+<div x-data="{ tab: '{{ request('tab') === 'inventory' ? 'inventory' : 'sales' }}' }"
      x-init="$watch('tab', value => {
          document.querySelectorAll('#tab-content > div').forEach(el => el.classList.remove('printable'));
          document.getElementById(value + '-printable').classList.add('printable');
@@ -65,6 +66,14 @@
             </div>
 
             <form method="GET" class="mb-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-end print:hidden bg-white p-4 rounded shadow">
+                {{-- Manatili sa Sales Report tab pagkatapos mag-filter --}}
+                <input type="hidden" name="tab" value="sales">
+                {{-- Panatilihin ang mga filter ng Inventory Movement tab --}}
+                @foreach(['inv_from', 'inv_to'] as $invParam)
+                    @if(request()->filled($invParam))
+                        <input type="hidden" name="{{ $invParam }}" value="{{ request($invParam) }}">
+                    @endif
+                @endforeach
                 <div>
                     <label class="block text-sm font-semibold">From:</label>
                     <input type="date" name="from" value="{{ $from->format('Y-m-d') }}" class="border rounded px-2 py-1 w-full">
@@ -174,12 +183,20 @@
 
     <!-- Date Range Filter -->
     <form method="GET" class="mb-4 flex gap-2 items-center ">
+        {{-- Manatili sa Inventory Movement tab pagkatapos mag-filter --}}
+        <input type="hidden" name="tab" value="inventory">
+        {{-- Panatilihin ang mga filter ng Sales Report tab --}}
+        @foreach(['from', 'to', 'cashier_id', 'patient_id', 'medicine_id'] as $salesParam)
+            @if(request()->filled($salesParam))
+                <input type="hidden" name="{{ $salesParam }}" value="{{ request($salesParam) }}">
+            @endif
+        @endforeach
         <label>
-            From: 
+            From:
             <input type="date" name="inv_from" value="{{ request('inv_from', now()->startOfMonth()->format('Y-m-d')) }}" class="border rounded px-2 py-1">
         </label>
         <label>
-            To: 
+            To:
             <input type="date" name="inv_to" value="{{ request('inv_to', now()->endOfMonth()->format('Y-m-d')) }}" class="border rounded px-2 py-1">
         </label>
         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">

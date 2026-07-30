@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\DoctorSchedule;
 use App\Models\StoreScheduleOverride;
 use App\Services\AppointmentSms;
+use App\Services\Notifier;
 use Illuminate\Support\Facades\Auth;
 class AppointmentController extends Controller
 {
@@ -29,11 +30,27 @@ public function changeTime(Request $request, Appointment $appointment)
         'booking_end_time' => 'required|after:appointment_time',
     ]);
 
+    $oldWhen = Carbon::parse($appointment->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($appointment->appointment_time)->format('g:i A');
+
     $appointment->update([
         'appointment_date' => $request->appointment_date,
         'appointment_time' => $request->appointment_time,
         'booking_end_time' => $request->booking_end_time,
     ]);
+
+    $newWhen = Carbon::parse($request->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($request->appointment_time)->format('g:i A');
+
+    $patient = $appointment->user;
+    $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+    Notifier::user($patient, 'Appointment Date/Time Changed',
+        "Your appointment was moved from {$oldWhen} to {$newWhen}.", route('CBookingo'));
+
+    Notifier::branchStaff($appointment->store_id, 'Appointment Date/Time Changed',
+        "The appointment of {$patientName} was moved from {$oldWhen} to {$newWhen}.",
+        route('appointments.view', $appointment->id));
 
     return response()->json(['message' => 'Date & time updated']);
 }
@@ -390,6 +407,25 @@ if ($nextBooking) {
     // Best-effort SMS; hindi hinaharangan ang booking kapag pumalya ang gateway.
     app(AppointmentSms::class)->booked($appointment);
 
+    $when = Carbon::parse($appointment->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($appointment->appointment_time)->format('g:i A');
+    $patient = $appointment->user;
+    $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+    Notifier::user(
+        $patient,
+        'Booking Successfully Submitted',
+        "Your appointment at {$store->name} on {$when} has been submitted and is waiting for approval.",
+        route('CBookingo')
+    );
+
+    Notifier::branchStaff(
+        $store->id,
+        'New Appointment Booking',
+        "{$patientName} booked an appointment on {$when}. It is pending approval.",
+        route('admin.booking', ['status' => 'pending'])
+    );
+
     return response()->json([
         'status' => 'success',
         'message' => 'Appointment created successfully.',
@@ -582,6 +618,34 @@ public function appointmentadmin(Request $request)
         'appointment_type' => $appointmentType,
     ]);
 
+    $when = $appointmentDate->format('M d, Y') . ' at ' . $appointmentTime->format('g:i A');
+    $patientName = trim($user->lastname . ', ' . $user->name);
+
+    if ($appointmentType === 'emergency') {
+        // Emergency booking — dapat malaman agad ng buong branch at ng admin
+        Notifier::staffAndAdmins(
+            $store->id,
+            '🚨 Emergency Appointment Booked',
+            "An EMERGENCY appointment was booked for {$patientName} at {$store->name} on {$when}.",
+            route('appointments.view', $appointment->id)
+        );
+        Notifier::user($user, 'Emergency Appointment Recorded',
+            "Your emergency appointment at {$store->name} on {$when} has been recorded.", route('CBookingo'));
+    } elseif ($appointmentType === 'walkin') {
+        Notifier::branchStaff($store->id, 'Walk-in Appointment Booked',
+            "A walk-in appointment was booked for {$patientName} on {$when}.",
+            route('appointments.view', $appointment->id));
+        Notifier::user($user, 'Walk-in Appointment Recorded',
+            "Your walk-in appointment at {$store->name} on {$when} has been recorded.", route('CBookingo'));
+    } else {
+        Notifier::user($user, 'Booking Successfully Submitted',
+            "An appointment was booked for you at {$store->name} on {$when}. It is waiting for approval.",
+            route('CBookingo'));
+        Notifier::branchStaff($store->id, 'New Appointment Booking',
+            "{$patientName} has an appointment on {$when} pending approval.",
+            route('admin.booking', ['status' => 'pending']));
+    }
+
     // Redirect immediately for walk-in/emergency
     if (in_array($type, ['walkin', 'emergency'])) {
         return response()->json([
@@ -653,9 +717,25 @@ public function updateServices(Request $request)
 {
     $appt = Appointment::findOrFail($request->id);
 
- 
-    $appt->service_ids = $request->services; 
+    $oldNames = Service::whereIn('id', $appt->service_ids ?? [])->pluck('name')->implode(', ') ?: 'none';
+
+    $appt->service_ids = $request->services;
     $appt->save();
+
+    $newNames = Service::whereIn('id', $appt->service_ids ?? [])->pluck('name')->implode(', ') ?: 'none';
+
+    if ($oldNames !== $newNames) {
+        $patient = $appt->user;
+        $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+        Notifier::user($patient, 'Appointment Services Changed',
+            "The services for your appointment changed from [{$oldNames}] to [{$newNames}].",
+            route('CBookingo'));
+
+        Notifier::branchStaff($appt->store_id, 'Appointment Services Changed',
+            "Services for {$patientName} changed from [{$oldNames}] to [{$newNames}].",
+            route('appointments.view', $appt->id));
+    }
 
     return response()->json(['success' => true]);
 }

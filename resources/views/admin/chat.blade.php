@@ -8,9 +8,18 @@
 
 <div class="flex h-[calc(100vh-8.5rem)] min-h-[400px] rounded-lg overflow-hidden shadow">
 
+  @php
+      $chatBranch = \App\Models\Store::find(session('active_branch_id'));
+  @endphp
+
   <!-- ================= SIDEBAR ================= -->
   <div class="w-1/4 bg-sky-100 border-r border-sky-300 flex flex-col">
-    <h2 class="text-lg font-bold p-4 bg-sky-300 text-white">Patients</h2>
+    <div class="p-4 bg-sky-300 text-white">
+      <h2 class="text-lg font-bold leading-tight">Patients</h2>
+      <p class="text-xs opacity-90 mt-0.5">
+        <i class="fa-solid fa-code-branch mr-1"></i>{{ $chatBranch->name ?? 'No branch selected' }}
+      </p>
+    </div>
 
     <div class="p-2">
       <input id="patientSearch" type="text"
@@ -23,9 +32,11 @@
 
   <!-- ================= CHAT ================= -->
   <div class="flex-1 flex flex-col bg-slate-300">
-    <div id="chatHeader"
-      class="p-4 bg-sky-300 text-white font-bold">
-      Select a patient
+    <div class="p-4 bg-sky-300 text-white">
+      <div id="chatHeader" class="font-bold">Select a patient</div>
+      <div id="chatSubHeader" class="text-xs opacity-90 mt-0.5">
+        <i class="fa-solid fa-code-branch mr-1"></i>{{ $chatBranch->name ?? 'No branch selected' }}
+      </div>
     </div>
 
     <div id="messagesBox"

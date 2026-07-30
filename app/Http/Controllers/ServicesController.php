@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Service;
+use App\Services\Notifier;
 use Illuminate\Http\Request;
 
 class ServicesController extends Controller
@@ -64,6 +65,12 @@ class ServicesController extends Controller
 
     $service = Service::create($validated);
 
+    Notifier::admins(
+        'New Service Added',
+        "The service \"{$service->name}\" has been added to the clinic's service list.",
+        '/services'
+    );
+
     return response()->json(['status'=> 'success', 'message' => 'Service created successfully', 'service' => $service]);
     }
 
@@ -81,6 +88,12 @@ class ServicesController extends Controller
     }
 
     $service->update($data);
+
+    Notifier::admins(
+        'Service Updated',
+        "The service \"{$service->name}\" has been updated.",
+        '/services'
+    );
 
     return response()->json(['message' => 'Service updated successfully.']);
 }

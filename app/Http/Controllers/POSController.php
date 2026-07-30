@@ -118,6 +118,15 @@ class POSController extends Controller
         return back()->withErrors(['cart' => 'Cart is empty!']);
     }
 
+    // Bawal mag-checkout kapag kulang ang amount given sa kabuuang halaga.
+    $cartTotal = collect($cart)->sum('subtotal');
+    if ($request->filled('amount_given') && floatval($request->amount_given) < $cartTotal) {
+        $short = number_format($cartTotal - floatval($request->amount_given), 2);
+        return back()->withErrors([
+            'amount_given' => "Amount given is less than the total (₱{$short} short). Please enter the full amount.",
+        ])->withInput();
+    }
+
     $sale = null;
 
     DB::transaction(function () use ($cart, $storeId, $request, &$sale) {

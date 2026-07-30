@@ -235,7 +235,18 @@ public function showProfile($id)
 public function archive(Request $request)
 {
     $user = User::findOrFail($request->id);
+    $name = trim($user->lastname . ', ' . $user->name);
+    $isPatient = $user->account_type === 'patient';
+
     $user->delete(); // soft delete
+
+    \App\Services\Notifier::staffAndAdmins(
+        session('active_branch_id'),
+        $isPatient ? 'Patient Archived' : 'Staff Archived',
+        ($isPatient ? 'Patient' : 'Staff member') . " {$name} has been archived.",
+        $isPatient ? '/patientaccount' : '/useraccount'
+    );
+
     return response()->json(['message' => 'User archived successfully.']);
 }
 
@@ -243,6 +254,17 @@ public function restore(Request $request)
 {
     $user = User::withTrashed()->findOrFail($request->id);
     $user->restore();
+
+    $name = trim($user->lastname . ', ' . $user->name);
+    $isPatient = $user->account_type === 'patient';
+
+    \App\Services\Notifier::staffAndAdmins(
+        session('active_branch_id'),
+        $isPatient ? 'Patient Restored' : 'Staff Restored',
+        ($isPatient ? 'Patient' : 'Staff member') . " {$name} has been restored.",
+        $isPatient ? '/patientaccount' : '/useraccount'
+    );
+
     return response()->json(['message' => 'User restored successfully.']);
 }
 

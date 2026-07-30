@@ -136,7 +136,7 @@ $(document).ready(function () {
 
                 Swal.fire(
                     'Error',
-                    'May nangyaring problema. Pakisubukan muli.',
+                    'Something went wrong. Please try again.',
                     'error'
                 );
             }

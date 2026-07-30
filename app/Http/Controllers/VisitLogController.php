@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Appointment;
 use App\Models\daily_logs;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
@@ -142,6 +143,29 @@ class VisitLogController extends Controller
     // HELPER: Log visit (shared logic)
     // ─────────────────────────────────────────────
     private function logVisit(User $user, string $method): array
+    {
+        // Atomic lock para sa mabilisang sunod-sunod na scan (QR/face na paulit-ulit
+        // nagpapadala). Kung walang lock, sabay-sabay na pumapasa sa duplicate check
+        // ang mga request at nagkakaroon ng maraming log sa iisang oras.
+        $lock = Cache::lock("visit-log:{$user->id}", 10);
+
+        if (!$lock->get()) {
+            return [
+                'status'      => 'warning',
+                'message'     => 'You have already logged a visit today.',
+                'user_name'   => $user->full_name ?? $user->name,
+                'appointment' => null,
+            ];
+        }
+
+        try {
+            return $this->performLogVisit($user, $method);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function performLogVisit(User $user, string $method): array
     {
         // Check if already logged today
         $alreadyLogged = daily_logs::where('user_id', $user->id)

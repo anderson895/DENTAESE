@@ -229,6 +229,30 @@
                        readonly>
             </div>
 
+            {{-- AMOUNT GIVEN --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Amount Given (₱)</label>
+                <input type="number"
+                       name="amount_given"
+                       id="amount_given_input"
+                       value="{{ $appointment->amount_given }}"
+                       step="0.01"
+                       min="0"
+                       class="w-full border rounded p-2">
+                <p id="amount_given_error" class="text-red-600 text-sm mt-1 hidden"></p>
+            </div>
+
+            {{-- CHANGE (SUKLI) --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Change / Sukli (₱)</label>
+                <input type="text"
+                       id="change_display"
+                       value="{{ $appointment->change_amount !== null ? number_format((float) $appointment->change_amount, 2) : '0.00' }}"
+                       class="w-full border rounded p-2 bg-gray-100 font-semibold text-green-700"
+                       readonly>
+                <input type="hidden" name="change_amount" id="change_amount_input" value="{{ $appointment->change_amount }}">
+            </div>
+
             {{-- RECEIPT --}}
             <div class="mt-4" hidden>
                 <label class="block font-semibold">Upload Payment Receipt</label>
@@ -295,7 +319,7 @@
             <p class="text-sm text-gray-600 mb-4">
                 Open the POS to record medicine purchases for
                 <strong>{{ $appointment->user->name }} {{ $appointment->user->lastname }}</strong>.
-                The total ay automatic na rin makukuha sa Treatment Record at sa final receipt.
+                The total will be carried over automatically to the Treatment Record and the final receipt.
             </p>
 
             @php
@@ -509,6 +533,14 @@
                                 <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">Grand Total</td>
                                 <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">₱{{ number_format($combinedGrandTotal, 2) }}</td>
                             </tr>
+                            <tr>
+                                <td style="border:1px solid #000; padding:3px; text-align:right;">Amount Given</td>
+                                <td style="border:1px solid #000; padding:3px; text-align:right;">₱<span id="receipt-given-amount">{{ number_format((float) $appointment->amount_given, 2) }}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">Change (Sukli)</td>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">₱<span id="receipt-change-amount">{{ number_format((float) $appointment->change_amount, 2) }}</span></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -659,15 +691,22 @@ $(document).on('click', '#saveDentistBtn', function () {
     });
 });
 
-function refreshPaymentTotals() {
+function currentGrandTotal() {
     const servicePrice  = parseFloat($('#service_price_input').val()) || 0;
     const medicineTotal = parseFloat($('#medicine_total_display').data('amount')) || 0;
-    const grandTotal    = servicePrice + medicineTotal;
+    return servicePrice + medicineTotal;
+}
 
-    const formattedTotal = grandTotal.toLocaleString('en-PH', {
+function peso(value) {
+    return value.toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
+}
+
+function refreshPaymentTotals() {
+    const grandTotal     = currentGrandTotal();
+    const formattedTotal = peso(grandTotal);
 
     $('#grand_total_display').val(formattedTotal);
 
@@ -678,9 +717,43 @@ function refreshPaymentTotals() {
         $('#receipt-sum-amount').text('');
         $('#receipt-sum-words').text('__________________________');
     }
+
+    refreshChange();
+}
+
+// Kalkulahin ang sukli at harangan ang kulang na bayad
+function refreshChange() {
+    const grandTotal = currentGrandTotal();
+    const givenRaw   = $('#amount_given_input').val();
+    const given      = parseFloat(givenRaw) || 0;
+    const hasAmount  = givenRaw !== '' && givenRaw !== null;
+    const change     = given - grandTotal;
+    const short      = hasAmount && change < 0;
+
+    $('#change_display').val(short ? '0.00' : peso(Math.max(0, change)));
+    $('#change_amount_input').val(short ? '' : Math.max(0, change).toFixed(2));
+
+    const err = $('#amount_given_error');
+    if (short) {
+        err.text('Amount given is less than the total (₱' + peso(Math.abs(change)) + ' short).').removeClass('hidden');
+    } else {
+        err.addClass('hidden');
+    }
+
+    // Update receipt change line
+    $('#receipt-change-amount').text(short ? '0.00' : peso(Math.max(0, change)));
+    $('#receipt-given-amount').text(hasAmount ? peso(given) : '0.00');
+
+    // Huwag payagang i-complete kapag kulang ang bayad
+    const completeBtn = $('#action-buttons button[data-status="completed"]');
+    completeBtn.prop('disabled', short)
+               .toggleClass('opacity-50 cursor-not-allowed', short);
+
+    return !short;
 }
 
 $(document).on('input', '#service_price_input', refreshPaymentTotals);
+$(document).on('input', '#amount_given_input', refreshChange);
 $(document).ready(refreshPaymentTotals);
     $(document).ready(function () {
                 $('#payment_receipt_input').on('change', function (event) {
@@ -707,6 +780,13 @@ $(document).ready(refreshPaymentTotals);
 
             const button = $(this);
             const status = button.data('status');
+
+            // Bawal i-complete kapag kulang ang amount given sa total
+            if (status === 'completed' && !refreshChange()) {
+                Swal.fire('Insufficient Amount', $('#amount_given_error').text(), 'warning');
+                return;
+            }
+
             $('#status').val(status); // set hidden input
 
             const form = $('#finalizeAppointmentForm')[0];

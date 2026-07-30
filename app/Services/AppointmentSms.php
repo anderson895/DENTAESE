@@ -12,11 +12,11 @@ use Carbon\Carbon;
  */
 class AppointmentSms
 {
-    public function __construct(private SemaphoreSms $sms) {}
+    public function __construct(private SmsGateway $sms) {}
 
     public function booked(Appointment $appointment): bool
     {
-        return $this->send($appointment, sprintf(
+        return $this->send($appointment, 'appointment_booked', sprintf(
             'DentalEase: Hi %s, your appointment request at %s on %s at %s has been received. Please wait for the clinic to confirm.',
             $this->firstName($appointment),
             $this->storeName($appointment),
@@ -27,7 +27,7 @@ class AppointmentSms
 
     public function approved(Appointment $appointment): bool
     {
-        return $this->send($appointment, sprintf(
+        return $this->send($appointment, 'appointment_confirmed', sprintf(
             'DentalEase: Hi %s, your appointment at %s is CONFIRMED on %s, %s. Please arrive 10 minutes early.',
             $this->firstName($appointment),
             $this->storeName($appointment),
@@ -38,7 +38,7 @@ class AppointmentSms
 
     public function rescheduled(Appointment $appointment): bool
     {
-        return $this->send($appointment, sprintf(
+        return $this->send($appointment, 'appointment_rescheduled', sprintf(
             'DentalEase: Hi %s, your appointment at %s has been RESCHEDULED to %s, %s. See you then!',
             $this->firstName($appointment),
             $this->storeName($appointment),
@@ -49,7 +49,7 @@ class AppointmentSms
 
     public function cancelled(Appointment $appointment): bool
     {
-        return $this->send($appointment, sprintf(
+        return $this->send($appointment, 'appointment_cancelled', sprintf(
             'DentalEase: Hi %s, your appointment at %s on %s at %s has been CANCELLED. You may book again anytime.',
             $this->firstName($appointment),
             $this->storeName($appointment),
@@ -58,9 +58,9 @@ class AppointmentSms
         ));
     }
 
-    private function send(Appointment $appointment, string $message): bool
+    private function send(Appointment $appointment, string $purpose, string $message): bool
     {
-        return $this->sms->send($appointment->user?->contact_number, $message);
+        return $this->sms->send($appointment->user?->contact_number, $message, $purpose);
     }
 
     private function firstName(Appointment $appointment): string

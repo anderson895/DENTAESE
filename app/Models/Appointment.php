@@ -19,6 +19,8 @@ class Appointment extends Model
         'booking_end_time',
         'work_done',
         'total_price',
+        'amount_given',
+        'change_amount',
         'payment_type',
         'payment_image',
         'desc',
