@@ -152,6 +152,12 @@ Route::middleware('auth')->group(function () {
     // ✅ ADMIN FILE UPLOAD
     Route::post('/messages/upload', [MessageController::class, 'adminUpload'])
         ->name('messages.upload');
+
+    // ✅ BRANCH-TO-BRANCH (Dentist / Receptionist / Admin)
+    Route::get('/branch-messages/branches', [MessageController::class, 'staffBranches'])->name('branch.messages.list');
+    Route::get('/branch-messages/{storeId}', [MessageController::class, 'branchMessages'])->name('branch.messages');
+    Route::post('/branch-messages', [MessageController::class, 'sendBranchMessage'])->name('branch.messages.store');
+    Route::post('/branch-messages/upload', [MessageController::class, 'uploadBranchFile'])->name('branch.messages.upload');
 });
 
 // PATIENT

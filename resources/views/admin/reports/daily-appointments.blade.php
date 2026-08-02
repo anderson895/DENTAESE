@@ -4,32 +4,11 @@
 @section('main-content')
 
 <style>
-/* PRINT STYLE */
+/* Ang letterhead ay para sa papel lang — nasa printSection() na ang page setup. */
 .print-only { display: none; }
 
 @media print {
-    @page { margin: 12mm; }
-
-    /* Hide everything except the report */
-    body * {
-        visibility: hidden;
-    }
-
-    #print-section, #print-section * {
-        visibility: visible;
-    }
-
-    #print-section {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-    }
-
-    /* Hide buttons and form when printing */
     .no-print { display: none !important; }
-
-    /* Show clinic letterhead only when printing */
     .print-only { display: block !important; }
 }
 </style>
@@ -40,7 +19,7 @@
         <h1 class="text-2xl font-bold">Appointments Report</h1>
 
         <!-- PRINT BUTTON -->
-        <button onclick="window.print()"
+        <button onclick="printSection('print-section', { paper: 'Letter', scale: 80, title: 'Appointments Report' })"
             class="bg-green-600 px-4 py-2 text-white rounded hover:bg-green-700">
             Print Report
         </button>

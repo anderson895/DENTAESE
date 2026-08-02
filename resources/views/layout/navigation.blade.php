@@ -178,9 +178,16 @@
                         <x-nav-link href="/reports/sales" icon="fa-solid fa-chart-line" label="POS Reports" />
                         <x-nav-link href="/reports/appointments" icon="fa-solid fa-chart-line" label="Appointment Reports" />
                         @php
-                            $unreadStaffMessages = \App\Models\Message::where('store_id', session('active_branch_id'))
+                            // Mensahe ng pasyente sa branch na ito...
+                            $unreadStaffMessages = \App\Models\Message::patientThread()
+                                ->where('store_id', session('active_branch_id'))
                                 ->where('is_read', false)
                                 ->whereHas('sender', fn ($q) => $q->where('account_type', 'patient'))
+                                ->count();
+
+                            // ...kasama ang mensahe mula sa ibang branch.
+                            $unreadStaffMessages += \App\Models\Message::where('to_store_id', session('active_branch_id'))
+                                ->where('is_read', false)
                                 ->count();
                         @endphp
                         <x-nav-link href="/chat" icon="fa-solid fa-comments" label="Message" :badge="$unreadStaffMessages" />
@@ -200,6 +207,9 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    {{-- Shared na print helper (window.printSection) para sa lahat ng printout --}}
+    @include('partials.print-scripts')
 
     <script>
     $(function() {

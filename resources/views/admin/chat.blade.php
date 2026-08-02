@@ -15,10 +15,25 @@
   <!-- ================= SIDEBAR ================= -->
   <div class="w-1/4 bg-sky-100 border-r border-sky-300 flex flex-col">
     <div class="p-4 bg-sky-300 text-white">
-      <h2 class="text-lg font-bold leading-tight">Patients</h2>
+      <h2 id="sidebarTitle" class="text-lg font-bold leading-tight">Patients</h2>
       <p class="text-xs opacity-90 mt-0.5">
         <i class="fa-solid fa-code-branch mr-1"></i>{{ $chatBranch->name ?? 'No branch selected' }}
       </p>
+    </div>
+
+    {{-- Patients = usapan sa pasyente. Branches = branch-to-branch na mensahe
+         ng staff; nakikita ito ng lahat ng naka-aktibo sa tumatanggap na branch. --}}
+    <div class="flex text-sm font-semibold bg-sky-200">
+      <button id="tabPatients" type="button"
+        class="flex-1 py-2 border-b-2 border-sky-600 text-sky-900">
+        Patients
+      </button>
+      <button id="tabBranches" type="button"
+        class="flex-1 py-2 border-b-2 border-transparent text-sky-700">
+        Branches
+        <span id="branchUnreadBadge"
+          class="hidden ml-1 inline-flex items-center justify-center min-w-[18px] h-4 px-1 text-[10px] font-bold text-white bg-red-500 rounded-full"></span>
+      </button>
     </div>
 
     <div class="p-2">
@@ -28,12 +43,16 @@
     </div>
 
     <ul id="patientList" class="flex-1 overflow-y-auto divide-y"></ul>
+    <ul id="branchList" class="flex-1 overflow-y-auto divide-y hidden"></ul>
   </div>
 
   <!-- ================= CHAT ================= -->
   <div class="flex-1 flex flex-col bg-slate-300">
     <div class="p-4 bg-sky-300 text-white">
       <div id="chatHeader" class="font-bold">Select a patient</div>
+      <div id="branchModeNote" class="hidden text-xs opacity-90 mt-0.5">
+        <i class="fa-solid fa-tower-broadcast mr-1"></i>Branch message — nakikita ng lahat ng staff sa branch na ito
+      </div>
       <div id="chatSubHeader" class="text-xs opacity-90 mt-0.5">
         <i class="fa-solid fa-code-branch mr-1"></i>{{ $chatBranch->name ?? 'No branch selected' }}
       </div>
@@ -76,9 +95,38 @@
 <script>
 /* ================= GLOBAL ================= */
 let currentPatient = null;
+let currentBranch  = null;   // kausap na branch (branch-to-branch mode)
+let chatMode       = 'patients'; // 'patients' | 'branches'
 const currentStore = "{{ session('active_branch_id') }}";
 const authUserId = {{ auth()->id() }};
 let allPatients = [];
+
+/* ================= TAB SWITCH ================= */
+function setChatMode(mode) {
+  chatMode = mode;
+  const isPatients = mode === 'patients';
+
+  document.getElementById('patientList').classList.toggle('hidden', !isPatients);
+  document.getElementById('branchList').classList.toggle('hidden', isPatients);
+  document.getElementById('patientSearch').classList.toggle('hidden', !isPatients);
+  document.getElementById('sidebarTitle').textContent = isPatients ? 'Patients' : 'Branches';
+  document.getElementById('branchModeNote').classList.toggle('hidden', isPatients);
+
+  document.getElementById('tabPatients').className =
+    'flex-1 py-2 border-b-2 ' + (isPatients ? 'border-sky-600 text-sky-900' : 'border-transparent text-sky-700');
+  document.getElementById('tabBranches').className =
+    'flex-1 py-2 border-b-2 ' + (isPatients ? 'border-transparent text-sky-700' : 'border-sky-600 text-sky-900');
+
+  document.getElementById('messagesBox').innerHTML = '';
+  document.getElementById('chatHeader').textContent = isPatients ? 'Select a patient' : 'Select a branch';
+  currentPatient = null;
+  currentBranch  = null;
+
+  isPatients ? loadPatients() : loadBranches();
+}
+
+document.getElementById('tabPatients').onclick = () => setChatMode('patients');
+document.getElementById('tabBranches').onclick = () => setChatMode('branches');
 
 /* ================= PATIENT LIST ================= */
 function loadPatients() {
@@ -123,6 +171,112 @@ function renderPatientList(patients) {
 
     list.appendChild(li);
   });
+}
+
+/* ================= BRANCH LIST (branch-to-branch) ================= */
+function loadBranches() {
+  fetch("{{ route('branch.messages.list') }}")
+    .then(res => res.json())
+    .then(renderBranchList);
+}
+
+function renderBranchList(branches) {
+  const list = document.getElementById('branchList');
+  list.innerHTML = '';
+
+  if (!branches.length) {
+    list.innerHTML = `
+      <li class="p-4 text-sm text-gray-600">
+        Walang ibang branch na makakausap. Pumili muna ng branch sa sidebar.
+      </li>`;
+    updateBranchBadge(0);
+    return;
+  }
+
+  let totalUnread = 0;
+
+  branches.forEach(b => {
+    totalUnread += b.unread_count;
+
+    const li = document.createElement('li');
+    li.className = 'p-3 cursor-pointer hover:bg-sky-200 ' + (currentBranch === b.id ? 'bg-sky-300' : '');
+
+    const unreadBadge = b.unread_count > 0
+      ? `<span class="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">${b.unread_count}</span>`
+      : '';
+
+    li.innerHTML = `
+      <div class="flex items-center justify-between">
+        <strong>${b.name}</strong>${unreadBadge}
+      </div>
+      <small class="${b.unread_count > 0 ? 'text-gray-900 font-semibold' : 'text-gray-600'}">
+        ${b.latest_message ?? 'No messages yet'}
+      </small>
+    `;
+
+    li.onclick = () => {
+      currentBranch = b.id;
+      document.getElementById('chatHeader').textContent = b.name;
+      loadBranchMessages(b.id);
+      loadBranches();
+    };
+
+    list.appendChild(li);
+  });
+
+  updateBranchBadge(totalUnread);
+}
+
+function updateBranchBadge(count) {
+  const badge = document.getElementById('branchUnreadBadge');
+  badge.textContent = count;
+  badge.classList.toggle('hidden', count === 0);
+}
+
+function loadBranchMessages(storeId) {
+  fetch(`/branch-messages/${storeId}`)
+    .then(res => res.json())
+    .then(messages => {
+      if (!Array.isArray(messages)) return;
+
+      const box = document.getElementById('messagesBox');
+      box.innerHTML = '';
+
+      messages.forEach(msg => {
+        const cls = msg.mine ? 'bg-sky-500 text-white ml-auto' : 'bg-sky-200 text-sky-900';
+        const body = msg.file_url
+          ? `<i class="fa-solid fa-file"></i><a href="${msg.file_url}" target="_blank" class="underline ml-2">${msg.message}</a>`
+          : msg.message;
+
+        box.innerHTML += `
+          <div class="${cls} p-2 rounded-lg max-w-md shadow">
+            <div class="text-[10px] opacity-80">${msg.sender_name}${msg.sender_role ? ' · ' + msg.sender_role : ''}</div>
+            ${body}
+            <div class="text-[10px] opacity-70 mt-1">${msg.created_at}</div>
+          </div>`;
+      });
+
+      box.scrollTop = box.scrollHeight;
+    });
+}
+
+function sendBranchMessage(text) {
+  fetch("{{ route('branch.messages.store') }}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    },
+    body: JSON.stringify({ to_store_id: currentBranch, message: text })
+  })
+    .then(res => res.json())
+    .then(r => {
+      if (r.status === 'success') {
+        $('#messageInput').val('');
+        loadBranchMessages(currentBranch);
+        loadBranches();
+      }
+    });
 }
 
 /* ================= SEARCH ================= */
@@ -179,7 +333,15 @@ $('#messageInput').on('keypress', e => {
 
 function sendMessage() {
   const text = $('#messageInput').val().trim();
-  if (!text || !currentPatient) return;
+  if (!text) return;
+
+  if (chatMode === 'branches') {
+    if (!currentBranch) return;
+    sendBranchMessage(text);
+    return;
+  }
+
+  if (!currentPatient) return;
 
   fetch("{{ route('messages.store') }}", {
     method: "POST",
@@ -207,8 +369,10 @@ function sendMessage() {
 /* ================= FILE UPLOAD (ADMIN) ================= */
 $('#adminFileInput').on('change', function () {
 
-  if (!currentPatient) {
-    alert('Select a patient first');
+  const isBranchMode = chatMode === 'branches';
+
+  if (isBranchMode ? !currentBranch : !currentPatient) {
+    alert(isBranchMode ? 'Select a branch first' : 'Select a patient first');
     return;
   }
 
@@ -217,11 +381,16 @@ $('#adminFileInput').on('change', function () {
 
   const fd = new FormData();
   fd.append('file', file);
-  fd.append('store_id', currentStore);
-  fd.append('user_id', currentPatient); // ✅ REQUIRED
+
+  if (isBranchMode) {
+    fd.append('to_store_id', currentBranch);
+  } else {
+    fd.append('store_id', currentStore);
+    fd.append('user_id', currentPatient); // ✅ REQUIRED
+  }
 
   $.ajax({
-    url: "{{ route('messages.upload') }}",
+    url: isBranchMode ? "{{ route('branch.messages.upload') }}" : "{{ route('messages.upload') }}",
     type: "POST",
     data: fd,
     contentType: false,
@@ -247,8 +416,13 @@ $('#adminFileInput').on('change', function () {
       Swal.close(); // ❌ close loader
 
       if (res.status === 'success') {
-        loadMessages(currentStore, currentPatient);
-        loadPatients();
+        if (isBranchMode) {
+          loadBranchMessages(currentBranch);
+          loadBranches();
+        } else {
+          loadMessages(currentStore, currentPatient);
+          loadPatients();
+        }
         $('#adminFileInput').val('');
       }
     },
@@ -269,10 +443,22 @@ $('#adminFileInput').on('change', function () {
 
 /* ================= AUTO REFRESH ================= */
 setInterval(() => {
+  if (chatMode === 'branches') {
+    loadBranches();
+    if (currentBranch) loadBranchMessages(currentBranch);
+    return;
+  }
+
   loadPatients();
   if (currentPatient) {
     loadMessages(currentStore, currentPatient);
   }
+  // Panatilihing tama ang badge ng Branches kahit nasa Patients tab.
+  fetch("{{ route('branch.messages.list') }}")
+    .then(res => res.json())
+    .then(branches => updateBranchBadge(
+      Array.isArray(branches) ? branches.reduce((sum, b) => sum + b.unread_count, 0) : 0
+    ));
 }, 3000);
 
 /* INIT */

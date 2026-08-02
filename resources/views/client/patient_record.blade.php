@@ -125,7 +125,13 @@
     .pda-cond-grid label { display: flex; align-items: center; gap: 0.5rem; color: #374151; }
     .pda-cond-grid input[type="checkbox"] { width: 1rem; height: 1rem; }
 
-    /* Print: revert to flat lines for the formal PDA look */
+    /* =====================================================================
+       PRINT
+       Layout na pang-screen ay masyadong maluwag para sa papel — apat na
+       pahina ang dating kinakain nito at naoorphan pa ang huling hanay ng
+       checklist. Dito ipinapaliit ang lahat ng espasyo para kasya sa mas
+       kaunting papel, at pinapanatiling buo ang bawat pangkat ng tanong.
+       ===================================================================== */
     @media print {
         .pda-input,
         .pda-detail input {
@@ -135,14 +141,75 @@
             box-shadow: none !important;
             padding: 0 2px !important;
             background: transparent !important;
+            font-size: 8.5pt !important;
+            line-height: 1.25 !important;
         }
+
+        /* ---- Siksik na espasyo ---- */
+        #patient-form { font-size: 8.5pt; }
+        #patient-form > * + * { margin-top: 0.3rem !important; }
+        #patient-form .grid { gap: 0.25rem 0.75rem !important; }
+        #patient-form label.text-xs,
+        .pda-detail label {
+            color: #111 !important;
+            font-size: 7pt !important;
+            margin-bottom: 0 !important;
+            line-height: 1.2 !important;
+        }
+        .pda-section-title {
+            font-size: 9.5pt;
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.3rem !important;
+            padding-bottom: 0.1rem;
+        }
+        .pda-yn-row {
+            padding: 0.1rem 0 !important;
+            font-size: 8.5pt;
+        }
+        .pda-detail { margin-top: 0.1rem !important; }
+        .pda-cond-grid { gap: 0 0.75rem !important; font-size: 8pt; }
+        #patient-form .px-3.py-2,
+        #patient-form .px-3.py-3 { padding: 0.15rem 0.4rem !important; }
+        #patient-form .mt-4.p-3 { padding: 0.3rem !important; }
+        #patient-form .ml-6 { margin-left: 0.75rem !important; }
+        #patient-form .space-y-1 > * + * { margin-top: 0 !important; }
+
+        /* ---- Kontrol sa paghati ng pahina ---- */
+        /* Dating naiiwan sa kabilang papel ang label na tulad ng "MEDICAL
+           HISTORY" o ang huling hanay lang ng checklist. */
+        .pda-section-title {
+            page-break-after: avoid;
+            break-after: avoid-page;
+        }
+        #patient-form > .grid,
+        #patient-form > .mt-4.p-3,
+        #patient-form .border-b.border-gray-100,
+        #patient-form .px-3.py-3,
+        .pda-yn-row,
+        .pda-detail,
+        .pda-cond-grid,
+        .pda-cond-grid label {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* ---- Hanay ng mga field ----
+           Hindi tumatama ang `md:` breakpoint ng Tailwind kapag nagprint —
+           mas makitid ang layout viewport ng papel kaysa sa 768px. Dahil doon,
+           nagiging isang hanay ang lahat ng field at umaabot ng apat na pahina
+           ang form. Pinipilit natin dito ang tamang bilang ng hanay. */
+        #patient-form .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        #patient-form .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        #patient-form .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+        .pda-cond-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
     }
 </style>
 
-<div class="max-w-5xl mx-auto p-6 bg-white shadow rounded-lg print:shadow-none">
+<div class="max-w-5xl mx-auto p-6 bg-white shadow rounded-lg print:shadow-none print:p-0 print:max-w-none">
 
     @if(auth()->user()->account_type == 'admin')
-        <button onclick="printDiv('printable-patient')" class="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
+        <button onclick="printSection('printable-patient', { paper: 'Letter', scale: 80, title: 'Patient Information Record' })"
+                class="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
             Print Patient Info
         </button>
     @endif
@@ -154,12 +221,12 @@
         ])
     </div>
 
-    {{-- PDA Header --}}
-    <div class="flex items-center gap-4 mb-4 border-b pb-3">
-        <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs text-center leading-tight">PDA</div>
+    {{-- PDA Header (siksik sa papel — nasa itaas na ang letterhead ng klinika) --}}
+    <div class="flex items-center gap-4 mb-4 border-b pb-3 print:gap-2 print:mb-1 print:pb-1">
+        <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs text-center leading-tight print:w-9 print:h-9">PDA</div>
         <div>
-            <h1 class="text-xl font-bold text-gray-800">PHILIPPINE DENTAL ASSOCIATION</h1>
-            <p class="text-sm text-gray-500">Dental Chart &mdash; Patient Information Record</p>
+            <h1 class="text-xl font-bold text-gray-800 print:text-sm">PHILIPPINE DENTAL ASSOCIATION</h1>
+            <p class="text-sm text-gray-500 print:text-[8pt]">Dental Chart &mdash; Patient Information Record</p>
         </div>
     </div>
 
@@ -458,7 +525,7 @@
 
         {{-- Submit --}}
         @unless($isReadonly)
-        <div class="pt-4 flex justify-end gap-3">
+        <div class="pt-4 flex justify-end gap-3 print:hidden">
             @if($firstLogin && auth()->user()->account_type == 'patient')
                 <a href="/logouts" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded">Cancel</a>
             @endif

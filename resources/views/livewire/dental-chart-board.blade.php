@@ -10,8 +10,9 @@
      @if ($authUser && $authUser->account_type == 'admin' && empty($readonly))
     <div class="flex items-center mt-2">
         <!-- Print button (left) -->
+        {{-- Dental Chart lang ang naka-100% na scale; 80% ang ibang reports. --}}
         <button
-            onclick="printDiv('printable-info')"
+            onclick="printSection('printable-info', { paper: 'legal', scale: 100, title: 'Dental Chart' })"
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden"
         >
             Print Dental Chart

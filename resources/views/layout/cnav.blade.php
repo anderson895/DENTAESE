@@ -196,5 +196,8 @@
       });
     });
   </script>
+
+  {{-- Shared na print helper (window.printSection) para sa lahat ng printout --}}
+  @include('partials.print-scripts')
 </body>
 </html>

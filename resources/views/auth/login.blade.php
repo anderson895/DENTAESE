@@ -33,13 +33,14 @@
                 class="mt-1 w-full border border-sky-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white"
               >
           
-              <!-- Toggle button -->
-              <button 
-                type="button" 
-                onclick="togglePassword()" 
+              <!-- Toggle button (eye icon lang, wala nang "Show" na teksto) -->
+              <button
+                type="button"
+                onclick="togglePassword(this)"
                 class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600"
+                aria-label="Show password"
               >
-                Show
+                @include('partials.eye-icon')
               </button>
             </div>
           </div>
@@ -76,16 +77,14 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function togglePassword() {
+    function togglePassword(btn) {
       const input = document.getElementById('passwordInput');
-      const btn = event.currentTarget;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = 'Hide';
-      } else {
-        input.type = 'password';
-        btn.textContent = 'Show';
-      }
+      const isHidden = input.type === 'password';
+
+      input.type = isHidden ? 'text' : 'password';
+      btn.querySelector('.eye-open')?.classList.toggle('hidden', isHidden);
+      btn.querySelector('.eye-closed')?.classList.toggle('hidden', !isHidden);
+      btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
     }
 $(document).ready(function () {
     $('#loginForm').submit(function (event) {

@@ -670,64 +670,10 @@
         });
     </script>
     <script>
+    // Back-compat: nasa partials/print-scripts.blade.php na ang totoong printer.
+    // Wala nang location.reload() — hindi na sinisira ang pahina kapag nagprint.
     function printDiv(divId) {
-           @if(isset($appointment))
-        const redirectUrl = "{{ route('appointments.view', ['id' => $appointment->id]) }}";
-            @else
-                const redirectUrl = null;
-            @endif
-    
-        // Clone the div to preserve structure
-        const contentDiv = document.getElementById(divId);
-        const clone = contentDiv.cloneNode(true);
-    
-        // Copy current values for all inputs/selects/textarea
-        const originalInputs = contentDiv.querySelectorAll('input, select, textarea');
-        const clonedInputs = clone.querySelectorAll('input, select, textarea');
-    
-        originalInputs.forEach((input, index) => {
-            if (input.type === 'checkbox' || input.type === 'radio') {
-                clonedInputs[index].checked = input.checked;
-            } else {
-                clonedInputs[index].value = input.value;
-            }
-        });
-    
-        // Backup original page
-        const originalBody = document.body.innerHTML;
-    
-        // Replace body with cloned content + print styles
-        document.body.innerHTML = `
-
-            <style>
-                @media print {
-                    /* Default print setup: Legal paper, single page at ~72% scale */
-                    @page { size: legal; margin: 0; }
-                    body { margin: 1mm; font-family: system-ui, sans-serif; zoom: 72%; }
-                    .no-print { display: none !important; }
-                    /* Keep legend/status colors visible on the printable layout */
-                    * {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        color-adjust: exact !important;
-                    }
-                }
-                body { font-family: system-ui, sans-serif; margin: 5mm; }
-            </style>
-        `;
-        document.body.appendChild(clone);
-    
-        // Trigger print
-        window.print();
-    
-        // Restore original page
-        setTimeout(() => {
-            // document.body.innerHTML = originalBody;
-            // if (window.Alpine) window.Alpine.initTree(document.body);
-            // window.location.href = redirectUrl;
-            // history.back();
-            location.reload()
-        }, 200);
+        window.printSection(divId, { paper: 'Letter', scale: 80 });
     }
     </script>
 @endsection

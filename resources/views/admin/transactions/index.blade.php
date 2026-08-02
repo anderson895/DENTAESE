@@ -148,55 +148,10 @@
 
             <!-- Print -->
             <div class="mt-6 text-right">
-                <button onclick="printReceipt()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"> 🖨 Print </button>
+                {{-- Nasa partials/print-scripts ang window.printReceipt — 4x6 ang default na papel. --}}
+                <button onclick="window.printReceipt('receipt-modal', 'POS Receipt')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"> 🖨 Print </button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-function printReceipt() {
-    const modal = document.getElementById("receipt-modal");
-    if (!modal) return;
-
-    // Hidden iframe + DOM APIs only (walang doc.write at closing-tag literals —
-    // hinahati ng HTML optimizer ng host ang inline script sa closing-body string,
-    // at hinaharang naman ng popup blocker ang window.open).
-    const oldFrame = document.getElementById('txn-print-frame');
-    if (oldFrame) oldFrame.remove();
-
-    const frame = document.createElement('iframe');
-    frame.id = 'txn-print-frame';
-    frame.style.position = 'fixed';
-    frame.style.right = '0';
-    frame.style.bottom = '0';
-    frame.style.width = '0';
-    frame.style.height = '0';
-    frame.style.border = '0';
-    document.body.appendChild(frame);
-
-    const doc = frame.contentDocument || frame.contentWindow.document;
-    doc.title = 'Receipt';
-
-    const style = doc.createElement('style');
-    style.textContent = '@page { margin: 10mm; } ' +
-        'body { font-family: Arial, sans-serif; margin: 0; padding: 10px; font-size: 12px; } ' +
-        'h1 { font-size: 16px; margin: 0; } ' +
-        'table { border-collapse: collapse; width: 100%; } ' +
-        'td, th { border: 1px solid #000; padding: 4px; font-size: 12px; } ' +
-        '.text-right { text-align: right; } ' +
-        '.text-center { text-align: center; }';
-    doc.head.appendChild(style);
-
-    const wrapper = doc.createElement('div');
-    wrapper.className = 'receipt';
-    wrapper.innerHTML = modal.innerHTML;
-    doc.body.appendChild(wrapper);
-
-    setTimeout(function () {
-        frame.contentWindow.focus();
-        frame.contentWindow.print();
-    }, 300);
-}
-</script>
 @endsection

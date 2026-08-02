@@ -273,11 +273,8 @@ public function settle(Request $request, $id)
         'payment_receipt' => 'nullable|image|max:2048',
     ]);
 
-    // Kabuuang babayaran = serbisyo + gamot na binili sa araw na ito
-    $medicineTotal = \App\Models\Sale::where('patient_id', $appointment->user_id)
-        ->where('store_id', $appointment->store_id)
-        ->whereDate('created_at', $appointment->appointment_date)
-        ->sum('total_amount');
+    // Kabuuang babayaran = serbisyo + gamot na binili para sa pagbisitang ito
+    $medicineTotal = \App\Models\Sale::forAppointment($appointment)->sum('total_amount');
 
     $grandTotal = (float) $validated['total_price'] + (float) $medicineTotal;
 

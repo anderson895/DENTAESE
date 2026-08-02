@@ -154,11 +154,9 @@
             </div>
 
             @php
-                // Medicines bought for this visit (from POS sales on the appointment date)
+                // Medicines bought for this visit (mula sa POS sales na nakatali sa appointment)
                 $checkinSales = \App\Models\Sale::with('items.medicine')
-                    ->where('patient_id', $appointment->user_id)
-                    ->where('store_id', $appointment->store_id)
-                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->forAppointment($appointment)
                     ->get();
                 $checkinMedicineTotal = $checkinSales->sum('total_amount');
                 $checkinMedicineQty   = $checkinSales->flatMap->items->sum('quantity');
@@ -324,9 +322,7 @@
 
             @php
                 $patientSales = \App\Models\Sale::with('items.medicine')
-                    ->where('patient_id', $appointment->user_id)
-                    ->where('store_id', $appointment->store_id)
-                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->forAppointment($appointment)
                     ->get();
                 $patientMedicineTotal = $patientSales->sum('total_amount');
             @endphp
@@ -491,9 +487,7 @@
 
             @php
                 $combinedSales = \App\Models\Sale::with('items.medicine')
-                    ->where('patient_id', $appointment->user_id)
-                    ->where('store_id', $appointment->store_id)
-                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->forAppointment($appointment)
                     ->get();
                 $combinedMedTotal = $combinedSales->sum('total_amount');
                 $combinedTreatmentTotal = (float) ($appointment->total_price ?? 0);
@@ -614,45 +608,8 @@
 @endif
 <script>
 function printCheckinReceipt() {
-    const receipt = document.getElementById('ack-receipt-print');
-    if (!receipt) return;
-
-    // Use a hidden iframe instead of window.open() —
-    // popup blockers were silently killing the print window.
-    const oldFrame = document.getElementById('receipt-print-frame');
-    if (oldFrame) oldFrame.remove();
-
-    const frame = document.createElement('iframe');
-    frame.id = 'receipt-print-frame';
-    frame.style.position = 'fixed';
-    frame.style.right = '0';
-    frame.style.bottom = '0';
-    frame.style.width = '0';
-    frame.style.height = '0';
-    frame.style.border = '0';
-    document.body.appendChild(frame);
-
-    // Build the iframe document via DOM APIs only.
-    // IMPORTANT: walang doc.write at walang literal na closing body/html tag
-    // strings dito — hinahati ng HTML optimizer ng host ang inline script sa
-    // unang closing-body na makita nito, kaya lumalabas ang code bilang text.
-    const doc = frame.contentDocument || frame.contentWindow.document;
-
-    doc.title = 'Acknowledgement Receipt';
-
-    const style = doc.createElement('style');
-    style.textContent = '@page { margin: 10mm; } ' +
-        'body { font-family: system-ui, sans-serif; margin: 0; } ' +
-        '.no-print { display: none !important; }';
-    doc.head.appendChild(style);
-
-    doc.body.appendChild(doc.importNode(receipt, true));
-
-    // Give the iframe a tick to apply styles before printing
-    setTimeout(function () {
-        frame.contentWindow.focus();
-        frame.contentWindow.print();
-    }, 300);
+    // Default na 4x6 ang papel ng lahat ng resibo — nasa partials/print-scripts.
+    window.printReceipt('ack-receipt-print', 'Acknowledgement Receipt');
 }
 </script>
 
@@ -704,6 +661,60 @@ function peso(value) {
     });
 }
 
+// Ginagawang salita ang halaga para sa linyang "the sum of" ng resibo,
+// hal. 500 → "Five Hundred Pesos Only".
+const AMOUNT_ONES = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+    'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+const AMOUNT_TENS = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+const AMOUNT_SCALES = [
+    { value: 1000000000, name: 'Billion' },
+    { value: 1000000,    name: 'Million' },
+    { value: 1000,       name: 'Thousand' },
+];
+
+function amountBelowThousandToWords(n) {
+    let words = [];
+    if (n >= 100) {
+        words.push(AMOUNT_ONES[Math.floor(n / 100)], 'Hundred');
+        n %= 100;
+    }
+    if (n >= 20) {
+        words.push(AMOUNT_TENS[Math.floor(n / 10)]);
+        n %= 10;
+        if (n) words.push(AMOUNT_ONES[n]);
+    } else if (n > 0) {
+        words.push(AMOUNT_ONES[n]);
+    }
+    return words.join(' ');
+}
+
+function amountToWords(n) {
+    n = Math.floor(Math.abs(n));
+    if (n === 0) return 'Zero';
+
+    let words = [];
+    AMOUNT_SCALES.forEach(scale => {
+        if (n >= scale.value) {
+            words.push(amountBelowThousandToWords(Math.floor(n / scale.value)), scale.name);
+            n %= scale.value;
+        }
+    });
+    if (n > 0) words.push(amountBelowThousandToWords(n));
+
+    return words.join(' ');
+}
+
+function pesoInWords(amount) {
+    const pesos    = Math.floor(Math.abs(amount));
+    const centavos = Math.round((Math.abs(amount) - pesos) * 100);
+
+    let words = amountToWords(pesos) + (pesos === 1 ? ' Peso' : ' Pesos');
+    if (centavos > 0) {
+        words += ' and ' + amountToWords(centavos) + (centavos === 1 ? ' Centavo' : ' Centavos');
+    }
+    return words + ' Only';
+}
+
 function refreshPaymentTotals() {
     const grandTotal     = currentGrandTotal();
     const formattedTotal = peso(grandTotal);
@@ -712,7 +723,7 @@ function refreshPaymentTotals() {
 
     if (grandTotal > 0) {
         $('#receipt-sum-amount').text(formattedTotal);
-        $('#receipt-sum-words').text(formattedTotal + ' PESOS ONLY');
+        $('#receipt-sum-words').text(pesoInWords(grandTotal));
     } else {
         $('#receipt-sum-amount').text('');
         $('#receipt-sum-words').text('__________________________');
@@ -862,48 +873,10 @@ $(document).ready(refreshPaymentTotals);
 
 
 <script>
+    // Back-compat: nasa partials/print-scripts.blade.php na ang totoong printer.
+    // Hindi na sinisira ang pahina kaya wala nang reload/redirect pagkatapos.
     function printDiv(divId) {
-        const redirectUrl = "{{ route('appointments.view', ['id' => $appointment->id]) }}";
-    
-        // Clone the div to preserve structure
-        const contentDiv = document.getElementById(divId);
-        const clone = contentDiv.cloneNode(true);
-    
-        // Copy current values for all inputs/selects/textarea
-        const originalInputs = contentDiv.querySelectorAll('input, select, textarea');
-        const clonedInputs = clone.querySelectorAll('input, select, textarea');
-    
-        originalInputs.forEach((input, index) => {
-            if (input.type === 'checkbox' || input.type === 'radio') {
-                clonedInputs[index].checked = input.checked;
-            } else {
-                clonedInputs[index].value = input.value;
-            }
-        });
-        const originalBody = document.body.innerHTML;
-        document.body.innerHTML = `
-
-            <style>
-                @media print {
-                    /* Default print setup: Legal paper, single page at ~72% scale */
-                    @page { size: legal; margin: 0; }
-                    body { margin: 1mm; font-family: system-ui, sans-serif; zoom: 72%; }
-                    .no-print { display: none !important; }
-                    /* Keep legend/status colors visible on the printable layout */
-                    * {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        color-adjust: exact !important;
-                    }
-                }
-                body { font-family: system-ui, sans-serif; margin: 5mm; }
-            </style>
-        `;
-        document.body.appendChild(clone);
-        window.print();
-        setTimeout(() => {
-            window.location.href = redirectUrl;
-        }, 200);
+        window.printSection(divId, { paper: 'Letter', scale: 80 });
     }
     </script>
 

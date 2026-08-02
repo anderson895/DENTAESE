@@ -16,7 +16,34 @@ class Sale extends Model
         'status',
         'remarks',
         'patient_id',
+        'appointment_id',
     ];
+
+    /**
+     * Lahat ng POS sale na kabilang sa isang appointment.
+     *
+     * Direktang ugnayan ang gamit kapag galing ang bentahan sa "Open POS for
+     * this Patient". Kasama pa rin ang lumang paraan ng pagtutugma (pasyente +
+     * branch + petsa ng appointment) para hindi mawala ang mga naunang record
+     * na wala pang appointment_id.
+     */
+    public function scopeForAppointment($query, $appointment)
+    {
+        return $query->where(function ($q) use ($appointment) {
+            $q->where('appointment_id', $appointment->id)
+              ->orWhere(function ($legacy) use ($appointment) {
+                  $legacy->whereNull('appointment_id')
+                         ->where('patient_id', $appointment->user_id)
+                         ->where('store_id', $appointment->store_id)
+                         ->whereDate('created_at', $appointment->appointment_date);
+              });
+        });
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class);
+    }
 
     public function store()
     {

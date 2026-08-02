@@ -262,30 +262,12 @@ rxListEl.addEventListener('click', function(e) {
 });
 }
 
-// Print function
+// Print function — hindi na sinisira ang pahina, kaya wala nang redirect pabalik.
 window.printRx = function () {
-    const receipt = document.getElementById('receipt-content').innerHTML;
-    const original = document.body.innerHTML;
-
-    const redirectUrl = "{{ route('appointments.view', ['id' => $appointment->id]) }}";
-
-    document.body.innerHTML = `
-        <style>
-            @media print {
-                @page { margin: 0; }
-                body { margin: 20mm; font-family: system-ui, sans-serif; }
-                .no-print { display: none !important; }
-                #rx-list div { page-break-inside: avoid; }
-            }
-        </style>
-        ${receipt}
-    `;
-
-    window.print();
-
-    setTimeout(() => {
-        document.body.innerHTML = original;
-        window.location.href = redirectUrl;
-    }, 500);
+    window.printSection('receipt-content', {
+        paper: 'Letter',
+        scale: 80,
+        title: 'Prescription (RX)',
+    });
 };
 </script>
