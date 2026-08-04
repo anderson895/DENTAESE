@@ -100,6 +100,8 @@ Route::post('/cregister-face-registration', [FaceRecognitionController::class, '
 
 
 
+Route::view('/terms', 'auth.terms')->name('terms');
+
 Route::get('/qr',[AuthUi::class, 'Qr'])->name('Qr');
 Route::post('/qr-login', [QrController::class, 'LoginQr'])->name('qr.login');
 

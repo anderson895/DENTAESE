@@ -213,6 +213,11 @@
     <button type="submit" class="submit hidden bg-green-600 text-white px-6 py-2 rounded">Submit</button>
 </div>
 
+<p class="pt-4 text-center text-xs text-gray-600">
+    By creating an account, you acknowledge that you have read and agree to our
+    <a href="{{ route('terms') }}" target="_blank" class="text-blue-500 hover:text-blue-700 underline transition">Terms and Conditions</a>.
+</p>
+
 </form>
 </div>
 

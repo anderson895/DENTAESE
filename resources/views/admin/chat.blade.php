@@ -50,9 +50,6 @@
   <div class="flex-1 flex flex-col bg-slate-300">
     <div class="p-4 bg-sky-300 text-white">
       <div id="chatHeader" class="font-bold">Select a patient</div>
-      <div id="branchModeNote" class="hidden text-xs opacity-90 mt-0.5">
-        <i class="fa-solid fa-tower-broadcast mr-1"></i>Branch message — nakikita ng lahat ng staff sa branch na ito
-      </div>
       <div id="chatSubHeader" class="text-xs opacity-90 mt-0.5">
         <i class="fa-solid fa-code-branch mr-1"></i>{{ $chatBranch->name ?? 'No branch selected' }}
       </div>
@@ -110,7 +107,6 @@ function setChatMode(mode) {
   document.getElementById('branchList').classList.toggle('hidden', isPatients);
   document.getElementById('patientSearch').classList.toggle('hidden', !isPatients);
   document.getElementById('sidebarTitle').textContent = isPatients ? 'Patients' : 'Branches';
-  document.getElementById('branchModeNote').classList.toggle('hidden', isPatients);
 
   document.getElementById('tabPatients').className =
     'flex-1 py-2 border-b-2 ' + (isPatients ? 'border-sky-600 text-sky-900' : 'border-transparent text-sky-700');

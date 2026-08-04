@@ -67,8 +67,12 @@
                 <a href="{{ route('Qr') }}" class="text-blue-500 hover:text-blue-700 underline transition">QR</a>
             </p>
             <p>
-                Don’t have an account? 
+                Don’t have an account?
                 <a href="{{ route('signupui') }}" class="text-blue-500 hover:text-blue-700 underline transition">Sign up</a>
+            </p>
+            <p class="pt-3 border-t text-xs text-gray-600">
+                By signing in, you acknowledge that you have read and agree to our
+                <a href="{{ route('terms') }}" class="text-blue-500 hover:text-blue-700 underline transition">Terms and Conditions</a>.
             </p>
         </div>
     </form>
