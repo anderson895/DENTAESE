@@ -33,16 +33,25 @@
                 class="mt-1 w-full border border-sky-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white"
               >
           
-              <!-- Toggle button -->
-              <button 
-                type="button" 
-                onclick="togglePassword()" 
+              <!-- Toggle button (eye icon lang, wala nang "Show" na teksto) -->
+              <button
+                type="button"
+                onclick="togglePassword(this)"
                 class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600"
+                aria-label="Show password"
               >
-                Show
+                @include('partials.eye-icon')
               </button>
             </div>
           </div>
+
+        <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2 text-gray-700 cursor-pointer">
+                <input type="checkbox" name="remember" id="rememberInput" class="rounded border-sky-300 text-sky-500 focus:ring-sky-400">
+                Remember password
+            </label>
+            <a href="{{ route('password.forgot') }}" class="text-blue-500 hover:text-blue-700 underline transition">Forgot Password?</a>
+        </div>
 
         <div class="flex justify-end">
             <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white font-medium rounded-md px-4 py-2 transition duration-150">
@@ -58,8 +67,12 @@
                 <a href="{{ route('Qr') }}" class="text-blue-500 hover:text-blue-700 underline transition">QR</a>
             </p>
             <p>
-                Don’t have an account? 
+                Don’t have an account?
                 <a href="{{ route('signupui') }}" class="text-blue-500 hover:text-blue-700 underline transition">Sign up</a>
+            </p>
+            <p class="pt-3 border-t text-xs text-gray-600">
+                By signing in, you acknowledge that you have read and agree to our
+                <a href="{{ route('terms') }}" class="text-blue-500 hover:text-blue-700 underline transition">Terms and Conditions</a>.
             </p>
         </div>
     </form>
@@ -68,16 +81,14 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function togglePassword() {
+    function togglePassword(btn) {
       const input = document.getElementById('passwordInput');
-      const btn = event.currentTarget;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = 'Hide';
-      } else {
-        input.type = 'password';
-        btn.textContent = 'Show';
-      }
+      const isHidden = input.type === 'password';
+
+      input.type = isHidden ? 'text' : 'password';
+      btn.querySelector('.eye-open')?.classList.toggle('hidden', isHidden);
+      btn.querySelector('.eye-closed')?.classList.toggle('hidden', !isHidden);
+      btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
     }
 $(document).ready(function () {
     $('#loginForm').submit(function (event) {
@@ -86,6 +97,7 @@ $(document).ready(function () {
         var formData = {
             user: $('input[name="user"]').val(),
             password: $('input[name="password"]').val(),
+            remember: $('#rememberInput').is(':checked') ? 1 : 0,
             next: $('input[name="next"]').val(),
             _token: '{{ csrf_token() }}'
         };
@@ -127,7 +139,7 @@ $(document).ready(function () {
 
                 Swal.fire(
                     'Error',
-                    'May nangyaring problema. Pakisubukan muli.',
+                    'Something went wrong. Please try again.',
                     'error'
                 );
             }

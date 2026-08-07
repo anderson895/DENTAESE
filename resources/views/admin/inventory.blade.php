@@ -6,9 +6,17 @@
   <h1 class="text-2xl font-bold text-accent mb-4">Inventory Management</h1>
 
   <div class="flex flex-col sm:flex-row justify-between gap-4 mb-4">
-    <button id="addUserBtn" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded shadow w-full sm:w-auto">
-      <i class="fa-solid fa-user-plus mr-2"></i>Add Item
-    </button>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <button id="addUserBtn" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded shadow w-full sm:w-auto">
+        <i class="fa-solid fa-user-plus mr-2"></i>Add Item
+      </button>
+      <button id="manageUnitsBtn" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow w-full sm:w-auto">
+        <i class="fa-solid fa-ruler mr-2"></i>Manage Units
+      </button>
+      <a href="{{ route('inventory.archived') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded shadow w-full sm:w-auto inline-flex items-center">
+        <i class="fa-solid fa-box-archive mr-2"></i>Suspended / Deleted
+      </a>
+    </div>
 
     <div class="flex flex-col sm:flex-row gap-2">
       {{-- <select id="positionFilter" class="border rounded p-2 w-full sm:w-auto">
@@ -69,14 +77,11 @@
        
         <div>
           <label class="font-semibold">Unit</label>
-          <select name="unit" id="unit" required class="w-full border p-2 rounded">
+          <select name="unit" id="unit" required class="w-full border p-2 rounded unit-select">
             <option value="">-- Select Unit --</option>
-            <option value="mL">mL</option>
-            <option value="G">G</option>
-            <option value="MG">MG</option>
-            <option value="pcs">pcs</option>
-            <option value="bottle">bottle</option>
-            <option value="box">box</option>
+            @foreach($units as $unit)
+              <option value="{{ $unit->name }}">{{ $unit->name }}</option>
+            @endforeach
           </select>
         </div>
       </div>
@@ -123,14 +128,11 @@
         </div>
         <div>
           <label class="font-semibold">Unit</label>
-          <select name="edit_unit" id="edit_unit" required class="w-full border p-2 rounded">
+          <select name="edit_unit" id="edit_unit" required class="w-full border p-2 rounded unit-select">
             <option value="">-- Select Unit --</option>
-            <option value="mL">mL</option>
-            <option value="G">G</option>
-            <option value="MG">MG</option>
-            <option value="pcs">pcs</option>
-            <option value="bottle">bottle</option>
-            <option value="box">box</option>
+            @foreach($units as $unit)
+              <option value="{{ $unit->name }}">{{ $unit->name }}</option>
+            @endforeach
           </select>
         </div>
       </div>
@@ -156,10 +158,141 @@
   </div>
 </div>
 
+<!-- Modal: Manage Units -->
+<div id="unitsModal" class="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/30 hidden z-50">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+    <button type="button" id="closeUnitsModalBtn" class="absolute top-2 right-2 text-gray-500 hover:text-black text-xl">&times;</button>
+    <h2 class="text-xl font-bold mb-4 text-blue-700">Manage Units</h2>
+
+    <form id="addUnitForm" class="flex gap-2 mb-4">
+      <input type="text" id="newUnitName" placeholder="New unit (e.g. tablet)" required maxlength="50"
+             class="flex-1 border p-2 rounded">
+      <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Add</button>
+    </form>
+
+    <ul id="unitsList" class="divide-y border rounded max-h-72 overflow-y-auto"></ul>
+  </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+  // ─────────────────────────────────────────────
+  // UNIT MANAGEMENT (add / edit / delete)
+  // ─────────────────────────────────────────────
+  const UNIT_CSRF = '{{ csrf_token() }}';
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[s]));
+  }
+
+  function loadUnits() {
+    $.get('{{ route('units.list') }}', function (res) {
+      const rows = (res.data || []).map(u => `
+        <li class="flex items-center justify-between px-3 py-2">
+          <span class="unit-name">${escapeHtml(u.name)}</span>
+          <span class="flex gap-2">
+            <button type="button" class="unit-edit bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-sm"
+                    data-id="${u.id}" data-name="${escapeHtml(u.name)}">Edit</button>
+            <button type="button" class="unit-delete bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm"
+                    data-id="${u.id}" data-name="${escapeHtml(u.name)}">Delete</button>
+          </span>
+        </li>`).join('');
+      $('#unitsList').html(rows || '<li class="px-3 py-4 text-center text-gray-500">No units yet.</li>');
+      refreshUnitDropdowns(res.data || []);
+    });
+  }
+
+  // Panatilihing updated ang Add/Edit Item dropdowns nang hindi nagre-reload
+  function refreshUnitDropdowns(units) {
+    $('.unit-select').each(function () {
+      const current = $(this).val();
+      const opts = ['<option value="">-- Select Unit --</option>']
+        .concat(units.map(u => `<option value="${escapeHtml(u.name)}">${escapeHtml(u.name)}</option>`));
+      $(this).html(opts.join(''));
+      if (current) $(this).val(current);
+    });
+  }
+
+  function unitError(xhr, fallback) {
+    const json = xhr.responseJSON || {};
+    const msg = json.message || Object.values(json.errors || {}).flat()[0] || fallback;
+    Swal.fire('Error', msg, 'error');
+  }
+
+  $(document).on('click', '#manageUnitsBtn', function () {
+    loadUnits();
+    $('#unitsModal').removeClass('hidden');
+  });
+  $(document).on('click', '#closeUnitsModalBtn', function () {
+    $('#unitsModal').addClass('hidden');
+  });
+
+  $(document).on('submit', '#addUnitForm', function (e) {
+    e.preventDefault();
+    $.post('{{ route('units.store') }}', { name: $('#newUnitName').val(), _token: UNIT_CSRF })
+      .done(function (res) {
+        $('#newUnitName').val('');
+        loadUnits();
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 2000 });
+      })
+      .fail(xhr => unitError(xhr, 'Failed to add unit.'));
+  });
+
+  $(document).on('click', '.unit-edit', function () {
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    Swal.fire({
+      title: 'Edit Unit',
+      input: 'text',
+      inputValue: name,
+      showCancelButton: true,
+      confirmButtonText: 'Save',
+      inputValidator: v => (!v || !v.trim()) && 'Unit name is required.'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      $.ajax({
+        url: '/units/' + id,
+        method: 'PUT',
+        data: { name: result.value, _token: UNIT_CSRF },
+        success: function (res) {
+          loadUnits();
+          InventoryList(1); // refresh table (unit names may have changed)
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 2000 });
+        },
+        error: xhr => unitError(xhr, 'Failed to update unit.')
+      });
+    });
+  });
+
+  $(document).on('click', '.unit-delete', function () {
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    Swal.fire({
+      title: 'Delete unit?',
+      text: `"${name}" will be removed from the unit list.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      confirmButtonColor: '#dc2626'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      $.ajax({
+        url: '/units/' + id,
+        method: 'DELETE',
+        data: { _token: UNIT_CSRF },
+        success: function (res) {
+          loadUnits();
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 2000 });
+        },
+        error: xhr => unitError(xhr, 'Failed to delete unit.')
+      });
+    });
+  });
+
   // modal control
   function closeModal() {
     $('#viewModal').addClass('hidden');
@@ -197,19 +330,19 @@
   <td class="border py-2 px-4">${item.description ?? ''}</td>
   <td class="border py-2 px-4 whitespace-nowrap">
     @if(session('active_branch_id') === 'admin')
-      <a href="/medicines/${item.id}" class="text-blue-600 hover:underline" disabled>View</a>
+      <a href="/medicines/${item.id}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2" disabled>View</a>
     @else
-      <a href="/medicines/${item.id}" class="text-blue-600 hover:underline mr-2">View</a>
+      <a href="/medicines/${item.id}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2">View</a>
     @endif
     <button type="button"
-            class="text-amber-600 hover:underline mr-2 editBtn"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded mr-2 editBtn"
             data-id="${item.id}"
             data-name="${(item.name ?? '').replace(/"/g, '&quot;')}"
             data-unit="${item.unit ?? ''}"
             data-price="${item.price ?? ''}"
             data-description="${safeDesc}">Edit</button>
     <button type="button"
-            class="text-red-600 hover:underline deleteBtn"
+            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded deleteBtn"
             data-id="${item.id}"
             data-name="${(item.name ?? '').replace(/"/g, '&quot;')}">Delete</button>
   </td>

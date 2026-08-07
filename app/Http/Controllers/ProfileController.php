@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Appointment;
 use App\Models\MedicalForm;
 use App\Models\PatientRecord;
+use App\Models\PatientMedication;
 use Illuminate\Support\Facades\Storage;
 class ProfileController extends Controller
 {
@@ -117,8 +118,14 @@ public function showProfile()
     // The dental-chart partial expects $patient to be the User model.
     $patient = $user;
 
+    // Current medications prescribed/monitored by the doctor (read-only for the patient)
+    $currentMedications = PatientMedication::where('user_id', $userid)
+        ->orderByDesc('start_date')
+        ->orderByDesc('id')
+        ->get();
+
     return view('client.cprofile', compact(
-        'completedAppointments', 'appointment', 'record', 'patient', 'patientinfo'
+        'completedAppointments', 'appointment', 'record', 'patient', 'patientinfo', 'currentMedications'
     ));
 }
 

@@ -6,11 +6,11 @@
 <!-- Content -->
 <div class="p-6 overflow-y-auto">
     @if (auth()->user()->position === 'admin')
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
    <!-- STAFF CARD -->
 <a href="/useraccount"
-   class="bg-white rounded-md border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 block">
+   class="bg-white rounded-md border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 block lg:col-span-2">
 
     <!-- Header -->
     <div class="mb-5">
@@ -57,24 +57,6 @@
 </a>
 
 
-    <!-- NEW USERS FOR APPROVAL -->
-<a href="/userverify"
-   class="bg-white rounded-md border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 block relative">
-
-    <div>
-        <div class="text-3xl font-semibold text-primary">
-            {{ \App\Models\newuser::where('account_type', 'patient')->count() }}
-        </div>
-        <div class="text-sm font-medium text-gray-400">
-            New Users for Approval
-        </div>
-    </div>
-
-
-    <div class="absolute bottom-4 right-4 text-accent font-medium text-sm hover:underline">
-        View 
-    </div>
-</a>
 <!-- PATIENTS -->
 <a href="/patientaccount"
    class="bg-white rounded-md border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 block relative">
@@ -100,7 +82,7 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
     <!-- SALES THIS MONTH -->
-    <div class="bg-white rounded-md border p-6 shadow hover:shadow-lg">
+    <div class="bg-white rounded-md border p-6 shadow">
         <div class="text-2xl font-semibold text-primary">
             ₱{{ number_format($monthlySalesTotal, 2) }}
         </div>
@@ -108,7 +90,7 @@
     </div>
 
     <!-- APPOINTMENT EARNINGS -->
-    <div class="bg-white rounded-md border p-6 shadow hover:shadow-lg">
+    <div class="bg-white rounded-md border p-6 shadow">
         <div class="text-2xl font-semibold text-primary">
             ₱{{ number_format($monthlyAppointmentTotal, 2) }}
         </div>
@@ -116,7 +98,7 @@
     </div>
 
     <!-- ACCUMULATED TOTAL -->
-    <div class="bg-white rounded-md border p-6 shadow hover:shadow-lg">
+    <div class="bg-white rounded-md border p-6 shadow">
         <div class="text-2xl font-semibold text-primary">
             ₱{{ number_format($monthlySalesTotal + $monthlyAppointmentTotal, 2) }}
         </div>
@@ -133,20 +115,20 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
     <!-- SALES PER BRANCH -->
-    <div class="bg-white rounded-md border p-6 shadow hover:shadow-lg">
+    <div class="bg-white rounded-md border p-6 shadow">
         <h3 class="text-lg font-semibold mb-4 text-gray-700">Sales per Branch (This Month)</h3>
         <canvas id="salesPerBranchChart"></canvas>
     </div>
 
     <!-- APPOINTMENTS PER BRANCH -->
-    <div class="bg-white rounded-md border p-6 shadow hover:shadow-lg">
+    <div class="bg-white rounded-md border p-6 shadow">
         <h3 class="text-lg font-semibold mb-4 text-gray-700">Appointments per Branch (This Month)</h3>
         <canvas id="appointmentsPerBranchChart"></canvas>
     </div>
 </div>
 
 <!-- TOTAL ACCUMULATED SALES & APPOINTMENTS -->
-<div class="bg-white rounded-md border p-6 shadow hover:shadow-lg mb-6">
+<div class="bg-white rounded-md border p-6 shadow mb-6">
     <h3 class="text-lg font-semibold mb-4 text-gray-700">Total Accumulated Sales & Appointments (Monthly)</h3>
     <canvas id="totalAccumulatedChart"></canvas>
 </div>

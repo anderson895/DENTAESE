@@ -1,6 +1,7 @@
 <div class="p-6 bg-gray-100 min-h-screen" id="printable-area">
      @if (auth()->user()->account_type == 'admin')
-    <button onclick="window.print()" class="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
+    <button onclick="printSection('printable-area', { paper: 'Letter', scale: 80, title: 'Treatment Record' })"
+            class="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
         Print
     </button>
     @endif
@@ -73,12 +74,9 @@
                         {{-- Treatment Fee --}}
                         <td class="py-2 px-4">{{ $r->total_price ? '₱' . number_format($r->total_price, 2) : '-' }}</td>
 
-                        {{-- Medicine Cost (from POS sales on same date for same patient) --}}
+                        {{-- Medicine Cost (mula sa POS sales na nakatali sa appointment) --}}
                         @php
-                            $medicineCost = \App\Models\Sale::where('patient_id', $r->user_id)
-                                ->where('store_id', $r->store_id)
-                                ->whereDate('created_at', $r->appointment_date)
-                                ->sum('total_amount');
+                            $medicineCost = \App\Models\Sale::forAppointment($r)->sum('total_amount');
                         @endphp
                         <td class="py-2 px-4">{{ $medicineCost > 0 ? '₱' . number_format($medicineCost, 2) : '-' }}</td>
 
@@ -103,37 +101,13 @@
 </div>
 
 <style>
+{{-- Ang page setup (paper size, scale, footer) ay galing na sa printSection().
+     Itsura lang ng talahanayan ang natitira dito. --}}
 @media print {
-
-    @page {
-                    margin: 0; /* removes browser header/footer space */
-                }
-    body * {
-        visibility: hidden; /* hide everything */
-      
-    }
-    #printable-area, #printable-area * {
-        visibility: visible; /* show only printable area */
-    }
-    #printable-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: white;
-        padding: 0;
-        margin: 0;
-    }
-    .print\\:hidden {
-        display: none !important;
-    }
-    /* Optional: remove colors for better print */
-    table, th, td {
-        color: black !important;
-        border: 1px solid black !important;
-    }
-    body {
-        -webkit-print-color-adjust: exact; /* preserve colors if needed */
+    #printable-area { background: #fff; }
+    #printable-area table, #printable-area th, #printable-area td {
+        color: #000 !important;
+        border: 1px solid #000 !important;
     }
 }
 </style>

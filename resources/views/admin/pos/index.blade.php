@@ -4,6 +4,7 @@
 
 @section('main-content')
 <script src="//unpkg.com/alpinejs" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Medicines List (Left Side) -->
@@ -122,7 +123,7 @@
             <p class="text-lg font-bold text-sky-800 mb-4">
                 Total: ₱{{ number_format(collect($cart)->sum('subtotal'), 2) }}
             </p>
-            <form method="POST" action="{{ route('pos.checkout', $storeId) }}" class="space-y-3">
+            <form method="POST" action="{{ route('pos.checkout', $storeId) }}" class="space-y-3" id="checkoutForm">
                 @csrf
                 @php
                     $presel = $preselectedPatientId ?? null;
@@ -161,7 +162,7 @@
                     Change: ₱<span id="changeAmount">0.00</span>
                 </div>
 
-                <button class="w-full px-6 py-3 bg-sky-600 text-white rounded-2xl hover:bg-sky-700 transition">
+                <button id="checkoutBtn" class="w-full px-6 py-3 bg-sky-600 text-white rounded-2xl hover:bg-sky-700 transition">
                     Checkout
                 </button>
             </form>
@@ -230,40 +231,14 @@
             </div>
             <!-- Print -->
             <div class="mt-6 text-right">
-                <button onclick="printReceipt()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"> 🖨 Print </button>
+                <button onclick="window.printReceipt('receipt-modal', 'POS Receipt')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"> 🖨 Print </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function printReceipt() {
-    let modalContent = document.getElementById("receipt-modal").innerHTML;
-    let printWindow = window.open("", "", "width=800,height=600");
-    printWindow.document.write(`
-        <html>
-        <head>
-            <style>
-                @page { margin: 10mm; }
-                body { font-family: Arial, sans-serif; margin: 0; padding: 10px; font-size: 12px; }
-                h1 { font-size: 16px; margin: 0; }
-                table { border-collapse: collapse; width: 100%; }
-                td, th { border: 1px solid #000; padding: 4px; font-size: 12px; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-            </style>
-        </head>
-        <body>
-            <div class="receipt">${modalContent}</div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-}
-
+{{-- Nasa partials/print-scripts ang window.printReceipt — 4x6 ang default na papel. --}}
 const POS_MEDICINES = @json($medicines->values());
 
 function filterMedicines() {
@@ -385,22 +360,54 @@ const POS_PATIENTS = @json($posPatients);
     });
 })();
 
+const POS_TOTAL = {{ collect($cart)->sum('subtotal') }};
+
 function calcChange() {
-    const total = {{ collect($cart)->sum('subtotal') }};
-    const given = parseFloat(document.getElementById('amount_given').value) || 0;
+    const givenRaw = document.getElementById('amount_given').value;
+    const given = parseFloat(givenRaw) || 0;
     const changeEl = document.getElementById('changeDisplay');
     const changeAmt = document.getElementById('changeAmount');
-    if (given > 0) {
+    const btn = document.getElementById('checkoutBtn');
+
+    // Bawal mag-checkout kapag kulang ang amount given sa total
+    const insufficient = givenRaw !== '' && given < POS_TOTAL;
+
+    if (givenRaw !== '' && given > 0) {
         changeEl.classList.remove('hidden');
-        const change = given - total;
+        const change = given - POS_TOTAL;
         changeAmt.textContent = change >= 0 ? change.toFixed(2) : '0.00';
-        changeEl.className = change >= 0 
-            ? 'text-sm font-semibold text-green-700' 
+        changeEl.className = change >= 0
+            ? 'text-sm font-semibold text-green-700'
             : 'text-sm font-semibold text-red-600';
         if (change < 0) changeAmt.textContent = 'Insufficient (' + Math.abs(change).toFixed(2) + ' short)';
     } else {
         changeEl.classList.add('hidden');
     }
+
+    if (btn) {
+        btn.disabled = insufficient;
+        btn.classList.toggle('opacity-50', insufficient);
+        btn.classList.toggle('cursor-not-allowed', insufficient);
+    }
 }
+
+// Panghuling harang kung sakaling ma-bypass ang disabled state
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('checkoutForm');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+        const givenRaw = document.getElementById('amount_given').value;
+        const given = parseFloat(givenRaw) || 0;
+        if (givenRaw !== '' && given < POS_TOTAL) {
+            e.preventDefault();
+            const short = (POS_TOTAL - given).toFixed(2);
+            if (window.Swal) {
+                Swal.fire('Insufficient Amount', 'Amount given (₱' + given.toFixed(2) + ') is less than the total (₱' + POS_TOTAL.toFixed(2) + '). Short by ₱' + short + '.', 'warning');
+            } else {
+                alert('Amount given is less than the total. Short by ₱' + short + '.');
+            }
+        }
+    });
+});
 </script>
 @endsection

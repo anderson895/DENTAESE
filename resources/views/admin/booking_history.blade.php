@@ -67,8 +67,13 @@
         <tr class="border text-center">
             <td>{{ $appointment->user->name }}</td>
             <td>{{ $appointment->dentist->name ?? 'N/A' }}</td>
-            <td>{{ $appointment->appointment_time }} - {{ $appointment->booking_end_time }}</td>
-            
+            <td>
+                {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') }}
+                {{ \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A') }}
+                &ndash;
+                {{ \Carbon\Carbon::parse($appointment->booking_end_time)->format('h:i A') }}
+            </td>
+
             <td>{{ $appointment->total_price }}</td>
             <td>{{ ucfirst($appointment->status) }}</td>
             <td>

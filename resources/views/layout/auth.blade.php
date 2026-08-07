@@ -48,6 +48,13 @@
   filter: invert(43%) sepia(99%) saturate(5121%) hue-rotate(200deg) brightness(95%) contrast(90%);
 }
 
+        /* Itinatago ang sariling "reveal password" na mata ng Edge/IE — ito ang
+           dahilan kung bakit dalawa ang mata sa mga password field. Sa amin
+           lang na eye icon nakadepende ang show/hide. */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">

@@ -10,6 +10,8 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\DoctorSchedule;
 use App\Models\StoreScheduleOverride;
+use App\Services\AppointmentSms;
+use App\Services\Notifier;
 use Illuminate\Support\Facades\Auth;
 class AppointmentController extends Controller
 {
@@ -28,11 +30,27 @@ public function changeTime(Request $request, Appointment $appointment)
         'booking_end_time' => 'required|after:appointment_time',
     ]);
 
+    $oldWhen = Carbon::parse($appointment->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($appointment->appointment_time)->format('g:i A');
+
     $appointment->update([
         'appointment_date' => $request->appointment_date,
         'appointment_time' => $request->appointment_time,
         'booking_end_time' => $request->booking_end_time,
     ]);
+
+    $newWhen = Carbon::parse($request->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($request->appointment_time)->format('g:i A');
+
+    $patient = $appointment->user;
+    $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+    Notifier::user($patient, 'Appointment Date/Time Changed',
+        "Your appointment was moved from {$oldWhen} to {$newWhen}.", route('CBookingo'));
+
+    Notifier::branchStaff($appointment->store_id, 'Appointment Date/Time Changed',
+        "The appointment of {$patientName} was moved from {$oldWhen} to {$newWhen}.",
+        route('appointments.view', $appointment->id));
 
     return response()->json(['message' => 'Date & time updated']);
 }
@@ -363,6 +381,9 @@ if ($nextBooking) {
         return response()->json(['status' => 'error', 'message' => 'Booking ends after store closing time.']);
     }
 
+    // Clean up lapsed pending appointments first so they never block new bookings
+    Appointment::expireLapsedPending();
+
     $userHasPending = Appointment::where('user_id', auth()->id())
         ->whereNotIn('status', ['completed', 'no_show', 'cancelled'])
         ->exists();
@@ -379,9 +400,31 @@ if ($nextBooking) {
         'appointment_date' => $validated['appointment_date'],
         'appointment_time' => $validated['appointment_time'],
         'booking_end_time' => $appointmentEnd->format('H:i'),
-        'desc' => $validated['desc'],
+        'desc' => $validated['desc'] ?? null,
         'status' => 'pending',
     ]);
+
+    // Best-effort SMS; hindi hinaharangan ang booking kapag pumalya ang gateway.
+    app(AppointmentSms::class)->booked($appointment);
+
+    $when = Carbon::parse($appointment->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($appointment->appointment_time)->format('g:i A');
+    $patient = $appointment->user;
+    $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+    Notifier::user(
+        $patient,
+        'Booking Successfully Submitted',
+        "Your appointment at {$store->name} on {$when} has been submitted and is waiting for approval.",
+        route('CBookingo')
+    );
+
+    Notifier::branchStaff(
+        $store->id,
+        'New Appointment Booking',
+        "{$patientName} booked an appointment on {$when}. It is pending approval.",
+        route('admin.booking', ['status' => 'pending'])
+    );
 
     return response()->json([
         'status' => 'success',
@@ -423,30 +466,48 @@ public function appointmentadmin(Request $request)
     $appointmentTime = Carbon::parse($appointmentDate->format('Y-m-d') . ' ' . $validated['appointment_time']);
     $bookingEnd = $appointmentTime->copy()->addMinutes($service->approx_time);
 
+    // Walk-in/emergency: nasa clinic na mismo ang pasyente at receptionist,
+    // kaya hindi na hinaharang ng closed-day / dentist-off / store-hours checks.
+    $isWalkinOrEmergency = in_array($type, ['walkin', 'emergency']);
+
+    // Policy: walk-in/emergency ay para lamang sa active branch ng staff
+    if ($isWalkinOrEmergency && (string) $validated['store_id'] !== (string) session('active_branch_id')) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Walk-in and Emergency bookings are only allowed for your current branch. For other branches, please use "Book Appointment" instead.'
+        ]);
+    }
+
     // Per-date clinic override (calendar-based) takes precedence
     $clinicOverride = StoreScheduleOverride::where('store_id', $store->id)
         ->where('schedule_date', $appointmentDate->toDateString())->first();
-    if ($clinicOverride) {
-        if (!$clinicOverride->is_open) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Clinic is closed on this date.'
-            ]);
-        }
-    } else {
-        $dayOfWeek = strtolower($appointmentDate->format('D'));
-        if (!in_array($dayOfWeek, $store->open_days ?? [])) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Store is closed on this day.'
-            ]);
+
+    if (!$isWalkinOrEmergency) {
+        if ($clinicOverride) {
+            if (!$clinicOverride->is_open) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Clinic is closed on this date.'
+                ]);
+            }
+        } else {
+            $dayOfWeek = strtolower($appointmentDate->format('D'));
+            $openDays = is_array($store->open_days)
+                ? $store->open_days
+                : (json_decode($store->open_days ?? '[]', true) ?: []);
+            if (!in_array($dayOfWeek, $openDays)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Store is closed on this day.'
+                ]);
+            }
         }
     }
 
     // Doctor schedule override
     $docSchedule = DoctorSchedule::where('dentist_id', $validated['dentist_id'])
         ->where('schedule_date', $appointmentDate->toDateString())->first();
-    if ($docSchedule && $docSchedule->status === 'off') {
+    if (!$isWalkinOrEmergency && $docSchedule && $docSchedule->status === 'off') {
         return response()->json([
             'status' => 'error',
             'message' => 'Selected dentist is off on this date.'
@@ -469,13 +530,14 @@ public function appointmentadmin(Request $request)
     $storeClosing = Carbon::parse($appointmentDate->format('Y-m-d') . ' ' . Carbon::parse($closingTime)->format('H:i'));
 
     // Adjust walk-in/emergency appointments if before opening
-    if (in_array($type, ['walkin', 'emergency']) && $appointmentTime < $storeOpening) {
+    if ($isWalkinOrEmergency && $appointmentTime < $storeOpening) {
         $appointmentTime = $storeOpening->copy();
         $bookingEnd = $appointmentTime->copy()->addMinutes($service->approx_time);
     }
 
-    // Check if appointment is within store hours
-    if ($appointmentTime < $storeOpening || $bookingEnd > $storeClosing) {
+    // Check if appointment is within store hours (walk-in/emergency exempted —
+    // nandiyan na ang pasyente kahit lampas o labas sa naka-set na store hours)
+    if (!$isWalkinOrEmergency && ($appointmentTime < $storeOpening || $bookingEnd > $storeClosing)) {
         return response()->json([
             'status' => 'error',
             'message' => 'Appointment time is outside of store hours.',
@@ -512,6 +574,9 @@ public function appointmentadmin(Request $request)
 
     // Only check pending appointments if NOT emergency
     if ($type !== 'emergency') {
+        // Clean up lapsed pending appointments first so they never block new bookings
+        Appointment::expireLapsedPending();
+
         $userHasPending = Appointment::where('user_id', $user->id)
             ->whereNotIn('status', ['completed', 'no_show', 'cancelled'])
             ->exists();
@@ -534,6 +599,12 @@ public function appointmentadmin(Request $request)
         default     => 'approved',
     };
 
+    $appointmentType = match($type) {
+        'walkin'    => 'walkin',
+        'emergency' => 'emergency',
+        default     => 'scheduled',
+    };
+
     $appointment = Appointment::create([
         'store_id' => $store->id,
         'user_id' => $user->id,
@@ -542,9 +613,38 @@ public function appointmentadmin(Request $request)
         'appointment_date' => $validated['appointment_date'],
         'appointment_time' => $appointmentTime->format('H:i'),
         'booking_end_time' => $bookingEnd->format('H:i'),
-        'desc' => $validated['desc'],
+        'desc' => $validated['desc'] ?? null,
         'status' => $status,
+        'appointment_type' => $appointmentType,
     ]);
+
+    $when = $appointmentDate->format('M d, Y') . ' at ' . $appointmentTime->format('g:i A');
+    $patientName = trim($user->lastname . ', ' . $user->name);
+
+    if ($appointmentType === 'emergency') {
+        // Emergency booking — dapat malaman agad ng buong branch at ng admin
+        Notifier::staffAndAdmins(
+            $store->id,
+            '🚨 Emergency Appointment Booked',
+            "An EMERGENCY appointment was booked for {$patientName} at {$store->name} on {$when}.",
+            route('appointments.view', $appointment->id)
+        );
+        Notifier::user($user, 'Emergency Appointment Recorded',
+            "Your emergency appointment at {$store->name} on {$when} has been recorded.", route('CBookingo'));
+    } elseif ($appointmentType === 'walkin') {
+        Notifier::branchStaff($store->id, 'Walk-in Appointment Booked',
+            "A walk-in appointment was booked for {$patientName} on {$when}.",
+            route('appointments.view', $appointment->id));
+        Notifier::user($user, 'Walk-in Appointment Recorded',
+            "Your walk-in appointment at {$store->name} on {$when} has been recorded.", route('CBookingo'));
+    } else {
+        Notifier::user($user, 'Booking Successfully Submitted',
+            "An appointment was booked for you at {$store->name} on {$when}. It is waiting for approval.",
+            route('CBookingo'));
+        Notifier::branchStaff($store->id, 'New Appointment Booking',
+            "{$patientName} has an appointment on {$when} pending approval.",
+            route('admin.booking', ['status' => 'pending']));
+    }
 
     // Redirect immediately for walk-in/emergency
     if (in_array($type, ['walkin', 'emergency'])) {
@@ -617,9 +717,25 @@ public function updateServices(Request $request)
 {
     $appt = Appointment::findOrFail($request->id);
 
- 
-    $appt->service_ids = $request->services; 
+    $oldNames = Service::whereIn('id', $appt->service_ids ?? [])->pluck('name')->implode(', ') ?: 'none';
+
+    $appt->service_ids = $request->services;
     $appt->save();
+
+    $newNames = Service::whereIn('id', $appt->service_ids ?? [])->pluck('name')->implode(', ') ?: 'none';
+
+    if ($oldNames !== $newNames) {
+        $patient = $appt->user;
+        $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+        Notifier::user($patient, 'Appointment Services Changed',
+            "The services for your appointment changed from [{$oldNames}] to [{$newNames}].",
+            route('CBookingo'));
+
+        Notifier::branchStaff($appt->store_id, 'Appointment Services Changed',
+            "Services for {$patientName} changed from [{$oldNames}] to [{$newNames}].",
+            route('appointments.view', $appt->id));
+    }
 
     return response()->json(['success' => true]);
 }

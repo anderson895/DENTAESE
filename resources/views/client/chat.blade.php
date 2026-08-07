@@ -139,9 +139,15 @@ $('#fileInput').on('change', function () {
             li.className = `p-3 cursor-pointer border-b border-sky-200 hover:bg-sky-200 transition
               ${currentBranch === branch.id ? "bg-sky-300" : ""}`;
 
+            const unreadBadge = branch.unread_count > 0
+              ? `<span class="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">${branch.unread_count}</span>`
+              : "";
+
             li.innerHTML = `
-              <strong>${branch.name}</strong><br>
-              <small class="text-gray-600">${lastMsg}</small>
+              <div class="flex items-center justify-between">
+                <strong>${branch.name}</strong>${unreadBadge}
+              </div>
+              <small class="${branch.unread_count > 0 ? 'text-gray-900 font-semibold' : 'text-gray-600'}">${lastMsg}</small>
             `;
 
             li.addEventListener("click", () => {

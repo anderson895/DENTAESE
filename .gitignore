@@ -24,3 +24,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+hosting_credentials.txt
+# Scratch folders used when extracting the revision .docx files
+/_docx_imgs/
+/.tmp-docx/

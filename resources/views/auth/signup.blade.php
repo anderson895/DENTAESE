@@ -213,6 +213,11 @@
     <button type="submit" class="submit hidden bg-green-600 text-white px-6 py-2 rounded">Submit</button>
 </div>
 
+<p class="pt-4 text-center text-xs text-gray-600">
+    By creating an account, you acknowledge that you have read and agree to our
+    <a href="{{ route('terms') }}" target="_blank" class="text-blue-500 hover:text-blue-700 underline transition">Terms and Conditions</a>.
+</p>
+
 </form>
 </div>
 
@@ -343,6 +348,40 @@ function validateStepOnServer(step) {
         });
     });
 }
+
+// ─────────────────────────────────────────────
+// Persist inputs so they survive a page refresh.
+// Sensitive fields (passwords, OTP, face data, files)
+// are never saved.
+// ─────────────────────────────────────────────
+const SIGNUP_STORAGE_KEY = 'signup_form_data';
+const EXCLUDED_FIELDS = ['password', 'confirm_password', 'otp', 'face_descriptor', 'verification_id', '_token'];
+
+function saveSignupInputs() {
+    const data = {};
+    $('#signupForm').find('input, select, textarea').each(function () {
+        if (!this.name || EXCLUDED_FIELDS.includes(this.name)) return;
+        if (this.type === 'file' || this.type === 'hidden' || this.type === 'password') return;
+        if ($(this).hasClass('otp-digit')) return;
+        data[this.name] = $(this).val();
+    });
+    try { localStorage.setItem(SIGNUP_STORAGE_KEY, JSON.stringify(data)); } catch (e) { /* storage full/blocked */ }
+}
+
+function restoreSignupInputs() {
+    let data;
+    try { data = JSON.parse(localStorage.getItem(SIGNUP_STORAGE_KEY) || '{}'); } catch (e) { return; }
+    Object.entries(data).forEach(([name, value]) => {
+        if (EXCLUDED_FIELDS.includes(name)) return;
+        const input = $('#signupForm').find(`[name="${name}"]`).first();
+        if (input.length && value !== null && value !== undefined) input.val(value);
+    });
+}
+
+$(document).ready(function () {
+    restoreSignupInputs();
+    $(document).on('input change', '#signupForm input, #signupForm select, #signupForm textarea', saveSignupInputs);
+});
 
 $(document).ready(function () {
     showStep(currentStep);

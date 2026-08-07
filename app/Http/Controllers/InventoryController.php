@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\medicine_batches;
 use App\Models\MedicineMovement;
 use App\Models\medicines;
+use App\Models\Unit;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,137 @@ class InventoryController extends Controller
 {
     //
        public function inventory(){
-        return view('admin.inventory');
+        $units = Unit::orderBy('name')->get();
+        return view('admin.inventory', compact('units'));
+    }
+
+    // ─────────────────────────────────────────────
+    // UNIT MANAGEMENT (add / edit / delete)
+    // ─────────────────────────────────────────────
+    public function unitList()
+    {
+        return response()->json([
+            'status' => 'success',
+            'data'   => Unit::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function unitStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:50|unique:units,name',
+        ]);
+
+        $unit = Unit::create($validated);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Unit added successfully.',
+            'data'    => $unit,
+        ]);
+    }
+
+    public function unitUpdate(Request $request, $id)
+    {
+        $unit = Unit::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:50|unique:units,name,' . $unit->id,
+        ]);
+
+        $oldName = $unit->name;
+        $unit->update($validated);
+
+        // Panatilihing tugma ang mga gamot na gumagamit ng lumang pangalan ng unit
+        medicines::where('unit', $oldName)->update(['unit' => $validated['name']]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Unit updated successfully.',
+        ]);
+    }
+
+    // ─────────────────────────────────────────────
+    // SUSPENDED / DELETED MEDICINE LIST
+    // ─────────────────────────────────────────────
+    public function archivedList()
+    {
+        $branchId = session('active_branch_id');
+
+        // Suspended at expired na batches ng kasalukuyang branch
+        $batchQuery = medicine_batches::with('medicine')
+            ->whereIn('status', ['suspended', 'expired'])
+            ->latest('updated_at');
+
+        if ($branchId && $branchId !== 'admin') {
+            $batchQuery->where('store_id', $branchId);
+        }
+
+        // Mga gamot na binura (soft deleted)
+        $deletedMedicines = medicines::onlyTrashed()
+            ->orderByDesc('deleted_at')
+            ->get();
+
+        return view('admin.inventory-archived', [
+            'batches'          => $batchQuery->get(),
+            'deletedMedicines' => $deletedMedicines,
+        ]);
+    }
+
+    public function restoreMedicine($id)
+    {
+        $medicine = medicines::onlyTrashed()->findOrFail($id);
+        $medicine->restore();
+
+        return back()->with('success', "\"{$medicine->name}\" has been restored.");
+    }
+
+    public function reactivateBatch($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $batch = medicine_batches::findOrFail($id);
+            $batch->status = 'active';
+            $batch->save();
+
+            MedicineMovement::create([
+                'store_id'          => $batch->store_id,
+                'medicine_id'       => $batch->medicine_id,
+                'medicine_batch_id' => $batch->id,
+                'type'              => 'reactivated',
+                'quantity'          => $batch->quantity,
+                'remarks'           => 'Batch reactivated',
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', "Batch #{$batch->id} has been reactivated.");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to reactivate batch: ' . $e->getMessage());
+        }
+    }
+
+    public function unitDestroy($id)
+    {
+        $unit = Unit::findOrFail($id);
+
+        // Huwag payagang burahin ang unit na ginagamit pa ng mga gamot
+        $inUse = medicines::where('unit', $unit->name)->count();
+        if ($inUse > 0) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => "Cannot delete \"{$unit->name}\" — it is still used by {$inUse} medicine(s).",
+            ], 422);
+        }
+
+        $unit->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Unit deleted successfully.',
+        ]);
     }
 
      public function InventoryList(Request $request){
@@ -360,7 +491,15 @@ public function stockIn(Request $request, $id)
             ]);
     
             DB::commit();
-            return back()->with('success', "Batch #{$batch->id} has been mark expired."); 
+
+            \App\Services\Notifier::staffAndAdmins(
+                $batch->store_id,
+                'Medicine Marked as Expired',
+                "\"{$batch->medicine->name}\" (Batch #{$batch->id}, qty {$batch->quantity}) has been marked as expired.",
+                route('inventory.archived')
+            );
+
+            return back()->with('success', "Batch #{$batch->id} has been mark expired.");
         } catch (\Throwable $e) {
             DB::rollBack();
 

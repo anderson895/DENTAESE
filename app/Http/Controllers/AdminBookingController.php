@@ -15,6 +15,7 @@ use App\Models\PatientRecord;
 use App\Models\PatientMedication;
 use App\Models\Service;
 use App\Models\StoreStaff;
+use App\Services\AppointmentSms;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\AppointmentNotification;
    use Illuminate\Support\Facades\Schema;
@@ -29,6 +30,9 @@ class AdminBookingController extends Controller
 public function showBookings(Request $request)
 {
     $user = auth()->user();
+
+    // Fallback auto-cancel of lapsed pending appointments (in case cron is down)
+    Appointment::expireLapsedPending();
 
     $stores = Store::all();
     $services = Service::all();
@@ -146,6 +150,10 @@ public function approveBooking(Request $request, $id)
         'message' => $message,
     ]));
 
+    //  SMS via Semaphore (best-effort, hindi nakaka-block ng approval)
+    $sms = app(AppointmentSms::class);
+    $isReschedule ? $sms->rescheduled($appointment) : $sms->approved($appointment);
+
     //  Response with custom message
     return response()->json([
         'message' => $isReschedule ? 'Appointment time updated successfully.' : 'Appointment approved successfully.',
@@ -234,6 +242,26 @@ public function settle(Request $request, $id)
 
     if ($request->status === 'no_show') {
         $appointment->update(['status' => 'no_show']);
+
+        $when = Carbon::parse($appointment->appointment_date)->format('M d, Y')
+            . ' at ' . Carbon::parse($appointment->appointment_time)->format('g:i A');
+        $patient = $appointment->user;
+        $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+        \App\Services\Notifier::user(
+            $patient,
+            'Appointment Marked as No Show',
+            "You were marked as a no-show for your appointment on {$when}. Please book again if you still need the service.",
+            route('CBookingo')
+        );
+
+        \App\Services\Notifier::branchStaff(
+            $appointment->store_id,
+            'Appointment No Show',
+            "{$patientName} was marked as a no-show for {$when}.",
+            route('admin.booking.history')
+        );
+
         return response()->json(['message' => 'Marked as No Show.']);
     }
 
@@ -241,14 +269,33 @@ public function settle(Request $request, $id)
         'work_done' => 'nullable|string',
         'paytype' => 'required|string',
         'total_price' => 'required|numeric',
+        'amount_given' => 'nullable|numeric|min:0',
         'payment_receipt' => 'nullable|image|max:2048',
     ]);
+
+    // Kabuuang babayaran = serbisyo + gamot na binili para sa pagbisitang ito
+    $medicineTotal = \App\Models\Sale::forAppointment($appointment)->sum('total_amount');
+
+    $grandTotal = (float) $validated['total_price'] + (float) $medicineTotal;
+
+    // Bawal tapusin ang bayad kapag kulang ang ibinigay na halaga
+    if ($request->filled('amount_given') && (float) $validated['amount_given'] < $grandTotal) {
+        $short = number_format($grandTotal - (float) $validated['amount_given'], 2);
+        return response()->json([
+            'message' => "Amount given is less than the total (₱{$short} short). Please enter the full amount.",
+        ], 422);
+    }
 
     $data = [
         'payment_type' => $validated['paytype'],
         'total_price' => $validated['total_price'],
         'status' => 'completed',
     ];
+
+    if ($request->filled('amount_given')) {
+        $data['amount_given']  = $validated['amount_given'];
+        $data['change_amount'] = max(0, (float) $validated['amount_given'] - $grandTotal);
+    }
 
     if (!empty($validated['work_done'])) {
         $data['work_done'] = $validated['work_done'];
@@ -291,11 +338,27 @@ public function cancelBooking($id)
 
     $appointment->status = 'cancelled';
     $appointment->save();
-    $appointment->user->notify(new AppointmentNotification([
-    'title' => 'Appointment Approved',
-    'message' => 'Your appointment at '. $appointment->store->name . ' has been cancelled.',
-    // 'url' => '/messages'
-]));
+
+    $when = Carbon::parse($appointment->appointment_date)->format('M d, Y')
+        . ' at ' . Carbon::parse($appointment->appointment_time)->format('g:i A');
+    $patient = $appointment->user;
+    $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+
+    \App\Services\Notifier::user(
+        $patient,
+        'Appointment Cancelled',
+        "Your appointment at {$appointment->store->name} on {$when} has been cancelled by the clinic.",
+        route('CBookingo')
+    );
+
+    \App\Services\Notifier::branchStaff(
+        $appointment->store_id,
+        'Appointment Cancelled',
+        "The appointment of {$patientName} on {$when} was cancelled.",
+        route('admin.booking')
+    );
+
+    app(AppointmentSms::class)->cancelled($appointment);
 
     return response()->json(['message' => 'Appointment cancelled.']);
 }
@@ -364,6 +427,8 @@ public function updateHistory(Request $request, Appointment $appointment)
         'service_ids' => 'nullable|array',
     ]);
 
+    $oldStatus = $appointment->status;
+
     $appointment->update([
         'desc' => $request->desc,
         'work_done' => $request->work_done,
@@ -371,6 +436,21 @@ public function updateHistory(Request $request, Appointment $appointment)
         'status' => $request->status,
         'service_ids' => $request->service_ids,
     ]);
+
+    $patient = $appointment->user;
+    $patientName = $patient ? trim($patient->lastname . ', ' . $patient->name) : 'A patient';
+    $when = Carbon::parse($appointment->appointment_date)->format('M d, Y');
+
+    $statusNote = $oldStatus !== $appointment->status
+        ? " Status changed from " . ucfirst($oldStatus) . " to " . ucfirst($appointment->status) . "."
+        : '';
+
+    \App\Services\Notifier::branchStaff(
+        $appointment->store_id,
+        'Appointment History Updated',
+        "The record of {$patientName} for {$when} was updated.{$statusNote}",
+        route('admin.booking.history')
+    );
 
     return response()->json(['success' => true]);
 }
@@ -412,6 +492,12 @@ public function modalDetails($id)
         ['user_id' => $user->id]
     );
 
+    // Current medications the patient is taking (monitored by the doctor)
+    $currentMedications = PatientMedication::where('user_id', $user->id)
+        ->orderByDesc('start_date')
+        ->orderByDesc('id')
+        ->get();
+
     return view('admin.partials.usermodaldetail', compact(
         'user',
         'completedAppointments',
@@ -419,7 +505,8 @@ public function modalDetails($id)
         'record',
         'patient',
         'patientinfo',
-        'medicines'
+        'medicines',
+        'currentMedications'
     ));
 }
 }

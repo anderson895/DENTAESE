@@ -42,10 +42,18 @@
                required>
     </td>
 
-    <td>{{ $appointment->desc }}</td>
+    <td>
+        @php $apptType = $appointment->appointment_type ?? 'scheduled'; @endphp
+        <span class="px-2 py-1 rounded text-xs font-semibold
+            {{ $apptType === 'walkin' ? 'bg-green-100 text-green-700' : ($apptType === 'emergency' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700') }}">
+            {{ $apptType === 'walkin' ? 'Walk-in' : ucfirst($apptType) }}
+        </span>
+    </td>
     <td class="status">{{ ucfirst($appointment->status) }}</td>
     <td>
-        @if($appointment->arrived_at)
+        @if(in_array($appointment->appointment_type, ['walkin', 'emergency']))
+            <span class="text-gray-400 italic">Not applicable</span>
+        @elseif($appointment->arrived_at)
             {{ \Carbon\Carbon::parse($appointment->arrived_at)->format('h:i A') }}
         @else
             <span class="text-gray-400">—</span>

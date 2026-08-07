@@ -59,8 +59,10 @@
     @endif
 @endif
 
+{{-- Naka-fixed ang footer kaya inuulit ito ng browser sa bawat pahina kapag nagprint.
+     Dito lang nakalagay ang petsa/oras at kung sino ang nagprint — wala na sa header. --}}
 <div class="clinic-print-footer"
-     style="position:fixed; left:0; right:0; bottom:8px; padding:4px 12px 0; border-top:1px solid #999;
+     style="position:fixed; left:10mm; right:10mm; bottom:6mm; padding:4px 0 0; border-top:1px solid #999;
             display:flex; justify-content:space-between; align-items:center;
             font-family: 'Times New Roman', Georgia, serif; font-size:8pt; color:#444;">
     <div>Printed: {{ now()->format('M d, Y h:i A') }}</div>

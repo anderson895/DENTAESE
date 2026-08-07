@@ -118,9 +118,23 @@ class POSController extends Controller
         return back()->withErrors(['cart' => 'Cart is empty!']);
     }
 
+    // Bawal mag-checkout kapag kulang ang amount given sa kabuuang halaga.
+    $cartTotal = collect($cart)->sum('subtotal');
+    if ($request->filled('amount_given') && floatval($request->amount_given) < $cartTotal) {
+        $short = number_format($cartTotal - floatval($request->amount_given), 2);
+        return back()->withErrors([
+            'amount_given' => "Amount given is less than the total (₱{$short} short). Please enter the full amount.",
+        ])->withInput();
+    }
+
     $sale = null;
 
-    DB::transaction(function () use ($cart, $storeId, $request, &$sale) {
+    // Kapag binuksan ang POS mula sa isang appointment ("Open POS for this
+    // Patient"), itali ang bentahan doon para siguradong lumalabas ang gamot
+    // sa Treatment Record at sa panghuling resibo.
+    $appointmentId = session('pos_appointment_id');
+
+    DB::transaction(function () use ($cart, $storeId, $request, $appointmentId, &$sale) {
         $totalAmount = collect($cart)->sum('subtotal');
         $amountGiven = $request->amount_given ? floatval($request->amount_given) : null;
         $changeAmount = $amountGiven ? max(0, $amountGiven - $totalAmount) : null;
@@ -129,6 +143,7 @@ class POSController extends Controller
             'store_id'       => $storeId,
             'user_id'        => auth()->id(),
             'patient_id'     => $request->patient_id,
+            'appointment_id' => $appointmentId,
             'total_amount'   => $totalAmount,
             'amount_given'   => $amountGiven,
             'change_amount'  => $changeAmount,

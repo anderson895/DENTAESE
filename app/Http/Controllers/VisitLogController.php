@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Appointment;
 use App\Models\daily_logs;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
@@ -36,7 +37,7 @@ class VisitLogController extends Controller
 
         $appointment = Appointment::where('user_id', $userId)
             ->where('appointment_date', $today)
-            ->whereIn('status', ['approved', 'pending'])
+            ->whereIn('status', ['approved', 'pending', 'arrived'])
             ->latest('appointment_date')
             ->first();
 
@@ -86,9 +87,85 @@ class VisitLogController extends Controller
     }
 
     // ─────────────────────────────────────────────
+    // HELPER: Auto-create a default walk-in appointment
+    // for patients who visit/log without an appointment.
+    // Defaults: current time, branch = active branch,
+    // dentist = first dentist of the branch,
+    // service = Dental Checkup.
+    // ─────────────────────────────────────────────
+    private function createDefaultWalkinAppointment(User $user): ?Appointment
+    {
+        try {
+            $storeId = session('active_branch_id');
+            $store   = \App\Models\Store::find($storeId);
+
+            if (!$store) {
+                return null;
+            }
+
+            // Default dentist: first dentist assigned to this branch
+            $dentist = $store->staff()->wherePivot('position', 'dentist')->first();
+            if (!$dentist) {
+                Log::warning("Auto walk-in skipped: no dentist assigned to store {$storeId}");
+                return null;
+            }
+
+            // Default service: Dental Checkup (fallback to first service)
+            $service = \App\Models\Service::where('name', 'like', '%checkup%')->first()
+                ?? \App\Models\Service::first();
+            if (!$service) {
+                Log::warning('Auto walk-in skipped: no services configured');
+                return null;
+            }
+
+            $start = Carbon::now();
+            $end   = $start->copy()->addMinutes((int) ($service->approx_time ?: 30));
+
+            return Appointment::create([
+                'store_id'         => $store->id,
+                'user_id'          => $user->id,
+                'dentist_id'       => $dentist->id,
+                'service_ids'      => [$service->id],
+                'appointment_date' => $start->format('Y-m-d'),
+                'appointment_time' => $start->format('H:i'),
+                'booking_end_time' => $end->format('H:i'),
+                'desc'             => 'Auto-created walk-in from visit log',
+                'status'           => 'arrived',
+                'appointment_type' => 'walkin',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Auto walk-in creation failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────────
     // HELPER: Log visit (shared logic)
     // ─────────────────────────────────────────────
     private function logVisit(User $user, string $method): array
+    {
+        // Atomic lock para sa mabilisang sunod-sunod na scan (QR/face na paulit-ulit
+        // nagpapadala). Kung walang lock, sabay-sabay na pumapasa sa duplicate check
+        // ang mga request at nagkakaroon ng maraming log sa iisang oras.
+        $lock = Cache::lock("visit-log:{$user->id}", 10);
+
+        if (!$lock->get()) {
+            return [
+                'status'      => 'warning',
+                'message'     => 'You have already logged a visit today.',
+                'user_name'   => $user->full_name ?? $user->name,
+                'appointment' => null,
+            ];
+        }
+
+        try {
+            return $this->performLogVisit($user, $method);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function performLogVisit(User $user, string $method): array
     {
         // Check if already logged today
         $alreadyLogged = daily_logs::where('user_id', $user->id)
@@ -103,6 +180,9 @@ class VisitLogController extends Controller
                 'status' => 'arrived',
                 'arrived_at' => $appointment->arrived_at ?? Carbon::now(),
             ]);
+        } elseif (!$alreadyLogged && $user->account_type === 'patient') {
+            // No appointment today → auto-create a default walk-in appointment
+            $appointment = $this->createDefaultWalkinAppointment($user);
         }
 
         if ($alreadyLogged) {

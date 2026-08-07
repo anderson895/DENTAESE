@@ -97,33 +97,61 @@
                     <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-sky-500"></div>
                 </div>
 
+                @php $hasFace = Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== ""; @endphp
+
                 <div class="flex flex-col items-center justify-center flex-1 text-center gap-3 py-4">
-                    @if(Auth::user()->face_descriptor !== null && Auth::user()->face_descriptor !== "")
+                    @if($hasFace)
                         <span class="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                             <i class="fa-solid fa-check text-xl"></i>
                         </span>
                         <p class="text-sm text-gray-600">Your face is registered for login.</p>
-                        <button id="capturemodal" class="px-4 py-2 bg-sky-200 text-white rounded-lg text-sm cursor-not-allowed" disabled>Capture & Register</button>
                     @else
                         <span class="w-14 h-14 rounded-full bg-sky-50 text-sky-500 flex items-center justify-center">
                             <i class="fa-solid fa-camera text-xl"></i>
                         </span>
                         <p class="text-sm text-gray-600">Register your face to log in using face recognition.</p>
-                        <button id="capturemodal" class="px-4 py-2 bg-primary hover:bg-sky-700 text-white rounded-lg text-sm font-medium transition">
-                            <i class="fa-solid fa-camera mr-1"></i> Capture & Register
-                        </button>
                     @endif
+                    <button id="capturemodal" class="px-4 py-2 bg-primary hover:bg-sky-700 text-white rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-camera mr-1"></i> {{ $hasFace ? 'Re-capture Face' : 'Capture & Register' }}
+                    </button>
                 </div>
 
-                <!-- Modal -->
+                <!-- Modal: guided face capture (same flow as patient registration) -->
                 <div id="modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-                    <div class="bg-white p-6 rounded-xl shadow-lg w-96">
-                        <h2 class="text-lg font-bold mb-4 text-gray-800">Capture & Register</h2>
-                        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-                        <video id="video" width="320" height="240" autoplay class="rounded-lg"></video>
-                        <div class="flex items-center justify-end gap-2 mt-4">
-                            <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition" id="capture">Capture</button>
-                            <button id="closemodal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg text-sm font-medium transition">Close</button>
+                    <div class="bg-white p-6 rounded-xl shadow-lg w-fit">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-800 text-center">Face Registration</h2>
+
+                        <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
+                            <div class="relative inline-block">
+                                <video id="video" width="320" height="240" autoplay playsinline
+                                    class="rounded-md block" style="width:320px;height:240px;"></video>
+                                <canvas id="overlayCanvas" width="320" height="240"
+                                    class="absolute top-0 left-0 rounded-md pointer-events-none"
+                                    style="width:320px;height:240px;"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 space-y-2">
+                            <div class="text-center text-xs text-gray-500"><p id="debugInfo">FPS: --</p></div>
+                            <div class="text-center">
+                                <p id="instructionText" class="text-sm font-semibold text-gray-700">
+                                    Move your head left and right
+                                </p>
+                                <p id="progressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
+                            </div>
+                            <div class="flex justify-center gap-4 text-xs">
+                                <div class="flex items-center gap-1">
+                                    <span id="leftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Left Turn</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Right Turn</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-4">
+                            <button id="closemodal" type="button"
+                                class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded-md text-sm">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -173,92 +201,239 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{{-- No defer: must be available synchronously --}}
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+
+<style>
+    #video, #overlayCanvas { display: block; width: 320px; height: 240px; }
+    #overlayCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+</style>
+
+{{-- =========================================================================
+     GUIDED FACE CAPTURE — same flow as patient registration.
+     FIX: dati nagpapadala ito ng JPEG (face_image) pero 128-value na
+     face_descriptor ang hinihingi ng /register-face, kaya laging
+     "Failed to register face".
+     ========================================================================= --}}
 <script>
-    const openBtn = document.getElementById('capturemodal');
-    const modal = document.getElementById('modal');
-    const closeBtn = document.getElementById('closemodal');
-  
-    openBtn.addEventListener('click', () => {
-      modal.classList.remove('hidden');
-      if (window.isSecureContext) {
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-        })
-        .catch(error => {
-            console.error("Error accessing media devices.", error);
-        });
-} else {
-    console.error("getUserMedia requires a secure context (HTTPS).");
+let modelsLoaded     = false;
+let isDetecting      = false;
+let animationFrameId = null;
+let captureTriggered = false;
+
+let headMovementLeft  = false;
+let headMovementRight = false;
+let currentProgress   = 0;
+let lastFrameTime     = Date.now();
+let frameCount        = 0;
+let fps               = 0;
+
+const openBtn  = document.getElementById('capturemodal');
+const modal    = document.getElementById('modal');
+const closeBtn = document.getElementById('closemodal');
+const video    = document.getElementById('video');
+let stream     = null;
+
+async function loadModels() {
+    if (modelsLoaded) return;
+    try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/models/face_recognition');
+        modelsLoaded = true;
+    } catch (err) {
+        console.error('Model error:', err);
+        Swal.fire('Error', 'Failed to load face detection models.', 'error');
+    }
 }
-    });
-  
-    closeBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  </script>
-  
-<script>
-    
-     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const captureButton = document.getElementById('capture');
-    const context = canvas.getContext('2d');
-  
 
-        captureButton.addEventListener('click', () => {
-    // Draw video frame onto canvas
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+function updateProgress() {
+    let p = 0;
+    if (headMovementLeft)  p += 50;
+    if (headMovementRight) p += 50;
+    currentProgress = Math.min(100, Math.round(p));
 
-    // Convert canvas to Blob
-    canvas.toBlob(function(blob) {
-        let formData = new FormData();
-        formData.append('face_image', blob, 'face_capture.jpg');
+    video.parentElement.parentElement.style.setProperty('--progress', currentProgress + '%');
+    document.getElementById('progressText').textContent = `Progress: ${currentProgress}%`;
 
-        // Show loading spinner
-        document.getElementById('loadingSpinner').classList.remove('hidden');
+    const instruction = document.getElementById('instructionText');
+    if (!headMovementLeft && !headMovementRight) {
+        instruction.textContent = 'Move your head left and right';
+    } else if (headMovementLeft && !headMovementRight) {
+        instruction.textContent = 'Now turn your head to the right';
+    } else if (!headMovementLeft && headMovementRight) {
+        instruction.textContent = 'Now turn your head to the left';
+    } else {
+        instruction.textContent = 'Verification complete!';
+    }
 
-        fetch('/register-face', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}' // for Laravel Blade
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            // Hide loading spinner
-            document.getElementById('loadingSpinner').classList.add('hidden');
+    document.getElementById('leftIndicator').className  = headMovementLeft  ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+    document.getElementById('rightIndicator').className = headMovementRight ? 'w-3 h-3 rounded-full bg-green-500' : 'w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
 
-            // Show SweetAlert success
-            Swal.fire({
-                title: 'Success!',
-                text: data.message || 'Face registered!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                // Close modal (optional)
-               
-                document.getElementById('modal').classList.add('hidden');
-                location.reload();
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('loadingSpinner').classList.add('hidden');
+    if (currentProgress === 100 && !captureTriggered) {
+        captureTriggered = true;
+        setTimeout(() => captureAndRegisterFace(), 500);
+    }
+}
 
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to register face.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
+function detectHeadMovement(landmarks) {
+    const nose  = landmarks.getNose();
+    const jaw   = landmarks.getJawOutline();
+    const ratio = (nose[3].x - jaw[0].x) / (jaw[16].x - jaw[0].x);
+    if (ratio < 0.38 && !headMovementLeft)  { headMovementLeft  = true; updateProgress(); }
+    if (ratio > 0.62 && !headMovementRight) { headMovementRight = true; updateProgress(); }
+}
+
+function drawBoundingBox(detection, canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!detection) return;
+    const sx = canvas.width / video.videoWidth, sy = canvas.height / video.videoHeight;
+    const b  = detection.detection.box;
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3;
+    ctx.strokeRect(b.x*sx, b.y*sy, b.width*sx, b.height*sy);
+    ctx.fillStyle = 'rgba(16,185,129,0.9)';
+    ctx.fillRect(b.x*sx, b.y*sy - 25, 60, 23);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial';
+    ctx.fillText('FACE', b.x*sx + 8, b.y*sy - 7);
+}
+
+async function detectFaceLoop() {
+    if (!isDetecting) return;
+    const overlay = document.getElementById('overlayCanvas');
+    frameCount++;
+    const now = Date.now();
+    if (now - lastFrameTime > 1000) { fps = frameCount; frameCount = 0; lastFrameTime = now; }
+    document.getElementById('debugInfo').textContent = `FPS: ${fps}`;
+
+    if (video && !video.paused && !video.ended && video.readyState === video.HAVE_ENOUGH_DATA) {
+        if (overlay.width !== video.videoWidth)  overlay.width  = video.videoWidth;
+        if (overlay.height !== video.videoHeight) overlay.height = video.videoHeight;
+        try {
+            const det = await faceapi
+                .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+                .withFaceLandmarks();
+            if (det) {
+                drawBoundingBox(det, overlay);
+                detectHeadMovement(det.landmarks);
+            } else {
+                overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+            }
+        } catch (err) { console.error('Detection error:', err); }
+    }
+    animationFrameId = requestAnimationFrame(detectFaceLoop);
+}
+
+function startDetection() { isDetecting = true; detectFaceLoop(); }
+function stopDetection() {
+    isDetecting = false;
+    if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+}
+function stopCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+function resetTracking() {
+    headMovementLeft = headMovementRight = false;
+    currentProgress = fps = frameCount = 0;
+    captureTriggered = false;
+    document.getElementById('instructionText').textContent = 'Move your head left and right';
+    document.getElementById('progressText').textContent    = 'Progress: 0%';
+    document.getElementById('debugInfo').textContent       = 'FPS: --';
+    document.getElementById('leftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
+    document.getElementById('rightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
+    video.parentElement.parentElement.style.setProperty('--progress', '0%');
+}
+
+openBtn.addEventListener('click', async () => {
+    modal.classList.remove('hidden');
+    resetTracking();
+
+    if (!window.isSecureContext) {
+        Swal.fire('Not Secure', 'Camera access requires HTTPS. Please open the site over a secure connection.', 'error');
+        modal.classList.add('hidden');
+        return;
+    }
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
         });
-    }, 'image/jpeg');
+        video.srcObject = stream;
+        await new Promise(resolve => { video.onloadedmetadata = () => { video.play(); resolve(); }; });
+        await loadModels();
+        setTimeout(() => startDetection(), 500);
+    } catch (err) {
+        console.error('Webcam error:', err);
+        Swal.fire('Error', 'Unable to access webcam.', 'error');
+        modal.classList.add('hidden');
+    }
 });
 
+closeBtn.addEventListener('click', () => {
+    stopDetection(); modal.classList.add('hidden'); stopCamera(); resetTracking();
+});
+
+async function captureAndRegisterFace() {
+    stopDetection();
+    Swal.fire({ title: 'Capturing face...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const detection = await faceapi
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+        if (!detection) {
+            Swal.fire('No Face Detected', 'Please try again.', 'error');
+            captureTriggered = false;
+            resetTracking();
+            startDetection();
+            return;
+        }
+
+        // Ipadala ang 128-value descriptor (ito ang hinihingi ng /register-face)
+        const descriptorJSON = JSON.stringify(Array.from(detection.descriptor));
+
+        const res = await fetch('/register-face', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ face_descriptor: descriptorJSON })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || data.status === 'error') {
+            const msg = data.message
+                || Object.values(data.errors || {}).flat()[0]
+                || 'Failed to register face.';
+            Swal.fire('Error', msg, 'error');
+            captureTriggered = false;
+            resetTracking();
+            startDetection();
+            return;
+        }
+
+        modal.classList.add('hidden');
+        stopCamera();
+
+        Swal.fire('Success!', data.message || 'Face registered successfully!', 'success')
+            .then(() => location.reload());
+
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', err.message || 'Face capture failed.', 'error');
+        captureTriggered = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadModels);
 </script>
+
 
 <script>
     ///update profile

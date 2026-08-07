@@ -4,34 +4,20 @@
 @section('main-content')
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-<style>
-@media print {
-    body * {
-        visibility: hidden;
+{{-- Ang aktibong tab lang ang ipinipirint, sa pamamagitan ng printSection(). --}}
+<script>
+    function printActiveReport(tab) {
+        const titles = { sales: 'Sales Report', inventory: 'Inventory Movement' };
+        window.printSection(tab + '-printable', {
+            paper: 'Letter',
+            scale: 80,
+            title: titles[tab] || 'Report',
+        });
     }
-    #tab-content > div {
-        display: none !important;
-    }
-    #tab-content > div.printable {
-        display: block !important;
-    }
-    #tab-content > div.printable, #tab-content > div.printable * {
-        visibility: visible;
-    }
-    #tab-content > div.printable {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-}
-</style>
+</script>
 
-<div x-data="{ tab: 'sales' }" 
-     x-init="$watch('tab', value => {
-         document.querySelectorAll('#tab-content > div').forEach(el => el.classList.remove('printable'));
-         document.getElementById(value + '-printable').classList.add('printable');
-     })">
+{{-- Panatilihin ang aktibong tab pagkatapos mag-filter (GET reload) --}}
+<div x-data="{ tab: '{{ request('tab') === 'inventory' ? 'inventory' : 'sales' }}' }">
 
     <!-- Tabs -->
     <div class="flex gap-2 border-b mb-4">
@@ -52,19 +38,27 @@
     <!-- Tab Content -->
     <div id="tab-content">
         <!-- Sales Report -->
-        <div x-show="tab === 'sales'" id="sales-printable" class="printable">
+        <div x-show="tab === 'sales'" id="sales-printable">
             <div class="hidden print:block">
                 @include('partials.print-header', ['title' => 'Sales Report', 'meta' => 'Period: '.$from->format('M d, Y').' – '.$to->format('M d, Y')])
             </div>
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-2xl font-bold">Sales Report</h1>
-                <button onclick="window.print()"
+                <h1 class="text-2xl font-bold print:hidden">Sales Report</h1>
+                <button onclick="printActiveReport('sales')"
                     class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 print:hidden">
                     Print
                 </button>
             </div>
 
             <form method="GET" class="mb-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 items-end print:hidden bg-white p-4 rounded shadow">
+                {{-- Manatili sa Sales Report tab pagkatapos mag-filter --}}
+                <input type="hidden" name="tab" value="sales">
+                {{-- Panatilihin ang mga filter ng Inventory Movement tab --}}
+                @foreach(['inv_from', 'inv_to'] as $invParam)
+                    @if(request()->filled($invParam))
+                        <input type="hidden" name="{{ $invParam }}" value="{{ request($invParam) }}">
+                    @endif
+                @endforeach
                 <div>
                     <label class="block text-sm font-semibold">From:</label>
                     <input type="date" name="from" value="{{ $from->format('Y-m-d') }}" class="border rounded px-2 py-1 w-full">
@@ -165,21 +159,29 @@
         @include('partials.print-header', ['title' => 'Inventory Movement', 'meta' => 'Period: '.request('inv_from', now()->startOfMonth()->format('Y-m-d')).' – '.request('inv_to', now()->endOfMonth()->format('Y-m-d'))])
     </div>
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">Inventory Movement</h1>
-        <button onclick="window.print()"
+        <h1 class="text-2xl font-bold print:hidden">Inventory Movement</h1>
+        <button onclick="printActiveReport('inventory')"
             class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 print:hidden">
             Print
         </button>
     </div>
 
     <!-- Date Range Filter -->
-    <form method="GET" class="mb-4 flex gap-2 items-center ">
+    <form method="GET" class="mb-4 flex gap-2 items-center print:hidden">
+        {{-- Manatili sa Inventory Movement tab pagkatapos mag-filter --}}
+        <input type="hidden" name="tab" value="inventory">
+        {{-- Panatilihin ang mga filter ng Sales Report tab --}}
+        @foreach(['from', 'to', 'cashier_id', 'patient_id', 'medicine_id'] as $salesParam)
+            @if(request()->filled($salesParam))
+                <input type="hidden" name="{{ $salesParam }}" value="{{ request($salesParam) }}">
+            @endif
+        @endforeach
         <label>
-            From: 
+            From:
             <input type="date" name="inv_from" value="{{ request('inv_from', now()->startOfMonth()->format('Y-m-d')) }}" class="border rounded px-2 py-1">
         </label>
         <label>
-            To: 
+            To:
             <input type="date" name="inv_to" value="{{ request('inv_to', now()->endOfMonth()->format('Y-m-d')) }}" class="border rounded px-2 py-1">
         </label>
         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">

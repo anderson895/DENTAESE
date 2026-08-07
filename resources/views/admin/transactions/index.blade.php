@@ -148,38 +148,10 @@
 
             <!-- Print -->
             <div class="mt-6 text-right">
-                <button onclick="printReceipt()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"> 🖨 Print </button>
+                {{-- Nasa partials/print-scripts ang window.printReceipt — 4x6 ang default na papel. --}}
+                <button onclick="window.printReceipt('receipt-modal', 'POS Receipt')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"> 🖨 Print </button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-function printReceipt() {
-    let modalContent = document.getElementById("receipt-modal").innerHTML;
-    let printWindow = window.open("", "", "width=800,height=600");
-    printWindow.document.write(`
-        <html>
-        <head>
-            <style>
-                @page { margin: 10mm; }
-                body { font-family: Arial, sans-serif; margin: 0; padding: 10px; font-size: 12px; }
-                h1 { font-size: 16px; margin: 0; }
-                table { border-collapse: collapse; width: 100%; }
-                td, th { border: 1px solid #000; padding: 4px; font-size: 12px; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-            </style>
-        </head>
-        <body>
-            <div class="receipt">${modalContent}</div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-}
-</script>
 @endsection

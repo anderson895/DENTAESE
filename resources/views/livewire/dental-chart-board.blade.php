@@ -2,29 +2,21 @@
     $authUser       = auth()->user();
     $isPatient      = $authUser && $authUser->account_type === 'patient';
     $isReceptionist = $authUser && $authUser->position === 'Receptionist';
-    $chartReadonly  = $isPatient || $isReceptionist;
+    $isAdminUser    = $authUser && $authUser->position === 'admin';
+    $chartReadonly  = $isPatient || $isReceptionist || $isAdminUser || !empty($readonly);
 @endphp
 
 <div class="space-y-6">
-     @if ($authUser && $authUser->account_type == 'admin')
+     @if ($authUser && $authUser->account_type == 'admin' && empty($readonly))
     <div class="flex items-center mt-2">
         <!-- Print button (left) -->
+        {{-- Dental Chart lang ang naka-100% na scale; 80% ang ibang reports. --}}
         <button
-            onclick="printDiv('printable-info')"
+            onclick="printSection('printable-info', { paper: 'legal', scale: 100, title: 'Dental Chart' })"
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden"
         >
             Print Dental Chart
         </button>
-
-        @if(!$isReceptionist)
-        <!-- Next button (right) -->
-        <button
-            @click="tab='checkin'"
-            class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-        >
-            Next
-        </button>
-        @endif
     </div>
 @endif
 
@@ -58,6 +50,17 @@
 
 
 </style>
+
+@if($chartReadonly)
+{{-- View-only: teeth are not clickable at all (no hover, no click, no edit) --}}
+<style>
+.tooth-svg .slice,
+.tooth-svg .inner-slice {
+    pointer-events: none;
+    cursor: default;
+}
+</style>
+@endif
 
 
 <div class="mt-6 p-4 border rounded-lg bg-gray-50 flex flex-col">
@@ -259,9 +262,11 @@ HTML;
                 <input type="checkbox" wire:model.change="chart.tmd_muscle_spasm" @if($chartReadonly) disabled @endif> Muscle Spasm
             </label>
         </div>
+    </div>
 
 <script>
-const DATA = {
+// `var` (not const/let) so re-injecting this script (View User Details modal) doesn't throw a redeclaration error
+var DATA = {
   condition: [
     ["✓", "Present Teeth", "#ffffff"],
     ["D", "Decayed", "#ef4444"],
@@ -293,7 +298,8 @@ const DATA = {
 
 
 
-{{-- MODAL --}}
+{{-- MODAL (never rendered in view-only mode, so it can never be shown) --}}
+@if(!$chartReadonly)
 <div id="toothModal"
      class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
   <div class="bg-white w-[720px] max-h-[85vh] rounded p-6 overflow-y-auto">
@@ -326,20 +332,16 @@ const DATA = {
 </div>
 <script>
 /* =====================================================
-   GLOBAL STATE
+   EDIT-ONLY SCRIPT (not rendered in view-only mode)
+   `var` so the modal can re-inject this script safely.
 ===================================================== */
-let activePart  = null;
-let activeTooth = null;
-let fetchedRecords = [];
+var activePart  = null;
+var activeTooth = null;
 
 /* =====================================================
    CLICK HANDLER (ADMIN ONLY)
 ===================================================== */
 document.addEventListener('click', function (e) {
-@if($chartReadonly)
-  return;
-@endif
-
   if (!e.target.matches('.slice, .inner-slice')) return;
 
   const svg = e.target.closest('svg[data-tooth]');
@@ -355,6 +357,8 @@ document.addEventListener('click', function (e) {
    MODAL
 ===================================================== */
 function openModal() {
+  if (!document.getElementById('toothModal')) return;
+
   // Rebuild the groups every time
   buildGroup('condition', 'conditionGroup');
   buildGroup('restoration', 'restorationGroup');
@@ -390,6 +394,23 @@ function applyColor(color, code, group) {
 }
 
 /* =====================================================
+   MODAL BUTTON BUILDER
+===================================================== */
+function buildGroup(key, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  DATA[key].forEach(([code, label, color]) => {
+    const btn = document.createElement('button');
+    btn.className = 'border p-2 rounded text-sm hover:bg-gray-100 text-left';
+    btn.innerHTML = `<b>${code}</b> - ${label}`;
+    btn.onclick = () => applyColor(color, code, key);
+    container.appendChild(btn);
+  });
+}
+
+/* =====================================================
    SAVE (AJAX POST)
 ===================================================== */
 function saveTooth(payload) {
@@ -412,6 +433,15 @@ function saveTooth(payload) {
     }
   });
 }
+</script>
+@endif
+
+<script>
+/* =====================================================
+   VIEW SCRIPT (always rendered — fetches & colors teeth)
+   `var` so the modal can re-inject this script safely.
+===================================================== */
+var fetchedRecords = [];
 
 /* =====================================================
    FETCH (AJAX GET)
@@ -461,42 +491,36 @@ function applyFetchedTeeth() {
 
 /* =====================================================
    MUTATION OBSERVER (LIVEWIRE / ALPINE SAFE)
+   Disconnect any previous instance so reopening the
+   modal doesn't stack observers.
 ===================================================== */
-const observer = new MutationObserver(() => {
+if (window.__dentalChartObserver) {
+    window.__dentalChartObserver.disconnect();
+}
+var observer = window.__dentalChartObserver = new MutationObserver(() => {
   applyFetchedTeeth();
 });
 
 /* =====================================================
-   MODAL BUTTON BUILDER
-===================================================== */
-function buildGroup(key, containerId) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-
-  DATA[key].forEach(([code, label, color]) => {
-    const btn = document.createElement('button');
-    btn.className = 'border p-2 rounded text-sm hover:bg-gray-100 text-left';
-    btn.innerHTML = `<b>${code}</b> - ${label}`;
-    btn.onclick = () => applyColor(color, code, key);
-    container.appendChild(btn);
-  });
-}
-
-/* =====================================================
    INIT
+   Runs immediately when the chart is injected via AJAX
+   (e.g. View User Details modal) since DOMContentLoaded
+   has already fired by then.
 ===================================================== */
-document.addEventListener('DOMContentLoaded', () => {
-  buildGroup('condition', 'conditionGroup');
-  buildGroup('restoration', 'restorationGroup');
-  buildGroup('surgery', 'surgeryGroup');
-
+function initDentalChartBoard() {
   fetchTeeth();
 
   observer.observe(document.body, {
     childList: true,
     subtree: true
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDentalChartBoard);
+} else {
+  initDentalChartBoard();
+}
 </script>
 
 

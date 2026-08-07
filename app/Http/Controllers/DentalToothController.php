@@ -10,6 +10,18 @@ class DentalToothController extends Controller
 {
     public function store(Request $request)
     {
+        // Only dentists/doctors may modify the dental chart.
+        // Admins, receptionists and patients are view-only.
+        $user = auth()->user();
+        if (!$user
+            || $user->account_type === 'patient'
+            || in_array($user->position, ['admin', 'Receptionist'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not allowed to modify the dental chart.',
+            ], 403);
+        }
+
         $request->validate([
             'patient_id' => 'required|integer',
             'tooth'      => 'required|string',

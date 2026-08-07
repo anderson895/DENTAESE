@@ -56,6 +56,9 @@ class Clientside extends Controller
 {
     $userId = auth()->id();
 
+    // Fallback auto-cancel of lapsed pending appointments (in case cron is down)
+    Appointment::expireLapsedPending();
+
     // Ongoing appointments
     $incompleteAppointments = Appointment::with(['user', 'dentist', 'store'])
         ->where('user_id', $userId)

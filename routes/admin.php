@@ -187,6 +187,17 @@ Route::post('/batches/{id}/stock-out', [InventoryController::class, 'stockOut'])
 Route::post('/batches/{id}/suspend', [InventoryController::class, 'suspend'])->name('batch.suspend');
 Route::post('/batches/{id}/expired', [InventoryController::class, 'expired'])->name('batch.expired');
 
+// Unit management
+Route::get('/units', [InventoryController::class, 'unitList'])->name('units.list');
+Route::post('/units', [InventoryController::class, 'unitStore'])->name('units.store');
+Route::put('/units/{id}', [InventoryController::class, 'unitUpdate'])->name('units.update');
+Route::delete('/units/{id}', [InventoryController::class, 'unitDestroy'])->name('units.destroy');
+
+// Suspended / deleted medicines
+Route::get('/inventory/archived', [InventoryController::class, 'archivedList'])->name('inventory.archived');
+Route::post('/medicines/{id}/restore', [InventoryController::class, 'restoreMedicine'])->name('medicines.restore');
+Route::post('/batches/{id}/reactivate', [InventoryController::class, 'reactivateBatch'])->name('batch.reactivate');
+
 Route::prefix('pos')->group(function () {
     Route::get('/{store}', [POSController::class, 'index'])->name('pos.index');
     Route::post('/{store}/add', [POSController::class, 'addToCart'])->name('pos.add');

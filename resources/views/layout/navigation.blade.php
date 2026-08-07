@@ -115,7 +115,7 @@
 
             <!-- User Dropdown -->
             <div class="relative">
-                <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white">
+                <div id="dropdownToggle" class="cursor-pointer flex items-center space-x-2 text-white rounded-lg px-2 py-1 hover:bg-sky-600 transition duration-150">
                     <div class="w-10 h-10 rounded-full bg-white overflow-hidden border">
                         @if(Auth::user()->profile_image)
                             <img src="{{ asset('storage/profile_pictures/' . Auth::user()->profile_image) }}" class="object-cover w-full h-full">
@@ -158,6 +158,7 @@
 
                     @if (session('active_branch_id') == "admin")
                         <x-nav-link href="/useraccount" icon="fa-solid fa-user-gear" label="Staff Accounts" />
+                        <x-nav-link href="/sms-logs" icon="fa-solid fa-comment-sms" label="SMS Notifications" />
                     @endif
 
                     <x-nav-link href="/patientaccount" icon="fa-solid fa-hospital-user" label="Patient Accounts" />
@@ -176,7 +177,20 @@
                         <x-nav-link href="/pos/{{ session('active_branch_id') }}" icon="fa-solid fa-cash-register" label="POS" />
                         <x-nav-link href="/reports/sales" icon="fa-solid fa-chart-line" label="POS Reports" />
                         <x-nav-link href="/reports/appointments" icon="fa-solid fa-chart-line" label="Appointment Reports" />
-                        <x-nav-link href="/chat" icon="fa-solid fa-comments" label="Message" />
+                        @php
+                            // Mensahe ng pasyente sa branch na ito...
+                            $unreadStaffMessages = \App\Models\Message::patientThread()
+                                ->where('store_id', session('active_branch_id'))
+                                ->where('is_read', false)
+                                ->whereHas('sender', fn ($q) => $q->where('account_type', 'patient'))
+                                ->count();
+
+                            // ...kasama ang mensahe mula sa ibang branch.
+                            $unreadStaffMessages += \App\Models\Message::where('to_store_id', session('active_branch_id'))
+                                ->where('is_read', false)
+                                ->count();
+                        @endphp
+                        <x-nav-link href="/chat" icon="fa-solid fa-comments" label="Message" :badge="$unreadStaffMessages" />
                     @endif
                 </nav>
             </aside>
@@ -193,6 +207,9 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    {{-- Shared na print helper (window.printSection) para sa lahat ng printout --}}
+    @include('partials.print-scripts')
 
     <script>
     $(function() {

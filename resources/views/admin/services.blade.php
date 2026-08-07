@@ -42,7 +42,7 @@
     <h3 class="text-xl font-bold mb-4 text-blue-700">Add Service</h3>
     <form id="addUserForm" class="space-y-3">
       <input type="text" name="name" placeholder="Name" required class="w-full border p-2 rounded">
-      <input type="text" name="description" placeholder="Description" required class="w-full border p-2 rounded">
+      <textarea name="description" placeholder="Description" required rows="3" class="w-full border p-2 rounded"></textarea>
       <input type="number" name="time" placeholder="Approx. Time (mins)" required class="w-full border p-2 rounded">
       <input type="number" name="price" placeholder="Approx. Price" class="w-full border p-2 rounded" hidden>
       <select name="type" id="type" class="w-full border p-2 rounded">
@@ -62,7 +62,7 @@
 <div id="serviceModal" class="fixed inset-0 hidden z-50 bg-black bg-opacity-50 flex items-center justify-center">
   <div class="bg-white w-full max-w-lg p-6 rounded shadow-lg relative">
     <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-600">&times;</button>
-    <h2 class="text-xl font-bold mb-4">View & Update Service</h2>
+    <h2 class="text-xl font-bold mb-4">Update Service</h2>
     <form id="updateServiceForm" enctype="multipart/form-data">
       @csrf
       <input type="hidden" name="id" id="service_id">
@@ -116,14 +116,14 @@
                 <td class="border px-2 py-1">${service.approx_time}</td>
                 <td hidden class="border px-2 py-1">${service.approx_price}</td>
                 <td class="border px-2 py-1">
-                  <button class="view-service bg-blue-500 text-white px-2 py-1 rounded" 
-                    data-id="${service.id}" 
+                  <button class="view-service bg-blue-500 text-white px-2 py-1 rounded"
+                    data-id="${service.id}"
                     data-name="${service.name}"
                     data-type="${service.type}"
                     data-time="${service.approx_time}"
                     data-price="${service.approx_price}"
                     data-description="${service.description || ''}"
-                    data-image="${service.image || ''}">View</button>
+                    data-image="${service.image || ''}">Update</button>
                 </td>
               </tr>`;
           });
@@ -154,11 +154,11 @@
     $('#addUserForm').submit(function (e) {
       e.preventDefault();
       const formData = {
-        name: $('input[name="name"]').val(),
-        description: $('input[name="description"]').val(),
-        type: $('#type').val(),
-        price: $('input[name="price"]').val(),
-        time: $('input[name="time"]').val(),
+        name: $('#addUserForm [name="name"]').val(),
+        description: $('#addUserForm [name="description"]').val(),
+        type: $('#addUserForm [name="type"]').val(),
+        price: $('#addUserForm [name="price"]').val(),
+        time: $('#addUserForm [name="time"]').val(),
         _token: '{{ csrf_token() }}'
       };
 

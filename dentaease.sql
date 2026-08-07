@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 16, 2026 at 01:54 AM
+-- Generation Time: Jul 19, 2026 at 04:33 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -36,6 +36,8 @@ CREATE TABLE `appointments` (
   `appointment_time` time NOT NULL,
   `booking_end_time` time DEFAULT NULL,
   `status` varchar(255) NOT NULL DEFAULT 'pending',
+  `appointment_type` varchar(255) NOT NULL DEFAULT 'scheduled',
+  `arrived_at` timestamp NULL DEFAULT NULL,
   `desc` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -50,13 +52,9 @@ CREATE TABLE `appointments` (
 -- Dumping data for table `appointments`
 --
 
-INSERT INTO `appointments` (`id`, `store_id`, `user_id`, `dentist_id`, `appointment_date`, `appointment_time`, `booking_end_time`, `status`, `desc`, `created_at`, `updated_at`, `work_done`, `total_price`, `payment_type`, `payment_image`, `service_ids`) VALUES
-(33, 1, 12, 26, '2026-01-16', '11:00:00', '11:15:00', 'completed', 'ad', '2026-01-14 17:12:29', '2026-01-14 18:43:28', 'test', 500.00, 'GCASH', NULL, '[\"1\"]'),
-(34, 2, 12, 30, '2026-01-23', '16:00:00', '18:30:00', 'completed', 'aaaa', '2026-01-14 18:49:34', '2026-01-14 22:30:05', 'dsddsd', 3000.00, 'GCASH', NULL, '[\"2\"]'),
-(35, 4, 12, 30, '2026-01-22', '22:00:00', '00:30:00', 'cancelled', NULL, '2026-01-14 19:03:15', '2026-01-14 19:04:19', NULL, NULL, NULL, NULL, '[\"4\",\"7\"]'),
-(36, 2, 12, 30, '2026-01-22', '16:00:00', '19:30:00', 'completed', NULL, '2026-01-14 19:04:59', '2026-01-14 22:29:34', 'awdwadawd', 3000.00, 'GCASH', NULL, '[\"5\",\"6\",\"7\"]'),
-(37, 2, 45, 30, '2026-01-24', '11:00:00', '11:30:00', 'approved', 'th', '2026-01-14 22:30:37', '2026-01-14 23:16:40', NULL, NULL, NULL, NULL, '[3]'),
-(38, 2, 12, 30, '2026-01-15', '16:00:00', '19:30:00', 'approved', NULL, '2026-01-14 22:32:36', '2026-01-15 01:05:53', NULL, NULL, NULL, NULL, '[\"2\",\"3\",\"4\"]');
+INSERT INTO `appointments` (`id`, `store_id`, `user_id`, `dentist_id`, `appointment_date`, `appointment_time`, `booking_end_time`, `status`, `appointment_type`, `arrived_at`, `desc`, `created_at`, `updated_at`, `work_done`, `total_price`, `payment_type`, `payment_image`, `service_ids`) VALUES
+(100, 1, 82, 26, '2026-05-02', '09:00:00', '09:45:00', 'completed', 'scheduled', NULL, NULL, '2026-05-01 22:06:25', '2026-05-01 22:07:26', NULL, 1000.00, 'GCASH', NULL, '[\"1\",\"3\"]'),
+(101, 1, 82, 26, '2026-05-04', '09:00:00', '10:00:00', 'approved', 'scheduled', NULL, NULL, '2026-05-01 22:09:39', '2026-05-01 22:09:48', NULL, NULL, NULL, NULL, '[\"3\",\"4\"]');
 
 -- --------------------------------------------------------
 
@@ -92,6 +90,7 @@ CREATE TABLE `daily_logs` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `appointment_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `store_id` bigint(20) UNSIGNED DEFAULT NULL,
   `scanned_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -235,26 +234,56 @@ CREATE TABLE `dental_charts` (
 --
 
 INSERT INTO `dental_charts` (`id`, `patient_id`, `tooth_11_condition`, `tooth_11_treatment`, `tooth_12_condition`, `tooth_12_treatment`, `tooth_13_condition`, `tooth_13_treatment`, `tooth_14_condition`, `tooth_14_treatment`, `tooth_15_condition`, `tooth_15_treatment`, `tooth_16_condition`, `tooth_16_treatment`, `tooth_17_condition`, `tooth_17_treatment`, `tooth_18_condition`, `tooth_18_treatment`, `tooth_21_condition`, `tooth_21_treatment`, `tooth_22_condition`, `tooth_22_treatment`, `tooth_23_condition`, `tooth_23_treatment`, `tooth_24_condition`, `tooth_24_treatment`, `tooth_25_condition`, `tooth_25_treatment`, `tooth_26_condition`, `tooth_26_treatment`, `tooth_27_condition`, `tooth_27_treatment`, `tooth_28_condition`, `tooth_28_treatment`, `tooth_31_condition`, `tooth_31_treatment`, `tooth_32_condition`, `tooth_32_treatment`, `tooth_33_condition`, `tooth_33_treatment`, `tooth_34_condition`, `tooth_34_treatment`, `tooth_35_condition`, `tooth_35_treatment`, `tooth_36_condition`, `tooth_36_treatment`, `tooth_37_condition`, `tooth_37_treatment`, `tooth_38_condition`, `tooth_38_treatment`, `tooth_41_condition`, `tooth_41_treatment`, `tooth_42_condition`, `tooth_42_treatment`, `tooth_43_condition`, `tooth_43_treatment`, `tooth_44_condition`, `tooth_44_treatment`, `tooth_45_condition`, `tooth_45_treatment`, `tooth_46_condition`, `tooth_46_treatment`, `tooth_47_condition`, `tooth_47_treatment`, `tooth_48_condition`, `tooth_48_treatment`, `tooth_51_condition`, `tooth_51_treatment`, `tooth_52_condition`, `tooth_52_treatment`, `tooth_53_condition`, `tooth_53_treatment`, `tooth_54_condition`, `tooth_54_treatment`, `tooth_55_condition`, `tooth_55_treatment`, `tooth_61_condition`, `tooth_61_treatment`, `tooth_62_condition`, `tooth_62_treatment`, `tooth_63_condition`, `tooth_63_treatment`, `tooth_64_condition`, `tooth_64_treatment`, `tooth_65_condition`, `tooth_65_treatment`, `tooth_71_condition`, `tooth_71_treatment`, `tooth_72_condition`, `tooth_72_treatment`, `tooth_73_condition`, `tooth_73_treatment`, `tooth_74_condition`, `tooth_74_treatment`, `tooth_75_condition`, `tooth_75_treatment`, `tooth_81_condition`, `tooth_81_treatment`, `tooth_82_condition`, `tooth_82_treatment`, `tooth_83_condition`, `tooth_83_treatment`, `tooth_84_condition`, `tooth_84_treatment`, `tooth_85_condition`, `tooth_85_treatment`, `gingivitis`, `early_periodontitis`, `moderate_periodontitis`, `advanced_periodontitis`, `occlusion_class_molar`, `overjet`, `overbite`, `midline_deviation`, `crossbite`, `appliance_orthodontic`, `appliance_stayplate`, `appliance_others`, `tmd_clenching`, `tmd_clicking`, `tmd_trismus`, `tmd_muscle_spasm`, `created_at`, `updated_at`) VALUES
-(1, 12, NULL, NULL, NULL, NULL, 'D', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', 'Ab', 'Rf', 'Ab', '✓', 'Co', 'D', 'JC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-08-31 01:36:37', '2026-01-14 21:14:54'),
-(2, 11, NULL, NULL, NULL, NULL, 'Rf', NULL, 'M', 'Att', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-09-02 09:56:48', '2026-01-11 23:23:39'),
 (3, 6, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-09-02 09:58:05', '2025-09-02 09:58:36'),
-(4, 13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-09-07 22:16:18', '2025-09-07 22:16:18'),
 (5, 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-09-07 22:44:41', '2025-09-07 22:44:41'),
-(6, 14, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MO', 'Att', NULL, 'P', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, '2025-09-10 05:00:40', '2025-09-10 05:10:06'),
-(7, 15, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', NULL, NULL, 'JC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-07 22:21:01', '2025-11-23 01:55:59'),
-(8, 18, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-07 23:53:44', '2025-10-07 23:53:44'),
-(10, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-08 05:14:54', '2025-10-08 05:14:54'),
-(11, 35, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'D', 'In', 'Im', 'Ab', 'Un', 'X', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-15 20:57:44', '2025-11-26 07:54:25'),
-(12, 36, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Co', NULL, 'JC', NULL, 'Ab', NULL, 'Att', NULL, 'Imp', NULL, 'In', NULL, 'P', NULL, 'S', NULL, 'Am', 'Rf', NULL, 'Sp', NULL, '✓', NULL, 'Rf', NULL, 'Un', NULL, 'D', NULL, 'M', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Rm', 'D', 'XO', 'D', 'Imp', 'Sp', 'X', NULL, NULL, 'MO', 'Imp', NULL, NULL, 'D', NULL, 'Im', 'Imp', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-15 22:42:53', '2026-01-11 21:04:47'),
-(13, 37, NULL, NULL, 'MO', 'In', 'D', NULL, NULL, 'Co', 'M', NULL, 'M', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-17 08:16:51', '2026-01-13 02:53:07'),
 (14, 32, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-10-19 00:34:52', '2025-10-19 01:09:08'),
-(17, 44, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-11-12 05:38:13', '2025-11-12 05:38:13'),
-(21, 42, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-11-23 01:44:37', '2025-11-23 01:44:37'),
-(22, 38, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-11-24 07:56:24', '2025-11-24 07:56:24'),
-(23, 50, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-11-24 16:25:20', '2025-11-24 16:25:20'),
-(24, 43, NULL, NULL, NULL, NULL, NULL, NULL, 'M', 'Rm', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', 'Imp', 'D', 'In', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-11-26 07:06:45', '2025-12-02 23:13:59'),
-(25, 41, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '✓', 'JC', 'D', 'XO', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2025-12-02 23:13:07', '2025-12-03 00:18:40'),
-(26, 45, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', 'Co', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Am', 'Im', '', 'Im', 'JC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-01-14 22:30:38', '2026-01-14 22:39:59');
+(45, 82, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-01 00:27:11', '2026-05-01 00:27:11'),
+(46, 26, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-01 20:43:38', '2026-05-01 20:43:38');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dental_teeth`
+--
+
+CREATE TABLE `dental_teeth` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `patient_id` bigint(20) UNSIGNED NOT NULL,
+  `tooth` varchar(255) NOT NULL,
+  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `dental_teeth`
+--
+
+INSERT INTO `dental_teeth` (`id`, `patient_id`, `tooth`, `data`, `created_at`, `updated_at`) VALUES
+(72, 82, '54', '{\"center\":{\"group\":\"restoration\",\"code\":\"Ab\",\"color\":\"#a855f7\"}}', '2026-05-01 20:38:25', '2026-05-01 20:38:25'),
+(73, 82, '52', '{\"left\":{\"group\":\"restoration\",\"code\":\"P\",\"color\":\"#f97316\"},\"center\":{\"group\":\"restoration\",\"code\":\"S\",\"color\":\"#84cc16\"},\"right\":{\"group\":\"restoration\",\"code\":\"P\",\"color\":\"#f97316\"}}', '2026-07-10 02:21:12', '2026-07-10 02:21:18'),
+(74, 82, '53', '{\"bottom\":{\"group\":\"restoration\",\"code\":\"Att\",\"color\":\"#ec4899\"}}', '2026-07-10 02:21:20', '2026-07-10 02:21:20'),
+(75, 82, '55', '{\"left\":{\"group\":\"restoration\",\"code\":\"Imp\",\"color\":\"#14b8a6\"}}', '2026-07-10 02:21:45', '2026-07-10 02:21:45'),
+(76, 82, '61', '{\"bottom\":{\"group\":\"restoration\",\"code\":\"S\",\"color\":\"#84cc16\"}}', '2026-07-10 02:32:02', '2026-07-10 02:32:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `doctor_schedules`
+--
+
+CREATE TABLE `doctor_schedules` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `dentist_id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `schedule_date` date NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `status` enum('available','off') NOT NULL DEFAULT 'available',
+  `notes` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -342,13 +371,6 @@ CREATE TABLE `medical_forms` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `medical_forms`
---
-
-INSERT INTO `medical_forms` (`id`, `user_id`, `allergies`, `allergies_details`, `heart_condition`, `heart_condition_details`, `asthma`, `asthma_details`, `had_surgeries`, `surgery_type`, `surgery_date`, `surgery_location`, `surgery_remarks`, `medication_name`, `medication_dosage`, `medication_reason`, `visit_reason`, `last_dental_visit`, `had_dental_issues`, `dental_issue_description`, `dental_anxiety`, `emergency_name`, `emergency_relationship`, `emergency_contact`, `created_at`, `updated_at`) VALUES
-(1, 12, 0, 'N/A', 1, 'Had a heart attack in 2020, taking maintenance meds', 1, 'Mild asthma attacks; uses inhaler occasionally', 1, 'Coronary Angioplasty', '2020-10-15', 'St. Luke’s Medical Center', 'Post-heart attack procedure, successful recovery', 'Aspirin', '81 mg daily', 'Blood thinner after heart attack', 'Toothache on upper right molar', '2023-03-10', 1, 'Root canal treatment in 2020', 0, 'Maria Teresa Santos', 'Wife', '0918-765-4321', '2025-08-28 22:16:26', '2025-08-28 22:16:26');
-
 -- --------------------------------------------------------
 
 --
@@ -375,7 +397,11 @@ INSERT INTO `medicines` (`id`, `name`, `unit`, `price`, `description`, `created_
 (3, 'Mefenamic', 'mL', 5.00, 'Gamot sa sakit', '2025-09-17 02:40:08', '2025-09-17 02:40:08'),
 (4, 'Anesthesia', 'G', 1000.00, 'Anti sakit', '2025-09-17 02:41:37', '2025-09-17 02:41:37'),
 (5, 'Antidote', 'mL', 10.00, 'Eme', '2025-10-07 23:22:00', '2025-10-07 23:22:00'),
-(6, 'Yakapsul', 'G', 20.00, 'Hahaaha', '2026-01-13 02:26:50', '2026-01-13 02:26:50');
+(6, 'Yakapsul', 'G', 20.00, 'Hahaaha', '2026-01-13 02:26:50', '2026-01-13 02:26:50'),
+(7, 'Pain Relievers', 'G', 15.00, 'To ease the pain', '2026-01-20 16:19:24', '2026-01-20 16:19:24'),
+(8, 'Anti-covid', 'mL', 1000.00, 'Pangontra', '2026-02-02 06:47:18', '2026-02-02 06:47:18'),
+(9, 'Mimik', 'G', 12.00, 'Gamot sa batang isip', '2026-02-25 14:57:36', '2026-02-25 14:57:36'),
+(10, 'Yakapsule', 'mL', 200.00, 'sakit sa likod', '2026-03-31 23:46:58', '2026-03-31 23:46:58');
 
 -- --------------------------------------------------------
 
@@ -400,11 +426,21 @@ CREATE TABLE `medicine_batches` (
 
 INSERT INTO `medicine_batches` (`id`, `medicine_id`, `store_id`, `quantity`, `expiration_date`, `created_at`, `updated_at`, `status`) VALUES
 (1, 1, 2, 1, '2025-11-08', '2025-08-28 04:56:38', '2025-10-07 23:31:51', 'active'),
-(2, 2, 2, 8, '2026-03-15', '2025-08-28 05:36:13', '2025-11-24 07:59:40', 'active'),
-(3, 1, 1, 18, '2025-09-05', '2025-09-07 22:09:15', '2025-09-10 05:12:27', 'expired'),
-(4, 4, 1, 5, '2025-09-18', '2025-09-17 02:52:50', '2025-09-17 02:52:50', 'active'),
+(2, 2, 2, 6, '2026-03-15', '2025-08-28 05:36:13', '2026-04-01 00:26:58', 'active'),
+(3, 1, 1, 0, '2025-09-05', '2025-09-07 22:09:15', '2026-03-09 10:48:09', 'suspended'),
+(4, 4, 1, 4, '2025-09-18', '2025-09-17 02:52:50', '2026-05-01 21:58:32', 'expired'),
 (5, 5, 1, 0, '2026-01-01', '2025-10-07 23:24:15', '2026-01-11 23:37:47', 'suspended'),
-(6, 6, 1, 20, '2026-01-13', '2026-01-13 02:28:32', '2026-01-13 02:28:54', 'expired');
+(6, 6, 1, 20, '2026-01-13', '2026-01-13 02:28:32', '2026-01-13 02:28:54', 'expired'),
+(7, 1, 1, 8, '2026-02-02', '2026-02-02 06:45:00', '2026-05-01 21:34:15', 'expired'),
+(8, 1, 1, 20, '2027-02-28', '2026-02-02 06:45:30', '2026-05-01 22:07:10', 'active'),
+(9, 2, 1, 6, '2029-02-14', '2026-02-02 06:46:24', '2026-05-01 22:07:10', 'active'),
+(10, 3, 1, 50, '2026-02-26', '2026-02-25 15:00:35', '2026-02-25 15:00:35', 'active'),
+(11, 4, 1, 100, '2026-02-25', '2026-02-25 15:01:07', '2026-02-25 15:01:18', 'suspended'),
+(12, 4, 1, 70, '2026-02-25', '2026-02-25 15:01:34', '2026-02-25 15:03:09', 'expired'),
+(13, 5, 1, 57, '2026-02-26', '2026-02-25 15:01:55', '2026-05-01 21:58:32', 'active'),
+(14, 4, 1, 30, '2026-02-25', '2026-02-25 15:03:19', '2026-02-25 15:03:19', 'active'),
+(15, 1, 4, 30, '2026-02-25', '2026-02-25 15:05:35', '2026-02-25 15:05:35', 'active'),
+(16, 1, 4, 20, '2026-02-28', '2026-02-25 15:05:52', '2026-02-25 15:05:52', 'active');
 
 -- --------------------------------------------------------
 
@@ -451,7 +487,39 @@ INSERT INTO `medicine_movements` (`id`, `medicine_id`, `store_id`, `medicine_bat
 (20, 2, 2, 2, 'stock_out', -2, 'Sale #10', '2025-11-24 07:59:40', '2025-11-24 07:59:40'),
 (21, 5, 1, 5, 'stock_out', -8, 'Sale #11', '2026-01-11 23:37:47', '2026-01-11 23:37:47'),
 (22, 6, 1, 6, 'stock_in', 20, 'New Batch', '2026-01-13 02:28:32', '2026-01-13 02:28:32'),
-(23, 6, 1, 6, 'expired', 20, 'Manual Expired', '2026-01-13 02:28:54', '2026-01-13 02:28:54');
+(23, 6, 1, 6, 'expired', 20, 'Manual Expired', '2026-01-13 02:28:54', '2026-01-13 02:28:54'),
+(24, 4, 1, 4, 'expired', 5, 'Manual Expired', '2026-01-20 16:15:29', '2026-01-20 16:15:29'),
+(25, 1, 1, 7, 'stock_in', 20, 'New Batch', '2026-02-02 06:45:00', '2026-02-02 06:45:00'),
+(26, 1, 1, 7, 'expired', 20, 'Manual Expired', '2026-02-02 06:45:10', '2026-02-02 06:45:10'),
+(27, 1, 1, 8, 'stock_in', 40, 'New Batch', '2026-02-02 06:45:30', '2026-02-02 06:45:30'),
+(28, 2, 1, 9, 'stock_in', 60, 'New Batch', '2026-02-02 06:46:24', '2026-02-02 06:46:24'),
+(29, 2, 1, 9, 'stock_out', 30, 'Manual Decrease', '2026-02-05 07:48:37', '2026-02-05 07:48:37'),
+(30, 1, 1, 3, 'stock_out', -3, 'Sale #12', '2026-02-24 18:29:26', '2026-02-24 18:29:26'),
+(31, 2, 1, 9, 'stock_out', -5, 'Sale #12', '2026-02-24 18:29:26', '2026-02-24 18:29:26'),
+(32, 3, 1, 10, 'stock_in', 50, 'New Batch', '2026-02-25 15:00:35', '2026-02-25 15:00:35'),
+(33, 4, 1, 11, 'stock_in', 100, 'New Batch', '2026-02-25 15:01:07', '2026-02-25 15:01:07'),
+(34, 4, 1, 11, 'suspended', 100, 'Manual Suspended', '2026-02-25 15:01:18', '2026-02-25 15:01:18'),
+(35, 4, 1, 12, 'stock_in', 70, 'New Batch', '2026-02-25 15:01:34', '2026-02-25 15:01:34'),
+(36, 5, 1, 13, 'stock_in', 60, 'New Batch', '2026-02-25 15:01:55', '2026-02-25 15:01:55'),
+(37, 4, 1, 12, 'expired', 70, 'Manual Expired', '2026-02-25 15:03:09', '2026-02-25 15:03:09'),
+(38, 4, 1, 14, 'stock_in', 30, 'New Batch', '2026-02-25 15:03:19', '2026-02-25 15:03:19'),
+(39, 1, 4, 15, 'stock_in', 30, 'New Batch', '2026-02-25 15:05:35', '2026-02-25 15:05:35'),
+(40, 1, 4, 16, 'stock_in', 20, 'New Batch', '2026-02-25 15:05:52', '2026-02-25 15:05:52'),
+(41, 1, 1, 3, 'stock_out', -15, 'Sale #13', '2026-03-09 10:48:09', '2026-03-09 10:48:09'),
+(42, 2, 2, 2, 'stock_out', -2, 'Sale #14', '2026-04-01 00:26:58', '2026-04-01 00:26:58'),
+(43, 1, 1, 7, 'stock_out', -5, 'Sale #15', '2026-05-01 21:07:22', '2026-05-01 21:07:22'),
+(44, 1, 1, 7, 'stock_out', -5, 'Sale #16', '2026-05-01 21:14:15', '2026-05-01 21:14:15'),
+(45, 2, 1, 9, 'stock_out', -5, 'Sale #16', '2026-05-01 21:14:15', '2026-05-01 21:14:15'),
+(46, 1, 1, 7, 'stock_out', -1, 'Sale #17', '2026-05-01 21:21:43', '2026-05-01 21:21:43'),
+(47, 2, 1, 9, 'stock_out', -1, 'Sale #17', '2026-05-01 21:21:43', '2026-05-01 21:21:43'),
+(48, 1, 1, 7, 'stock_out', -1, 'Sale #18', '2026-05-01 21:34:15', '2026-05-01 21:34:15'),
+(49, 5, 1, 13, 'stock_out', -2, 'Sale #18', '2026-05-01 21:34:15', '2026-05-01 21:34:15'),
+(50, 1, 1, 8, 'stock_out', -10, 'Sale #19', '2026-05-01 21:57:09', '2026-05-01 21:57:09'),
+(51, 2, 1, 9, 'stock_out', -8, 'Sale #19', '2026-05-01 21:57:09', '2026-05-01 21:57:09'),
+(52, 5, 1, 13, 'stock_out', -1, 'Sale #20', '2026-05-01 21:58:32', '2026-05-01 21:58:32'),
+(53, 4, 1, 4, 'stock_out', -1, 'Sale #20', '2026-05-01 21:58:32', '2026-05-01 21:58:32'),
+(54, 1, 1, 8, 'stock_out', -10, 'Sale #21', '2026-05-01 22:07:10', '2026-05-01 22:07:10'),
+(55, 2, 1, 9, 'stock_out', -5, 'Sale #21', '2026-05-01 22:07:10', '2026-05-01 22:07:10');
 
 -- --------------------------------------------------------
 
@@ -478,41 +546,11 @@ CREATE TABLE `messages` (
 --
 
 INSERT INTO `messages` (`id`, `store_id`, `sender_id`, `receiver_id`, `message`, `is_read`, `created_at`, `updated_at`, `type`, `file_path`, `file_name`) VALUES
-(5, 1, 1, 12, 'hi', 0, '2025-11-11 06:13:52', '2025-11-11 06:13:52', 'text', NULL, NULL),
-(6, 1, 44, 1, 'Hello po, good morning.', 0, '2025-11-11 06:26:26', '2025-11-11 06:26:26', 'text', NULL, NULL),
-(7, 3, 34, 53, 'test', 0, '2026-01-13 02:54:36', '2026-01-13 02:54:36', 'text', NULL, NULL),
-(8, 3, 34, 53, 'rtt', 0, '2026-01-13 02:54:39', '2026-01-13 02:54:39', 'text', NULL, NULL),
-(9, 2, 30, 54, 'test', 0, '2026-01-14 22:28:45', '2026-01-14 22:28:45', 'text', NULL, NULL),
-(10, 2, 30, 12, 'test', 0, '2026-01-14 23:19:20', '2026-01-14 23:19:20', 'text', NULL, NULL),
-(13, 2, 30, 12, 'ddd', 0, '2026-01-14 23:22:49', '2026-01-14 23:22:49', 'text', NULL, NULL),
-(14, 3, 12, 3, 'awdaw', 0, '2026-01-14 23:32:23', '2026-01-14 23:32:23', 'text', NULL, NULL),
-(19, 2, 30, 12, 'ssss', 0, '2026-01-14 23:36:58', '2026-01-14 23:36:58', 'text', NULL, NULL),
-(22, 2, 12, NULL, 'ccc', 0, '2026-01-14 23:40:14', '2026-01-14 23:40:14', 'text', NULL, NULL),
-(23, 2, 12, NULL, 'qqqq', 0, '2026-01-14 23:40:18', '2026-01-14 23:40:18', 'text', NULL, NULL),
-(24, 2, 30, 51, 'test ssss', 0, '2026-01-14 23:40:43', '2026-01-14 23:40:43', 'text', NULL, NULL),
-(25, 2, 30, 12, ';pppp', 0, '2026-01-14 23:40:54', '2026-01-14 23:40:54', 'text', NULL, NULL),
-(26, 2, 30, 54, 'sss', 0, '2026-01-14 23:55:42', '2026-01-14 23:55:42', 'text', NULL, NULL),
-(27, 2, 12, 1, 'ccc', 0, '2026-01-15 00:11:06', '2026-01-15 00:11:06', 'text', NULL, NULL),
-(28, 2, 12, 1, 'xxx', 0, '2026-01-15 00:11:09', '2026-01-15 00:11:09', 'text', NULL, NULL),
-(29, 2, 30, 12, 'nnnn', 0, '2026-01-15 00:11:23', '2026-01-15 00:11:23', 'text', NULL, NULL),
-(30, 2, 12, NULL, 'Is-Web-Development-Oversaturated.jpg', 0, '2026-01-15 00:34:46', '2026-01-15 00:34:46', 'file', 'chat_files/hChpTHj8koEgR3oiCeF1JYtsoQ7utckiVVXr2fl4.jpg', NULL),
 (31, 2, 30, NULL, '494579798_693373853415594_8083316453582063649_n.jpg', 0, '2026-01-15 00:42:41', '2026-01-15 00:42:41', 'file', 'chat_files/P1KgcS9fxofq2YsvhwBMvgZu1J4MDUHj14uV8aVs.jpg', NULL),
 (32, 2, 30, NULL, 'Birth-Certificate-Template-10.jpg', 0, '2026-01-15 00:43:06', '2026-01-15 00:43:06', 'file', 'chat_files/SM6KfMDydhIg50aRRoOO6K1jJZVVzPdw14O6O7Et.jpg', NULL),
-(33, 2, 30, 12, 'vbbb', 0, '2026-01-15 00:43:37', '2026-01-15 00:43:37', 'text', NULL, NULL),
 (34, 2, 30, NULL, 'java-programming-tutorial.jpg', 0, '2026-01-15 00:50:26', '2026-01-15 00:50:26', 'file', 'chat_files/qwxKPUagFmpUm3td3pBcPIqKnZVamEDh7wfasD1l.jpg', NULL),
 (35, 2, 30, NULL, 'Info-Website-19.jpg', 0, '2026-01-15 00:50:49', '2026-01-15 00:50:49', 'file', 'chat_files/OXjOk8qYHzIJrOIJPwQgjMCd8wwGDpr5g3t9bOxq.jpg', NULL),
-(36, 2, 30, 12, 'yyy', 0, '2026-01-15 00:56:52', '2026-01-15 00:56:52', 'text', NULL, NULL),
-(37, 2, 30, NULL, 'java-programming-tutorial.jpg', 0, '2026-01-15 00:58:33', '2026-01-15 00:58:33', 'file', 'chat_files/3yZcalFyMo30kspMqr8t9Z33qChykyTLzIRQYIZi.jpg', NULL),
-(38, 2, 30, 12, 'xxxxaa', 0, '2026-01-15 01:01:02', '2026-01-15 01:01:02', 'text', NULL, NULL),
-(39, 2, 30, 55, 'data-analysis-skills-duties-responsibilities.webp', 0, '2026-01-15 01:03:38', '2026-01-15 01:03:38', 'file', 'chat_files/GFEw8UOk1yT1akKdzqWO6OKtTsKqXVl1HwTwTC13.webp', NULL),
-(40, 2, 30, 12, 'Info-Website-19.jpg', 0, '2026-01-15 01:03:45', '2026-01-15 01:03:45', 'file', 'chat_files/9RKKvwPXg578Ce5nMXabPzqeohOS4KC2McmH59yl.jpg', NULL),
-(41, 2, 30, 12, 'test upload', 0, '2026-01-15 01:05:24', '2026-01-15 01:05:24', 'text', NULL, NULL),
-(42, 2, 30, 12, 'images.webp', 0, '2026-01-15 01:05:31', '2026-01-15 01:05:31', 'file', 'chat_files/gVYgyUTQofHDmkwSuGYLF04uqOjYdOgWZVJXZ4JI.webp', NULL),
-(43, 1, 32, 44, 'comments.txt', 0, '2026-01-15 01:06:53', '2026-01-15 01:06:53', 'file', 'chat_files/LpcPrCZrq91WfuvYqP2GFNNGURWOX4966E0wMg92', NULL),
-(44, 1, 32, 44, 'landing.png', 0, '2026-01-15 01:09:03', '2026-01-15 01:09:03', 'file', 'chat_files/CMrCsIGIgIVqbN9239LVlUnfEYGkd59mv2b7dstm.png', NULL),
-(45, 4, 12, NULL, 'data-analysis-skills-duties-responsibilities.webp', 0, '2026-01-15 01:09:22', '2026-01-15 01:09:22', 'file', 'chat_files/No502gajzUdes5TD8Xmz9s66FNqprsauXdtrwFqk.webp', NULL),
-(46, 1, 32, 50, 'menu.bmp', 0, '2026-01-15 01:10:30', '2026-01-15 01:10:30', 'file', 'chat_files/8aYq9b08eqkWlUmxlGTsxJk5ZbkZwu64cIpZPxQe.png', NULL),
-(47, 1, 32, 50, 'ss', 0, '2026-01-15 01:10:36', '2026-01-15 01:10:36', 'text', NULL, NULL);
+(37, 2, 30, NULL, 'java-programming-tutorial.jpg', 0, '2026-01-15 00:58:33', '2026-01-15 00:58:33', 'file', 'chat_files/3yZcalFyMo30kspMqr8t9Z33qChykyTLzIRQYIZi.jpg', NULL);
 
 -- --------------------------------------------------------
 
@@ -582,7 +620,20 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (49, '2025_11_14_140131_remove_service_name_from_appointments_table', 8),
 (50, '2026_01_15_074240_add_files_to_messages_table', 9),
 (51, '2026_01_15_075258_add_file_columns_to_messages_table', 10),
-(52, '2026_01_15_083328_add_file_columns_to_messages_table', 11);
+(52, '2026_01_15_083328_add_file_columns_to_messages_table', 11),
+(53, '2026_01_18_014024_create_dental_teeth_table', 12),
+(54, '2026_02_12_162318_create_dailylogs_add_store', 13),
+(55, '2026_02_25_131440_add_face_descriptor_to_users_table', 14),
+(56, '2026_04_10_000001_break_down_address_fields', 15),
+(57, '2026_04_30_120000_add_pda_fields_to_patient_records_table', 16),
+(58, '2026_04_30_130000_add_payment_method_to_sales_table', 17),
+(59, '2026_05_01_120000_create_store_schedule_overrides_table', 18),
+(60, '2026_05_01_120100_create_doctor_schedules_table', 18),
+(61, '2026_05_01_120200_create_parent_child_links_table', 19),
+(62, '2026_05_04_100000_add_verification_to_parent_child_links_table', 20),
+(63, '2026_07_02_000000_add_is_managed_to_users_table', 21),
+(64, '2026_07_10_000000_create_patient_medications_table', 22),
+(65, '2026_07_19_000001_add_appointment_type_to_appointments_table', 23);
 
 -- --------------------------------------------------------
 
@@ -617,7 +668,9 @@ CREATE TABLE `newusers` (
 --
 
 INSERT INTO `newusers` (`id`, `name`, `status`, `birth_date`, `user`, `email`, `contact_number`, `password`, `remember_token`, `created_at`, `updated_at`, `middlename`, `lastname`, `suffix`, `birthdate`, `birthplace`, `current_address`, `verification_id`, `account_type`) VALUES
-(17, 'Joshua Anderson', NULL, '2026-01-13', 'Masterparj', 'masterparj@gmail.com', '09454454744', '$2y$12$0wQZg9WCQDpr8brZOtCnsufPHAsThnDzV5YHzvHfkLyx9DypKuw86', NULL, '2026-01-13 02:22:36', '2026-01-13 02:22:36', 'Raymundo', 'Padilla', NULL, NULL, 'sta.maria gen', '9e callejon tinajeros malabon', 'verify_69661cda3b4bc.jpg', 'patient');
+(18, 'Charlotte', NULL, NULL, 'Boxie', 'boxerrobotlover@gmail.com', '09876543211', '$2y$12$4iQQnpHyVcLErace/Le0o.DJifbso8Bgj3W5wzY5hfDoUSnGFkWeG', NULL, '2026-02-13 09:32:22', '2026-02-13 09:32:22', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'patient'),
+(19, 'Jorey', NULL, NULL, 'jorey', 'Jorey282019@gmail.com', '09612709883', '$2y$12$hZVxuINpzOOqooKi73d67unqb6X6g72o2FimAscfMfItNsOFBfMn.', NULL, '2026-02-13 12:41:57', '2026-02-13 12:41:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'patient'),
+(20, 'Dhan', NULL, NULL, 'liam123', 'l38674900@gmail.com', '09949499451', '$2y$12$4qQe3Vyx7exQ3Fsoe.WDy.QsG/4NJnB88DyU5zS6kbywNcYtI3p1u', NULL, '2026-02-24 18:08:01', '2026-02-24 18:08:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'patient');
 
 -- --------------------------------------------------------
 
@@ -642,80 +695,146 @@ CREATE TABLE `notifications` (
 
 INSERT INTO `notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `data`, `read_at`, `created_at`, `updated_at`) VALUES
 ('002d3531-82e6-4b99-9ebf-2c4778fe05e3', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 50, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2025-11-24 16:24:33', '2025-11-24 16:24:03', '2025-11-24 16:24:33'),
+('02e285a5-bdbe-4ecd-b065-214a06d6219a', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 57, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on February 23, 2026 (6:15 PM - 6:30 PM)\",\"url\":null}', NULL, '2026-02-23 18:09:07', '2026-02-23 18:09:07'),
+('0362715c-3b1f-4ed7-92cb-2b26709340d1', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 77, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 26, 2026 (1:00 PM - 1:45 PM)\",\"url\":null}', '2026-02-25 16:22:07', '2026-02-25 16:13:29', '2026-02-25 16:22:07'),
 ('04f987a2-4314-46a0-a5af-09e1ea00aecb', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:00 AM - 10:30 AM)\",\"url\":null}', NULL, '2025-11-24 16:20:11', '2025-11-24 16:20:11'),
 ('06485a2a-2786-43ab-bf5a-5c0e45d12ae8', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 04:58:51', '2025-10-07 05:26:23'),
-('08233f66-53d8-4d83-8a8c-17a5cb9ba5df', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', NULL, '2026-01-14 18:19:46', '2026-01-14 18:19:46'),
+('08233f66-53d8-4d83-8a8c-17a5cb9ba5df', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 18:19:46', '2026-01-16 01:00:58'),
+('08ec17ae-bded-48e6-963a-26745aac3068', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 82, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on May 2, 2026 (9:00 AM - 10:00 AM)\",\"url\":null}', '2026-07-02 08:21:15', '2026-05-01 21:13:27', '2026-07-02 08:21:15'),
 ('098228bd-3a2d-4729-939d-6ee611737163', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-09-05 02:14:26', '2025-08-31 01:36:20', '2025-09-05 02:14:26'),
-('0b5bfd79-69c8-4805-b9dd-894ecfff5c56', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', NULL, '2026-01-14 18:18:59', '2026-01-14 18:18:59'),
+('0b5bfd79-69c8-4805-b9dd-894ecfff5c56', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 18:18:59', '2026-01-16 01:00:58'),
 ('0cd33978-edec-48bf-b689-1c533b186f7b', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 04:56:33', '2025-10-07 05:26:23'),
 ('0d12ec94-f882-4cd7-8309-588c6b50141f', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 22:45:18', '2025-10-07 22:44:36', '2025-10-07 22:45:18'),
-('0ef9a5d7-b4af-49cd-966f-9e69b061e5f6', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 22, 2026 (4:00 PM - 7:30 PM)\",\"url\":null}', NULL, '2026-01-14 19:05:43', '2026-01-14 19:05:43'),
+('0ef7a2ff-3c65-42bb-acf8-44d2bbd9a356', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 59, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 17, 2026 (1:00 PM - 2:30 PM)\",\"url\":null}', NULL, '2026-01-16 04:23:43', '2026-01-16 04:23:43'),
+('0ef9a5d7-b4af-49cd-966f-9e69b061e5f6', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 22, 2026 (4:00 PM - 7:30 PM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 19:05:43', '2026-01-16 01:00:58'),
 ('10180c6b-6e02-4330-8d82-8d7841d4a131', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 11, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 5, 2025 (9:10 AM - 9:25 AM)\",\"url\":null}', NULL, '2025-11-26 20:45:44', '2025-11-26 20:45:44'),
 ('12386d1f-8f6b-4a5b-833e-a7bf863997bc', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:30 AM)\",\"url\":null}', NULL, '2025-11-26 20:42:10', '2025-11-26 20:42:10'),
 ('17293ce7-23ea-4420-83af-148ce823af25', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 18, 2025 (7:00 AM - 7:45 AM)\",\"url\":null}', '2025-11-29 02:23:34', '2025-11-26 06:49:54', '2025-11-29 02:23:34'),
 ('17d955aa-8a84-4576-8fa8-ea50a3b57e72', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 13, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', NULL, '2026-01-11 23:36:05', '2026-01-11 23:36:05'),
+('194c30db-d544-4f19-acdc-60a624554ac1', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 82, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on May 2, 2026 (9:00 AM - 9:45 AM)\",\"url\":null}', '2026-07-02 08:21:15', '2026-05-01 22:06:41', '2026-07-02 08:21:15'),
+('1b37f983-c7fb-4599-be9c-cc36efa3e4ef', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on March 5, 2026 (9:00 AM - 9:15 AM)\",\"url\":null}', '2026-03-05 22:27:16', '2026-03-05 17:33:58', '2026-03-05 22:27:16'),
 ('1ceb9463-7a8f-468e-b9b4-5566af5ced8f', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 13, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-09-07 22:33:46', '2025-09-07 22:33:46'),
 ('1dca694d-4a82-4b21-b765-b635b3cd97fc', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 11, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 5, 2025 (9:10 AM - 9:25 AM)\",\"url\":null}', NULL, '2025-11-24 16:22:47', '2025-11-24 16:22:47'),
+('23ffb69a-ef3c-4b52-8f07-8a2bc0d131b2', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 64, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Lambakin Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2026-01-20 13:30:46', '2026-01-20 13:30:17', '2026-01-20 13:30:46'),
 ('2593b66f-a9f0-4306-b338-e2ef960139c1', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:30 AM)\",\"url\":null}', NULL, '2025-11-26 20:42:11', '2025-11-26 20:42:11'),
 ('2c0b8360-faef-41b2-84f1-f8c6e8bca7fc', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:30 AM)\",\"url\":null}', NULL, '2025-11-26 20:42:10', '2025-11-26 20:42:10'),
+('2ccc4c92-984a-48f0-8c50-804be8dd0b10', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 82, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on May 9, 2026 (9:00 AM - 9:15 AM)\",\"url\":null}', '2026-07-02 08:21:15', '2026-05-01 21:49:47', '2026-07-02 08:21:15'),
 ('2e1f0338-7f57-4d4c-859b-3b1162860c76', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2026-01-13 01:10:48', '2025-11-30 10:02:09', '2026-01-13 01:10:48'),
-('2f854ee6-b60c-4ff2-8f61-dc054b2c3b3e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 43, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 13, 2025 (9:00 AM - 9:30 AM)\",\"url\":null}', NULL, '2025-11-26 20:48:17', '2025-11-26 20:48:17'),
+('2f854ee6-b60c-4ff2-8f61-dc054b2c3b3e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 43, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 13, 2025 (9:00 AM - 9:30 AM)\",\"url\":null}', '2026-01-31 16:16:44', '2025-11-26 20:48:17', '2026-01-31 16:16:44'),
+('303e9b26-e5c2-44ae-b333-5b1767e3bbdf', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 78, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at San Jose Del Monte Santiago-Amancio Branch has been cancelled.\",\"url\":null}', NULL, '2026-02-26 14:55:11', '2026-02-26 14:55:11'),
+('3745a3df-8194-4b26-9601-84f9d5b1e87b', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 54, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 31, 2026 (10:00 AM - 10:15 AM)\",\"url\":null}', NULL, '2026-01-31 18:10:29', '2026-01-31 18:10:29'),
 ('3a44d9de-df1b-456e-aad5-c1d12845b095', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 50, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 27, 2025 (7:00 AM - 8:00 AM)\",\"url\":null}', '2025-11-26 20:30:08', '2025-11-24 16:29:29', '2025-11-26 20:30:08'),
+('3b7522ee-6532-4579-9313-0c6fa235206b', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 80, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on March 6, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', '2026-03-06 10:37:24', '2026-03-06 10:32:24', '2026-03-06 10:37:24'),
 ('439d5819-fa0d-433c-9589-183976b4dafe', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 27, 2025 (8:00 AM - 9:15 AM)\",\"url\":null}', '2026-01-13 01:10:48', '2025-11-26 07:06:40', '2026-01-13 01:10:48'),
-('47c3955f-6e3d-40e1-a8e6-78a333e920a8', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at San Jose Del Monte Santiago-Amancio Branch has been cancelled.\",\"url\":null}', NULL, '2026-01-14 19:04:19', '2026-01-14 19:04:19'),
-('4a6695ae-821c-4f85-a70b-923f6f06fc6e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 23, 2026 (4:00 PM - 6:30 PM)\",\"url\":null}', NULL, '2026-01-14 18:51:28', '2026-01-14 18:51:28'),
+('443ea319-6ccb-4af2-bb5e-7035830e646d', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 78, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 26, 2026 (1:45 PM - 2:00 PM)\",\"url\":null}', NULL, '2026-02-26 14:57:32', '2026-02-26 14:57:32'),
+('47c3955f-6e3d-40e1-a8e6-78a333e920a8', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at San Jose Del Monte Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 19:04:19', '2026-01-16 01:00:58'),
+('4a6695ae-821c-4f85-a70b-923f6f06fc6e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 23, 2026 (4:00 PM - 6:30 PM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 18:51:28', '2026-01-16 01:00:58'),
+('4ccb00ff-29c2-4ded-b671-108d1538a965', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 57, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (9:00 AM - 10:15 AM)\",\"url\":null}', '2026-01-20 03:32:00', '2026-01-16 02:40:47', '2026-01-20 03:32:00'),
+('4e3345dc-47c8-44f4-be2b-936f727da3a7', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 57, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2026-02-23 17:43:55', '2026-02-23 17:43:37', '2026-02-23 17:43:55'),
+('54f16692-c45f-4a5a-abc9-c01c8e2e3f76', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 13, 2026 (12:46 PM - 1:16 PM)\",\"url\":null}', '2026-02-21 13:05:59', '2026-02-13 13:04:52', '2026-02-21 13:05:59'),
 ('550addb7-4972-4bdf-99e2-cb3b2fec5575', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 05:00:30', '2025-10-07 05:26:23'),
 ('5579640f-9133-4b56-97c5-e7789ef0ffda', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 27, 2025 (8:00 AM - 9:15 AM)\",\"url\":null}', '2026-01-13 01:10:48', '2025-11-24 16:57:59', '2026-01-13 01:10:48'),
+('55f8c5b1-6a35-4f0c-9995-bb24f9e5a225', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 80, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on March 6, 2026 (9:00 AM - 9:45 AM)\",\"url\":null}', '2026-03-06 10:37:24', '2026-03-06 10:36:46', '2026-03-06 10:37:24'),
+('55fe8835-7139-4aa8-87de-ac47cdfd9c0e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 80, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on March 6, 2026 (2:15 PM - 3:00 PM)\",\"url\":null}', '2026-03-06 10:59:30', '2026-03-06 10:57:16', '2026-03-06 10:59:30'),
 ('59ed5555-b5dd-44a5-8901-edad0ed63bc9', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 11, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-10-07 23:36:44', '2025-10-07 23:36:44'),
 ('5c699ba8-df22-4987-bbab-d206c4c7f12c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 50, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 27, 2025 (8:00 AM - 9:00 AM)\",\"url\":null}', NULL, '2026-01-11 20:49:07', '2026-01-11 20:49:07'),
-('66584c95-fe70-4ee3-9612-983aaf72d1f2', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 15, 2026 (2:00 PM - 3:30 PM)\",\"url\":null}', NULL, '2026-01-14 22:34:05', '2026-01-14 22:34:05'),
+('6105ec9b-44c2-4934-8177-fe7c9db9d0b8', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 43, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 7, 2026 (10:00 AM - 10:30 AM)\",\"url\":null}', NULL, '2026-02-13 09:12:17', '2026-02-13 09:12:17'),
+('66584c95-fe70-4ee3-9612-983aaf72d1f2', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 15, 2026 (2:00 PM - 3:30 PM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 22:34:05', '2026-01-16 01:00:58'),
+('67e2aa25-1a05-4c17-b7ec-acd4ed15a639', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 65, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at San Jose Del Monte Santiago-Amancio Branch on January 27, 2026 (10:00 PM - 11:00 PM)\",\"url\":null}', NULL, '2026-01-18 14:00:15', '2026-01-18 14:00:15'),
+('6803f2ab-c0a4-4ff5-a414-b1adca5085fb', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 13, 2026 (3:16 PM - 3:46 PM)\",\"url\":null}', '2026-02-21 13:05:59', '2026-02-13 13:40:49', '2026-02-21 13:05:59'),
 ('6812ecf5-d7da-45cc-90c6-282eaa8c657f', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to October 23, 2025 (9:00 AM - 9:15 AM)\",\"url\":null}', '2025-10-21 02:03:28', '2025-10-21 02:03:27', '2025-10-21 02:03:28'),
 ('6972c281-2a41-4d85-9e44-b5c1b828bf6c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 05:25:12', '2025-10-07 05:26:23'),
 ('69c1157d-5f91-4756-8e9e-3e7a3ad81a40', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 13, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-09-07 22:33:41', '2025-09-07 22:33:41'),
 ('6a9dff2f-bb2f-4084-bac5-fd46fc1f000d', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 13, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-09-07 22:33:54', '2025-09-07 22:33:54'),
-('6b549db8-949c-44dd-aa2c-ce205a6d83d5', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to January 15, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', NULL, '2026-01-13 02:25:00', '2026-01-13 02:25:00'),
+('6b549db8-949c-44dd-aa2c-ce205a6d83d5', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to January 15, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-13 02:25:00', '2026-01-16 01:00:58'),
 ('6cffb6e6-141f-48ed-babc-8c873e5bab9a', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 50, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 27, 2025 (7:00 AM - 8:00 AM)\",\"url\":null}', '2025-11-26 20:30:08', '2025-11-24 16:29:31', '2025-11-26 20:30:08'),
+('6f23d579-75e9-46d4-9419-1ed334a4bf05', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 42, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at San Jose Del Monte Santiago-Amancio Branch on January 24, 2026 (10:00 PM - 10:30 PM)\",\"url\":null}', NULL, '2026-02-25 14:59:09', '2026-02-25 14:59:09'),
+('7243fac0-9d8c-4e66-ba45-5bd6c7ccaf54', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 82, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on May 1, 2026 (9:00 AM - 9:15 AM)\",\"url\":null}', '2026-07-02 08:21:15', '2026-05-01 10:04:09', '2026-07-02 08:21:15'),
 ('72d9efb6-e1bf-4506-a41a-03eb9a8c1923', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 27, 2025 (8:00 AM - 9:15 AM)\",\"url\":null}', '2026-01-13 01:10:48', '2025-11-26 07:52:46', '2026-01-13 01:10:48'),
+('73b4a7b0-5ec7-4a6e-94ed-28941b12d0e4', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 65, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 30, 2026 (11:00 AM - 11:45 AM)\",\"url\":null}', NULL, '2026-02-05 06:47:59', '2026-02-05 06:47:59'),
 ('769aa53e-6f04-4162-8e6f-f75e1cb7b283', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 13, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-09-07 22:33:50', '2025-09-07 22:33:50'),
 ('7741a924-b510-421f-b5ea-41ae9d984b75', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to October 18, 2025 (10:30 AM - 10:45 AM)\",\"url\":null}', '2025-10-31 17:37:57', '2025-10-19 00:39:55', '2025-10-31 17:37:57'),
+('77554393-6eca-4a34-8165-9669d10f5397', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 60, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 17, 2026 (12:00 PM - 12:45 PM)\",\"url\":null}', NULL, '2026-01-16 05:16:58', '2026-01-16 05:16:58'),
 ('7f70f865-a369-474e-872b-81741ed95147', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (8:30 AM - 9:00 AM)\",\"url\":null}', NULL, '2025-11-24 16:18:50', '2025-11-24 16:18:50'),
+('8053b06f-78a9-452a-9922-192a72eec0a4', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 72, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 24, 2026 (5:00 PM - 5:15 PM)\",\"url\":null}', NULL, '2026-02-24 18:16:53', '2026-02-24 18:16:53'),
+('820b3d50-097e-439f-8fc1-9a285b4f40b6', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 79, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on March 2, 2026 (3:45 PM - 4:15 PM)\",\"url\":null}', NULL, '2026-03-01 21:17:59', '2026-03-01 21:17:59'),
 ('849feee9-f3f7-4d6b-933b-eda5aefd63e9', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:00 AM)\",\"url\":null}', NULL, '2025-11-24 16:19:16', '2025-11-24 16:19:16'),
 ('8641441f-33c4-48a7-a6a5-899f384b9510', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-10-07 21:46:26', '2025-10-07 21:46:26'),
+('887842a9-48c8-4f10-bd85-07e503c33ee4', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 71, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 19, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', NULL, '2026-02-13 12:45:31', '2026-02-13 12:45:31'),
 ('89a509f1-0266-4eb5-a303-1dd5bb6dc68e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-09-14 21:02:06', '2025-09-07 22:41:37', '2025-09-14 21:02:06'),
+('8d00448b-50fa-4173-af1e-4c9a3a40aac3', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 15, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 21, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', NULL, '2026-01-31 18:11:36', '2026-01-31 18:11:36'),
 ('9058f8e6-857e-4110-ad35-b5de795eaf36', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2026-01-13 01:10:48', '2025-11-30 10:52:39', '2026-01-13 01:10:48'),
 ('9061a9ea-4114-487c-b504-6ce908f92a40', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on October 18, 2025 (10:30 AM - 10:45 AM)\",\"url\":null}', '2025-10-31 17:37:57', '2025-10-19 00:39:55', '2025-10-31 17:37:57'),
 ('91a5edac-3b8b-4e3c-b63e-ac8548e521f0', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 37, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Santa Maria Santiago-Amancio Branch on October 21, 2025 (9:30 PM - 10:15 PM)\",\"url\":null}', '2025-10-17 08:18:41', '2025-10-17 08:16:47', '2025-10-17 08:18:41'),
 ('922d75c8-5c85-4ed1-81a1-e9b6cd4bd108', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-10-07 21:47:15', '2025-10-07 21:47:15'),
 ('94049e0b-9d19-4710-be82-8ea430008d9c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-10-07 21:46:29', '2025-10-07 21:46:29'),
 ('9507c4c8-cd1b-4a30-adae-f4683720c7e3', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 35, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to November 27, 2025 (8:00 AM - 9:15 AM)\",\"url\":null}', '2026-01-13 01:10:48', '2025-11-26 07:06:37', '2026-01-13 01:10:48'),
+('98900487-aacd-4b70-96b6-a0b31c380ea5', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 66, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on January 26, 2026 (8:00 PM - 8:15 PM)\",\"url\":null}', NULL, '2026-02-01 07:33:46', '2026-02-01 07:33:46'),
 ('9ebfc04e-adc5-4286-a15a-57df0898dd99', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 44, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 18, 2025 (8:45 AM - 10:15 AM)\",\"url\":null}', NULL, '2026-01-11 20:40:13', '2026-01-11 20:40:13'),
 ('a0a280e8-1720-4a8c-ab35-59f69e639185', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 04:56:57', '2025-10-07 05:26:23'),
 ('a18248d6-a468-4a08-bf34-11a94a74febc', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:00 AM)\",\"url\":null}', NULL, '2025-11-24 16:19:19', '2025-11-24 16:19:19'),
 ('a82d1137-702a-4d85-883a-f83a94f1a100', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 11, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-09-01 22:49:49', '2025-08-31 00:49:13', '2025-09-01 22:49:49'),
-('a9b651c9-2fed-442a-a2e4-029441995f82', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to January 15, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', NULL, '2026-01-13 02:24:57', '2026-01-13 02:24:57'),
-('aa642806-68fe-4f05-97cd-72579b72da34', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 43, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 13, 2025 (9:00 AM - 9:30 AM)\",\"url\":null}', NULL, '2025-11-11 07:04:11', '2025-11-11 07:04:11'),
+('a9b651c9-2fed-442a-a2e4-029441995f82', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to January 15, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-13 02:24:57', '2026-01-16 01:00:58'),
+('aa642806-68fe-4f05-97cd-72579b72da34', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 43, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 13, 2025 (9:00 AM - 9:30 AM)\",\"url\":null}', '2026-01-31 16:16:44', '2025-11-11 07:04:11', '2026-01-31 16:16:44'),
 ('ae268bf0-4f54-4d58-8404-db3aa61aa2b3', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:30 AM)\",\"url\":null}', NULL, '2025-11-26 07:46:16', '2025-11-26 07:46:16'),
-('af60ab77-7e4e-479e-ad57-46d3b7743a4d', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', NULL, '2026-01-11 01:12:39', '2026-01-11 01:12:39'),
+('af60ab77-7e4e-479e-ad57-46d3b7743a4d', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-11 01:12:39', '2026-01-16 01:00:58'),
 ('af9761db-170a-4885-ad38-1497ed21d767', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 51, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2025-11-26 08:05:38', '2025-11-26 08:05:13', '2025-11-26 08:05:38'),
 ('b14f73b0-4762-4b25-834a-63ed3adf196d', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 04:56:33', '2025-10-07 05:26:23'),
+('b1b720f5-6011-4936-998f-8b960fdb4438', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on March 4, 2026 (9:00 AM - 10:15 AM)\",\"url\":null}', '2026-03-05 22:27:16', '2026-03-04 16:44:36', '2026-03-05 22:27:16'),
+('b4d5be5c-4083-4279-b5e4-c45dbf43daef', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 82, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on May 4, 2026 (9:00 AM - 10:00 AM)\",\"url\":null}', '2026-07-02 08:21:15', '2026-05-01 22:09:52', '2026-07-02 08:21:15'),
+('b5c86f3e-a571-4e33-acbf-b285f69554e5', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 56, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Santa Maria Santiago-Amancio Branch on January 16, 2026 (9:00 PM - 10:00 PM)\",\"url\":null}', '2026-01-16 02:47:38', '2026-01-16 02:15:36', '2026-01-16 02:47:38'),
+('b7ea230f-ec61-4f35-adc1-c8714a8f669c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 57, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on February 23, 2026 (6:00 PM - 6:15 PM)\",\"url\":null}', '2026-02-23 17:54:00', '2026-02-23 17:47:46', '2026-02-23 17:54:00'),
+('b8e89f22-4a95-45bb-81c4-09635cbce6d7', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 57, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 26, 2026 (1:00 PM - 2:30 PM)\",\"url\":null}', NULL, '2026-02-25 16:14:18', '2026-02-25 16:14:18'),
 ('bafca1cb-46ae-482d-a2b8-3c3106c81284', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 11, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-09-02 22:53:05', '2025-09-02 10:15:35', '2025-09-02 22:53:05'),
 ('bb5c99a6-5791-40c8-97f6-3c6db1534d1c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to October 23, 2025 (9:00 AM - 9:15 AM)\",\"url\":null}', '2025-11-11 06:20:58', '2025-10-31 17:45:02', '2025-11-11 06:20:58'),
+('c034094e-f828-40bc-b51e-b8dc52dd17be', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 65, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at San Jose Del Monte Santiago-Amancio Branch has been cancelled.\",\"url\":null}', NULL, '2026-01-18 13:59:23', '2026-01-18 13:59:23'),
 ('c0f8c690-e477-446c-a591-b5d3dd75da42', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on October 23, 2025 (9:00 AM - 9:15 AM)\",\"url\":null}', '2025-10-21 02:03:28', '2025-10-21 02:03:24', '2025-10-21 02:03:28'),
-('c1d9371c-c33c-4447-b938-37eeba82942e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to January 15, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', NULL, '2026-01-13 02:25:17', '2026-01-13 02:25:17'),
+('c107a423-0c9d-4292-b3f3-20d59f0b20c7', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 70, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 13, 2026 (10:31 AM - 10:46 AM)\",\"url\":null}', NULL, '2026-02-13 09:35:17', '2026-02-13 09:35:17'),
+('c1d9371c-c33c-4447-b938-37eeba82942e', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to January 15, 2026 (11:00 AM - 11:30 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-13 02:25:17', '2026-01-16 01:00:58'),
 ('c6b27e7b-b4a5-4781-b897-097bd92bb6dd', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-10-07 06:03:52', '2025-10-07 06:03:52'),
 ('cd80d1ae-a543-45e8-a7d1-b09bae49814b', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 05:26:23', '2025-10-07 05:25:21', '2025-10-07 05:26:23'),
 ('d14c5581-f576-4ee0-a4f3-5c860184a7e8', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 44, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on November 17, 2025 (6:00 AM - 6:45 AM)\",\"url\":null}', NULL, '2025-11-14 06:06:18', '2025-11-14 06:06:18'),
 ('d17eb262-6ec6-49ba-97d1-9e2b4107aca9', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment at Prenza 1 Santiago-Amancio Branch has been cancelled.\",\"url\":null}', '2025-08-28 22:18:38', '2025-08-28 22:18:24', '2025-08-28 22:18:38'),
 ('dddbbf75-c3ef-45c0-86a8-b2222e03ac4b', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (10:30 AM - 11:30 AM)\",\"url\":null}', NULL, '2025-11-26 20:42:10', '2025-11-26 20:42:10'),
+('e0fac739-f275-47a3-9aee-abf69dde3b4a', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 79, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Lambakin Santiago-Amancio Branch on March 2, 2026 (3:00 PM - 3:45 PM)\",\"url\":null}', NULL, '2026-03-01 21:13:11', '2026-03-01 21:13:11'),
+('e41bee49-ed13-4464-90f8-5617000c9341', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 81, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on March 9, 2026 (9:00 AM - 9:15 AM)\",\"url\":null}', '2026-03-09 10:16:17', '2026-03-09 10:15:18', '2026-03-09 10:16:17'),
 ('e45d8a10-68d8-4c79-8cc7-dab2fb29974c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 11, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', NULL, '2025-10-07 23:36:43', '2025-10-07 23:36:43'),
 ('e78c7435-d6ee-4085-9236-21fdc6c69e95', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 21:49:18', '2025-10-07 06:46:45', '2025-10-07 21:49:18'),
+('e906ca0b-78b2-412d-bcf7-cb8a229130be', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 82, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on May 2, 2026 (9:00 AM - 9:45 AM)\",\"url\":null}', '2026-07-02 08:21:15', '2026-05-01 21:29:12', '2026-07-02 08:21:15'),
 ('ec3d87a4-688e-4f9a-a624-9dd9d03bba49', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 37, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Santa Maria Santiago-Amancio Branch to October 21, 2025 (9:30 PM - 10:15 PM)\",\"url\":null}', NULL, '2026-01-13 02:47:23', '2026-01-13 02:47:23'),
 ('f04d8897-35b3-4d0d-8a37-ffd19dfa0259', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 37, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Santa Maria Santiago-Amancio Branch to October 21, 2025 (9:30 PM - 10:15 PM)\",\"url\":null}', NULL, '2026-01-13 02:47:24', '2026-01-13 02:47:24'),
-('f1c46e7a-1c0b-4863-baf2-f16ece18031c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 15, 2026 (10:00 AM - 10:30 AM)\",\"url\":null}', NULL, '2026-01-11 20:52:07', '2026-01-11 20:52:07'),
+('f1c46e7a-1c0b-4863-baf2-f16ece18031c', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 15, 2026 (10:00 AM - 10:30 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-11 20:52:07', '2026-01-16 01:00:58'),
 ('f5d1b686-1790-492d-8d30-f954a3dd2746', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-10-07 21:49:18', '2025-10-07 21:47:57', '2025-10-07 21:49:18'),
+('f68c3515-3ffa-4889-80e4-78b2cbeaf5b0', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 38, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on February 5, 2026 (10:00 AM - 10:30 AM)\",\"url\":null}', NULL, '2026-02-25 16:21:11', '2026-02-25 16:21:11'),
 ('f791561b-bde8-4500-90b7-687f35868705', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 14, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved and updated at Prenza 1 Santiago-Amancio Branch\",\"url\":null}', '2025-09-10 05:06:55', '2025-09-10 05:01:06', '2025-09-10 05:06:55'),
-('feb2bf22-740c-47e1-8a58-19de3295fc56', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', NULL, '2026-01-14 18:17:13', '2026-01-14 18:17:13'),
+('fe3e6a81-3251-4ebf-b436-32b6de47fa35', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 60, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 19, 2026 (12:00 PM - 12:30 PM)\",\"url\":null}', NULL, '2026-01-31 18:11:13', '2026-01-31 18:11:13'),
+('feb2bf22-740c-47e1-8a58-19de3295fc56', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 12, '{\"title\":\"Appointment Approved\",\"message\":\"Your appointment has been approved at Prenza 1 Santiago-Amancio Branch on January 16, 2026 (11:00 AM - 11:15 AM)\",\"url\":null}', '2026-01-16 01:00:58', '2026-01-14 18:17:13', '2026-01-16 01:00:58'),
 ('ff032b7a-2646-4a52-8eda-bd61a3852c0f', 'App\\Notifications\\AppointmentNotification', 'App\\Models\\User', 8, '{\"title\":\"Appointment Rescheduled\",\"message\":\"Your appointment time has been changed at Prenza 1 Santiago-Amancio Branch to September 3, 2025 (8:30 AM - 9:00 AM)\",\"url\":null}', NULL, '2025-11-24 16:18:47', '2025-11-24 16:18:47');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `parent_child_links`
+--
+
+CREATE TABLE `parent_child_links` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `parent_user_id` bigint(20) UNSIGNED NOT NULL,
+  `child_user_id` bigint(20) UNSIGNED NOT NULL,
+  `relationship` varchar(255) DEFAULT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'pending',
+  `verification_token` varchar(64) DEFAULT NULL,
+  `token_expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `parent_child_links`
+--
+
+INSERT INTO `parent_child_links` (`id`, `parent_user_id`, `child_user_id`, `relationship`, `status`, `verification_token`, `token_expires_at`, `created_at`, `updated_at`) VALUES
+(5, 82, 85, 'Grandparent', 'active', NULL, NULL, '2026-07-02 07:52:34', '2026-07-02 07:52:34');
 
 -- --------------------------------------------------------
 
@@ -732,6 +851,33 @@ CREATE TABLE `password_reset_tokens` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `patient_medications`
+--
+
+CREATE TABLE `patient_medications` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `appointment_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `medicine_name` varchar(255) NOT NULL,
+  `dosage` varchar(255) DEFAULT NULL,
+  `frequency` varchar(255) DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `patient_medications`
+--
+
+INSERT INTO `patient_medications` (`id`, `user_id`, `appointment_id`, `medicine_name`, `dosage`, `frequency`, `start_date`, `end_date`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 82, 101, 'Mefenamic Acid (MG)', NULL, '1x daily', '2026-07-10', '2026-07-24', '10, morning, 2 weeks', '2026-07-10 01:56:46', '2026-07-10 01:56:46');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `patient_records`
 --
 
@@ -740,13 +886,21 @@ CREATE TABLE `patient_records` (
   `last_name` varchar(255) DEFAULT NULL,
   `first_name` varchar(255) DEFAULT NULL,
   `middle_name` varchar(255) DEFAULT NULL,
+  `nickname` varchar(255) DEFAULT NULL,
   `birthdate` date DEFAULT NULL,
   `sex` varchar(1) DEFAULT NULL,
   `nationality` varchar(255) DEFAULT NULL,
   `religion` varchar(255) DEFAULT NULL,
   `occupation` varchar(255) DEFAULT NULL,
   `home_address` varchar(255) DEFAULT NULL,
+  `home_no` varchar(255) DEFAULT NULL,
   `office_address` varchar(255) DEFAULT NULL,
+  `office_no` varchar(255) DEFAULT NULL,
+  `fax_no` varchar(255) DEFAULT NULL,
+  `dental_insurance` varchar(255) DEFAULT NULL,
+  `effective_date` date DEFAULT NULL,
+  `parent_guardian_name` varchar(255) DEFAULT NULL,
+  `parent_guardian_occupation` varchar(255) DEFAULT NULL,
   `contact_number` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `referred_by` varchar(255) DEFAULT NULL,
@@ -762,11 +916,19 @@ CREATE TABLE `patient_records` (
   `hospitalized` tinyint(1) NOT NULL DEFAULT 0,
   `taking_medication` tinyint(1) NOT NULL DEFAULT 0,
   `allergic` tinyint(1) NOT NULL DEFAULT 0,
+  `allergic_lidocaine` tinyint(1) NOT NULL DEFAULT 0,
+  `allergic_penicillin` tinyint(1) NOT NULL DEFAULT 0,
+  `allergic_sulfa` tinyint(1) NOT NULL DEFAULT 0,
+  `allergic_aspirin` tinyint(1) NOT NULL DEFAULT 0,
+  `allergic_latex` tinyint(1) NOT NULL DEFAULT 0,
+  `allergic_others` varchar(255) DEFAULT NULL,
   `bleeding_time` tinyint(1) NOT NULL DEFAULT 0,
   `pregnant` tinyint(1) NOT NULL DEFAULT 0,
   `nursing` tinyint(1) NOT NULL DEFAULT 0,
   `birth_control_pills` tinyint(1) NOT NULL DEFAULT 0,
   `blood_type` varchar(255) DEFAULT NULL,
+  `blood_pressure` varchar(255) DEFAULT NULL,
+  `profile_completed` tinyint(1) NOT NULL DEFAULT 0,
   `health_conditions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`health_conditions`)),
   `medical_conditions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`medical_conditions`)),
   `created_at` timestamp NULL DEFAULT NULL,
@@ -778,27 +940,14 @@ CREATE TABLE `patient_records` (
 -- Dumping data for table `patient_records`
 --
 
-INSERT INTO `patient_records` (`id`, `last_name`, `first_name`, `middle_name`, `birthdate`, `sex`, `nationality`, `religion`, `occupation`, `home_address`, `office_address`, `contact_number`, `email`, `referred_by`, `reason_for_consultation`, `previous_dentist`, `last_dental_visit`, `physician_name`, `physician_specialty`, `physician_contact`, `in_good_health`, `under_treatment`, `had_illness_operation`, `hospitalized`, `taking_medication`, `allergic`, `bleeding_time`, `pregnant`, `nursing`, `birth_control_pills`, `blood_type`, `health_conditions`, `medical_conditions`, `created_at`, `updated_at`, `user_id`) VALUES
-(1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-08-31 01:36:36', '2025-09-05 05:32:34', 12),
-(2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-09-02 09:56:48', '2025-09-02 09:56:48', 11),
-(3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-09-02 09:58:05', '2025-09-02 09:58:05', 6),
-(4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-09-07 22:16:18', '2025-09-07 22:16:18', 13),
-(5, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-09-07 22:44:41', '2025-09-07 22:44:41', 8),
-(6, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-09-10 05:00:40', '2025-09-10 05:00:40', 14),
-(7, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-07 22:21:01', '2025-10-07 22:21:01', 15),
-(8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-07 23:53:44', '2025-10-07 23:53:44', 18),
-(10, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-08 05:14:54', '2025-10-08 05:14:54', 19),
-(11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-15 20:57:43', '2025-10-15 20:57:43', 35),
-(12, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-15 22:42:53', '2025-10-15 22:42:53', 36),
-(13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-17 08:16:51', '2025-10-17 08:16:51', 37),
-(14, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-10-19 00:34:52', '2025-10-19 00:34:52', 32),
-(17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-11-12 05:38:13', '2025-11-12 05:38:13', 44),
-(21, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-11-23 01:44:36', '2025-11-23 01:44:36', 42),
-(22, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-11-24 07:56:23', '2025-11-24 07:56:23', 38),
-(23, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-11-24 16:25:18', '2025-11-24 16:25:18', 50),
-(24, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-11-26 07:06:45', '2025-11-26 07:06:45', 43),
-(25, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2025-12-02 23:13:07', '2025-12-02 23:13:07', 41),
-(26, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, '2026-01-14 22:30:38', '2026-01-14 22:30:38', 45);
+INSERT INTO `patient_records` (`id`, `last_name`, `first_name`, `middle_name`, `nickname`, `birthdate`, `sex`, `nationality`, `religion`, `occupation`, `home_address`, `home_no`, `office_address`, `office_no`, `fax_no`, `dental_insurance`, `effective_date`, `parent_guardian_name`, `parent_guardian_occupation`, `contact_number`, `email`, `referred_by`, `reason_for_consultation`, `previous_dentist`, `last_dental_visit`, `physician_name`, `physician_specialty`, `physician_contact`, `in_good_health`, `under_treatment`, `had_illness_operation`, `hospitalized`, `taking_medication`, `allergic`, `allergic_lidocaine`, `allergic_penicillin`, `allergic_sulfa`, `allergic_aspirin`, `allergic_latex`, `allergic_others`, `bleeding_time`, `pregnant`, `nursing`, `birth_control_pills`, `blood_type`, `blood_pressure`, `profile_completed`, `health_conditions`, `medical_conditions`, `created_at`, `updated_at`, `user_id`) VALUES
+(3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, NULL, '2025-09-02 09:58:05', '2025-09-02 09:58:05', 6),
+(5, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, NULL, '2025-09-07 22:44:41', '2025-09-07 22:44:41', 8),
+(14, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, NULL, '2025-10-19 00:34:52', '2025-10-19 00:34:52', 32),
+(45, 'pedro', 'juan', 'san', NULL, '2000-04-10', NULL, NULL, NULL, NULL, 'Apartment, 9999, tibagan, sta.rosa 2, Marilao, Bulacan', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '09454454744', 'andersonandy046@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 1, NULL, NULL, '2026-05-01 00:18:38', '2026-05-01 00:26:11', 82),
+(46, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, NULL, '2026-05-01 20:43:38', '2026-05-01 20:43:38', 26),
+(47, 'pedro', 'juan', 'san', NULL, '2000-04-10', NULL, NULL, NULL, NULL, 'Apartment, 9999, tibagan, sta.rosa 2, Marilao, Bulacan', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '09454454744', 'padillajoshuaanderson.pdm@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 1, NULL, NULL, '2026-05-04 01:51:00', '2026-05-04 01:51:12', 84),
+(48, 'marcos', 'bong bong', NULL, NULL, '2026-07-02', NULL, NULL, NULL, NULL, 'Apartment, 9999, tibagan, sta.rosa 2, Marilao, Bulacan', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '09454454744', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, 1, NULL, NULL, '2026-07-02 07:53:01', '2026-07-02 07:53:24', 85);
 
 -- --------------------------------------------------------
 
@@ -812,6 +961,9 @@ CREATE TABLE `sales` (
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
   `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `amount_given` decimal(10,2) DEFAULT NULL,
+  `change_amount` decimal(10,2) DEFAULT NULL,
+  `payment_method` varchar(30) DEFAULT NULL,
   `status` enum('pending','completed','void') NOT NULL DEFAULT 'pending',
   `remarks` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -822,18 +974,8 @@ CREATE TABLE `sales` (
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `store_id`, `user_id`, `patient_id`, `total_amount`, `status`, `remarks`, `created_at`, `updated_at`) VALUES
-(1, 2, 1, NULL, 40.00, 'completed', NULL, '2025-09-12 22:25:31', '2025-09-12 22:25:31'),
-(2, 2, 1, NULL, 25.00, 'completed', NULL, '2025-09-12 22:25:42', '2025-09-12 22:25:42'),
-(3, 2, 7, 11, 49.00, 'completed', NULL, '2025-09-15 05:11:54', '2025-09-15 05:11:54'),
-(4, 2, 7, NULL, 21.00, 'completed', NULL, '2025-09-17 02:27:25', '2025-09-17 02:27:25'),
-(5, 2, 7, NULL, 10.00, 'completed', NULL, '2025-09-17 02:27:54', '2025-09-17 02:27:54'),
-(6, 2, 9, 11, 5.00, 'completed', NULL, '2025-10-07 21:53:31', '2025-10-07 21:53:31'),
-(7, 1, 3, NULL, 20.00, 'completed', NULL, '2025-10-07 23:25:30', '2025-10-07 23:25:30'),
-(8, 2, 9, NULL, 5.00, 'completed', NULL, '2025-10-07 23:31:51', '2025-10-07 23:31:51'),
-(9, 1, 3, NULL, 50.00, 'completed', NULL, '2025-10-07 23:56:07', '2025-10-07 23:56:07'),
-(10, 2, 33, NULL, 14.00, 'completed', NULL, '2025-11-24 07:59:40', '2025-11-24 07:59:40'),
-(11, 1, 26, 13, 80.00, 'completed', NULL, '2026-01-11 23:37:46', '2026-01-11 23:37:46');
+INSERT INTO `sales` (`id`, `store_id`, `user_id`, `patient_id`, `total_amount`, `amount_given`, `change_amount`, `payment_method`, `status`, `remarks`, `created_at`, `updated_at`) VALUES
+(21, 1, 26, 82, 85.00, 85.00, 0.00, 'cash', 'completed', NULL, '2026-05-01 22:07:10', '2026-05-01 22:07:10');
 
 -- --------------------------------------------------------
 
@@ -858,17 +1000,8 @@ CREATE TABLE `sale_items` (
 --
 
 INSERT INTO `sale_items` (`id`, `sale_id`, `medicine_id`, `medicine_batch_id`, `quantity`, `price`, `subtotal`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, 8, 5.00, 40.00, '2025-09-12 22:25:31', '2025-09-12 22:25:31'),
-(2, 2, 1, 1, 5, 5.00, 25.00, '2025-09-12 22:25:42', '2025-09-12 22:25:42'),
-(3, 3, 2, 2, 7, 7.00, 49.00, '2025-09-15 05:11:54', '2025-09-15 05:11:54'),
-(4, 4, 2, 2, 3, 7.00, 21.00, '2025-09-17 02:27:25', '2025-09-17 02:27:25'),
-(5, 5, 1, 1, 2, 5.00, 10.00, '2025-09-17 02:27:54', '2025-09-17 02:27:54'),
-(6, 6, 1, 1, 1, 5.00, 5.00, '2025-10-07 21:53:31', '2025-10-07 21:53:31'),
-(7, 7, 5, 5, 2, 10.00, 20.00, '2025-10-07 23:25:30', '2025-10-07 23:25:30'),
-(8, 8, 1, 1, 1, 5.00, 5.00, '2025-10-07 23:31:51', '2025-10-07 23:31:51'),
-(9, 9, 5, 5, 5, 10.00, 50.00, '2025-10-07 23:56:07', '2025-10-07 23:56:07'),
-(10, 10, 2, 2, 2, 7.00, 14.00, '2025-11-24 07:59:40', '2025-11-24 07:59:40'),
-(11, 11, 5, 5, 8, 10.00, 80.00, '2026-01-11 23:37:46', '2026-01-11 23:37:46');
+(27, 21, 1, 8, 10, 5.00, 50.00, '2026-05-01 22:07:10', '2026-05-01 22:07:10'),
+(28, 21, 2, 9, 5, 7.00, 35.00, '2026-05-01 22:07:10', '2026-05-01 22:07:10');
 
 -- --------------------------------------------------------
 
@@ -923,8 +1056,9 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('j4Glt3P3UnGgIAGA0wLu6wwN8NHygGLKFKC2vjYi', 12, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiVndma2xSRVFPNmh1aFFmYlBYUFNyZUlUbTA5UFlXUDViWnhXMThDQSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozNDoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2FwcG9pbnRtZW50cyI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQwOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvcGF0aWVudC9tZXNzYWdlcy80Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTI7fQ==', 1768468515),
-('JBFjPG0wHtR9G3q0EKLgRCluwuwPFiov0calvl1O', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiYTBuMGE2czJHdkJpd2pldHdIVVBoQk9PNVNleXZsaHkzd0ZzUHdjYyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MjE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMCI7fXM6MTY6ImFjdGl2ZV9icmFuY2hfaWQiO3M6MToiMSI7fQ==', 1768468531);
+('hdlF9uyX2rPeD81RxDFo1gffNPAJQYNNCcd4ftMP', 26, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiaE1zWE1USEx3RE43QURZVkFwckdldGpCeGx6bURCU1doRm5ubTV0UCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NTE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hcHBvaW50bWVudHMvMTAxL3ZpZXc/dGFiPXBvcyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6MTY6ImFjdGl2ZV9icmFuY2hfaWQiO3M6MToiMSI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MjY7czoxODoicG9zX2FwcG9pbnRtZW50X2lkIjtzOjM6IjEwMSI7fQ==', 1783651439),
+('tCsnvKXjaALXXSSrKtXT1jkQPkeHHmwR7eYBujcX', 82, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoib1ljVDFiTDZhNG02U2t4Q1FaYkdNMjVqTks3TFJaZ2RWU2hMS0FvNiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozNDoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2FwcG9pbnRtZW50cyI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ4OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvc3RvcmFnZS9xcl9jb2Rlcy9xcl84Mi5wbmciO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo4Mjt9', 1783651380),
+('tgn2V0KcY09We72tZGyNPvXSftsGew7TIvUEOiS8', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.128.0 Chrome/148.0.7778.271 Electron/42.5.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiako2czllMExKNUhWR01OU1dXVlk1WnBBd05ZYm93Tjdmc01HUEk4byI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NjQ6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9zdG9yYWdlL3Byb2ZpbGVfcGljdHVyZXMvNjhlZTVlOWVjMjcxNy5qcGciO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1783649438);
 
 -- --------------------------------------------------------
 
@@ -948,10 +1082,28 @@ CREATE TABLE `stores` (
 --
 
 INSERT INTO `stores` (`id`, `name`, `address`, `created_at`, `updated_at`, `open_days`, `opening_time`, `closing_time`) VALUES
-(1, 'Prenza 1 Santiago-Amancio Branch', 'Prenza 1 Marilao Bulacan', '2025-08-28 04:53:41', '2025-08-28 05:31:24', '[\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]', '06:00:00', '18:00:00'),
-(2, 'Lambakin Santiago-Amancio Branch', 'Lambakin Marilao Bulacan', '2025-08-28 04:54:01', '2026-01-14 17:55:43', '[\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]', '08:00:00', '22:00:00'),
+(1, 'Prenza 1 Santiago-Amancio Branch', 'Prenza 1 Marilao Bulacan', '2025-08-28 04:53:41', '2026-02-25 19:17:11', '[\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]', '09:00:00', '18:00:00'),
+(2, 'Lambakin Santiago-Amancio Branch', 'Lambakin Marilao Bulacan', '2025-08-28 04:54:01', '2026-02-24 17:40:29', '[\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]', '15:00:00', '19:00:00'),
 (3, 'Santa Maria Santiago-Amancio Branch', 'Parada Sta. Maria', '2025-08-28 04:54:20', '2025-08-29 05:37:58', '[\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]', '21:00:00', '23:00:00'),
 (4, 'San Jose Del Monte Santiago-Amancio Branch', 'SJDM Bulacan Harmony Hills', '2025-08-28 04:54:44', '2025-08-29 05:38:44', '[\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]', '21:00:00', '23:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `store_schedule_overrides`
+--
+
+CREATE TABLE `store_schedule_overrides` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint(20) UNSIGNED NOT NULL,
+  `schedule_date` date NOT NULL,
+  `is_open` tinyint(1) NOT NULL DEFAULT 1,
+  `opening_time` time DEFAULT NULL,
+  `closing_time` time DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -980,9 +1132,7 @@ INSERT INTO `store_staff` (`id`, `store_id`, `user_id`, `position`, `created_at`
 (7, 2, 8, 'Receptionist', '2025-09-10 05:21:02', '2025-09-10 05:21:02'),
 (8, 2, 6, 'Dentist', '2025-09-10 05:21:19', '2025-09-10 05:21:19'),
 (9, 3, 10, 'Receptionist', '2025-09-15 00:06:52', '2025-09-15 00:06:52'),
-(10, 3, 5, 'Dentist', '2025-09-15 00:06:58', '2025-09-15 00:06:58'),
 (11, 4, 10, 'Receptionist', '2025-09-15 00:07:11', '2025-09-15 00:07:11'),
-(12, 4, 5, 'Dentist', '2025-09-15 00:07:15', '2025-09-15 00:07:15'),
 (13, 4, 9, 'Receptionist', '2025-09-15 00:07:21', '2025-09-15 00:07:21'),
 (14, 4, 7, 'Dentist', '2025-09-15 00:07:26', '2025-09-15 00:07:26'),
 (15, 1, 26, 'Dentist', '2025-10-14 04:17:01', '2025-10-14 04:17:01'),
@@ -992,7 +1142,8 @@ INSERT INTO `store_staff` (`id`, `store_id`, `user_id`, `position`, `created_at`
 (19, 3, 31, 'Dentist', '2025-10-14 04:19:04', '2025-10-14 04:19:04'),
 (20, 3, 34, 'Receptionist', '2025-10-14 04:19:12', '2025-10-14 04:19:12'),
 (21, 4, 30, 'Dentist', '2025-10-14 04:19:32', '2025-10-14 04:19:32'),
-(22, 4, 33, 'Receptionist', '2025-10-14 04:19:55', '2025-10-14 04:19:55');
+(24, 3, 26, 'Dentist', '2026-01-31 05:31:01', '2026-01-31 05:31:01'),
+(25, 1, 31, 'Dentist', '2026-02-24 18:32:15', '2026-02-24 18:32:15');
 
 -- --------------------------------------------------------
 
@@ -1003,7 +1154,8 @@ INSERT INTO `store_staff` (`id`, `store_id`, `user_id`, `position`, `created_at`
 CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
-  `account_type` varchar(255) DEFAULT NULL,
+  `account_type` enum('admin','patient') DEFAULT NULL,
+  `is_managed` tinyint(1) NOT NULL DEFAULT 0,
   `status` int(11) DEFAULT NULL,
   `birth_date` date DEFAULT NULL,
   `user` varchar(255) NOT NULL,
@@ -1014,7 +1166,8 @@ CREATE TABLE `users` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `face_token` varchar(255) DEFAULT NULL,
-  `position` varchar(255) DEFAULT NULL,
+  `face_descriptor` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`face_descriptor`)),
+  `position` enum('admin','Dentist','Receptionist') DEFAULT NULL,
   `is_verified` tinyint(1) NOT NULL DEFAULT 0,
   `otp_code` varchar(255) DEFAULT NULL,
   `middlename` varchar(255) DEFAULT NULL,
@@ -1022,7 +1175,15 @@ CREATE TABLE `users` (
   `suffix` varchar(255) DEFAULT NULL,
   `birthdate` date DEFAULT NULL,
   `birthplace` varchar(255) DEFAULT NULL,
+  `birthplace_municipality` varchar(255) DEFAULT NULL,
+  `birthplace_province` varchar(255) DEFAULT NULL,
   `current_address` text DEFAULT NULL,
+  `address_other_details` varchar(255) DEFAULT NULL,
+  `address_house_number` varchar(255) DEFAULT NULL,
+  `address_street` varchar(255) DEFAULT NULL,
+  `address_barangay` varchar(255) DEFAULT NULL,
+  `address_municipality` varchar(255) DEFAULT NULL,
+  `address_province` varchar(255) DEFAULT NULL,
   `verification_id` varchar(255) DEFAULT NULL,
   `profile_image` varchar(255) DEFAULT NULL,
   `qr_token` varchar(255) DEFAULT NULL,
@@ -1036,47 +1197,27 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `account_type`, `status`, `birth_date`, `user`, `email`, `contact_number`, `password`, `remember_token`, `created_at`, `updated_at`, `face_token`, `position`, `is_verified`, `otp_code`, `middlename`, `lastname`, `suffix`, `birthdate`, `birthplace`, `current_address`, `verification_id`, `profile_image`, `qr_token`, `qr_code`, `formstatus`, `is_consent`, `deleted_at`) VALUES
-(1, 'qwe', 'admin', NULL, NULL, 'qwe', NULL, '09999999999', '$2y$12$ML4eIg4E/VG4TIj86ej/VO1kS5QraTFPgFyNMeTOSLAWfOtorjrS2', NULL, '2025-08-17 21:59:37', '2025-10-14 03:13:45', NULL, 'admin', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68e4e9569f302.jpg', '675945c8-a059-460a-a730-929e7278e77b', 'qr_1.svg', 1, NULL, NULL),
-(3, 'Lenard', 'admin', NULL, NULL, 'Lenard', NULL, NULL, '$2y$12$CY4Ri9701m3pxpeUHYKDreasUDBb5oMVBU15PzuFNJYke04ihwqjC', NULL, '2025-08-28 04:20:40', '2025-10-14 03:15:08', NULL, 'admin', 0, NULL, 'Espiritu', 'Dela Cruz', NULL, NULL, NULL, NULL, NULL, '68ca948182392.jpeg', '03c1317c-0873-453a-98bc-45dc30eefb46', 'qr_3.svg', NULL, NULL, '2025-10-14 03:15:08'),
-(5, 'Reynaldo', 'admin', NULL, NULL, 'Reynaldo', 'reynaldodiazjunjun28@gmail.com', '09948701129', '$2y$12$Mn1BYzVEQE/h.rlrHGFXcuueJL2AoR5fDgUngNZ0L0Glj4abrS69i', NULL, '2025-08-28 04:22:16', '2025-10-14 03:14:52', NULL, 'Dentist', 0, NULL, 'Bahil', 'Diaz', 'Jr.', NULL, NULL, NULL, NULL, '68c7ca2c5b96a.jpg', '263e8a8c-6130-4802-8a52-9dc347ce3e5b', 'qr_5.svg', NULL, NULL, '2025-10-14 03:14:52'),
-(6, 'Dhan Leonardo', 'admin', NULL, NULL, 'Dhan', 'dhanalfonso@gmail.com', '09949499451', '$2y$12$8tUA.9MFvd3FTlc5KP/1qOikWOQQItOG1dPuM3xIBDKUn4vrYg0IG', NULL, '2025-08-28 04:22:37', '2025-10-14 03:18:33', NULL, 'Dentist', 0, NULL, 'Gomez', 'Alfonso', NULL, NULL, NULL, NULL, NULL, '68ca9264a1933.jpg', '13adc600-df57-47d9-90e9-7ce8922bc213', 'qr_6.svg', NULL, NULL, '2025-10-14 03:18:33'),
-(7, 'Czarina Jade', 'admin', NULL, NULL, 'CzarinaJade', 'baroraczarinajade@gmail.com', '09339247279', '$2y$12$rT6EqmpfPrn3WRzPvHbVWe0ba7/aIXrujMLyUBtmqDU3FqkMCHDc6', NULL, '2025-08-28 04:22:59', '2025-10-14 03:18:51', NULL, 'Dentist', 0, NULL, 'Mabini', 'Barora', NULL, NULL, NULL, NULL, NULL, '68c80f9fd8277.jpg', '5fafe406-8d05-410f-a568-dc498536ed63', 'qr_7.svg', NULL, NULL, '2025-10-14 03:18:51'),
-(8, 'Dani', 'admin', NULL, NULL, 'Dani', 'kimjeonlee03@gmail.com', '09183239884', '$2y$12$IEtaGQqw3dTufz2Mv0zexuY2ngItaE2CMxMzsFK0if3Wkm4GQ0OVy', NULL, '2025-08-28 04:23:22', '2025-10-14 03:12:40', NULL, 'Receptionist', 0, NULL, 'Gomez', 'Alfonso', NULL, NULL, NULL, NULL, NULL, '68c80f02c7c4a.jpg', 'e58ed137-2f8c-44c2-b2f0-de9175fec727', 'qr_8.svg', NULL, NULL, '2025-10-14 03:12:40'),
-(9, 'Czarina Jade', 'admin', NULL, NULL, 'Jade', 'barorac.26@gmail.com', '09515170014', '$2y$12$7C9E2l4cktpftWutmb/JReyxjUW5GfFDZH7oim1zllZJrywiUm1jK', NULL, '2025-08-28 04:23:41', '2025-10-14 03:13:12', 'c5f949012f832862965372d2edc3bbac', 'Receptionist', 0, NULL, 'Mabini', 'Barora', NULL, NULL, NULL, NULL, NULL, '68c80ed97b4b1.jpg', '53b8edf5-c5c9-4858-9823-8cd76b87592b', 'qr_9.svg', NULL, NULL, '2025-10-14 03:13:12'),
-(10, 'Joan Gail', 'admin', NULL, NULL, 'Joan', 'zaratejoangail1028@gmail.com', '09949499453', '$2y$12$s.avtG/WCQ.Wh9p4rSRSye3J7p60d4raO1z3C/11Xx/eh7j.dSa7u', NULL, '2025-08-28 04:24:10', '2025-10-14 03:13:58', NULL, 'Receptionist', 0, NULL, 'Caluag', 'Zarate', NULL, NULL, NULL, NULL, NULL, '68c7cac583e00.jpg', 'c242a93c-9a22-4f90-8b93-6da6484d09d7', 'qr_10.svg', NULL, NULL, '2025-10-14 03:13:58'),
-(11, 'Lian', 'patient', NULL, '2001-10-03', 'Lian', 'kimjeonlee03@gmail.com', '09949499451', '$2y$12$Rs9o1Y9m9uWTXpwjHgteFey0TjJVbR4TdkLT88B5ZpVOQ3RBejPTO', NULL, '2025-08-28 21:24:03', '2025-08-28 22:08:18', NULL, NULL, 0, NULL, NULL, 'Mercado', NULL, NULL, 'Malolos Bulacan', 'Sta.rosa II, Marilao Bulacan', 'verify_68b138f807057.png', NULL, 'cbd42bc2-b95a-452b-ba82-6079dc6690ef', 'qr_11.svg', NULL, 1, NULL),
-(12, 'Junjun', 'patient', NULL, '2001-10-28', 'Junjun', 'reynaldodiazjunjun28@gmail.com', '09610812705', '$2y$12$iDlZWzCgM0qx1jMEqFFMTeE2Jn8tc2kMg9SyG27ZzXQWS2Ej5.TEq', NULL, '2025-08-28 22:10:36', '2025-10-17 08:05:43', NULL, NULL, 0, NULL, 'Bahil', 'Diaz', 'Jr.', NULL, 'Davao City', 'Estrella Homes BLk 5 LOT 2 PHASE $ Sta. Rosa II Marilao, Bulacan', 'verify_68b058c265f1e.jpg', NULL, 'f19299f3-b166-4662-b2c1-0a42df53bf2d', 'qr_12.svg', 1, 1, NULL),
-(13, 'Jefferson', 'patient', NULL, '2025-09-07', 'Jeff', 'jeffersoncarreon22@gmail.com', '09515170014', '$2y$12$MXZ7v.AstJLshyQWMX6RseT4zgYTqz2LDIJjF6Qh4DttZx1KqLKRy', NULL, '2025-09-07 22:16:06', '2025-09-07 22:22:04', NULL, NULL, 0, NULL, 'NA', 'Carreon', NULL, NULL, 'Marilao', 'Patubig', 'verify_68be6d392104e.jpg', NULL, '5ed7a043-e648-4432-b3f3-0f73de84d3d5', 'qr_13.svg', NULL, 1, NULL),
-(14, 'Taehyung', 'patient', NULL, '2001-10-03', 'Taehyung', 'leonardokim60@gmail.com', '09183239884', '$2y$12$jTeW5ZMtqjgH.t49iP6aFe1FystWoT9A1/kJhnFFzjMp88DNua2Wy', NULL, '2025-09-10 04:56:50', '2025-09-17 02:43:05', '4d3d06b9df28f15c16ed7a05c2225e79', NULL, 0, NULL, 'Kim', 'Villanueva', NULL, NULL, 'Prenza 1', 'Sta.Rosa 1, Marilao Bulacan', 'verify_68c174e7b0fc0.png', '68ca90b99af45.jpg', '9adc0dcc-a69a-49b1-915a-e87f8f93ff8f', 'qr_14.svg', NULL, 1, NULL),
-(15, 'Angelo', 'patient', NULL, '1999-10-08', 'Marcus25', 'benedictrey353@gmail.com', '09949499451', '$2y$12$PGVZDz5vyK53jxCVc8AU0u.zZUcu6QJ40.ykGEJ7.uyaXJFe01fxu', NULL, '2025-10-07 22:16:35', '2025-10-07 22:16:35', NULL, NULL, 0, NULL, NULL, 'Casquez', NULL, NULL, 'Hagonoy', 'Sta.rosa II, Marilao Bulacan', 'verify_68e6016e7780d.jpeg', NULL, '7c6879cf-971f-4098-a9f0-86bc994a92d7', 'qr_15.svg', NULL, NULL, NULL),
-(16, 'Lailla', 'admin', NULL, NULL, 'Lailacruz', NULL, NULL, '$2y$12$eds0wqa7ZhyECiTv/lN/v.N0hT/JSVwzGs8bNYkY14IjAR6Jho5hC', NULL, '2025-10-07 22:22:18', '2025-10-14 03:19:04', NULL, 'Dentist', 0, NULL, NULL, 'Gomez', NULL, NULL, NULL, NULL, NULL, NULL, 'eb39a2c8-1713-4c7f-96d6-e3faada76655', 'qr_16.svg', NULL, NULL, '2025-10-14 03:19:04'),
-(17, 'Elijah', 'admin', NULL, NULL, 'Elijahvergara', NULL, NULL, '$2y$12$3BoNQleFlwyRVFbdNN9TVe3c21VQCrm1oaxceV5WwSgSawJOTjfqC', NULL, '2025-10-07 22:26:37', '2025-10-14 03:20:20', NULL, 'Dentist', 0, NULL, NULL, 'Vergara', NULL, NULL, NULL, NULL, NULL, NULL, '2ca00ba3-1321-4fc4-9164-57f19a52a12f', 'qr_17.svg', NULL, NULL, '2025-10-14 03:20:20'),
-(18, 'Joshua', 'patient', NULL, '2001-10-03', 'Joshua', 'kimjeonlee03@gmail.com', '09949499451', '$2y$12$Ygtq9RM8G0HjjgXsxg55Sez6pf3Wh3F6QofarViM9hdLZMV3Y4gZe', NULL, '2025-10-07 23:29:55', '2025-10-07 23:29:55', NULL, NULL, 0, NULL, 'Delos Reyes', 'Villnueva', NULL, NULL, 'Malolos Bulacan', 'Sta.rosa II, Marilao Bulacan', 'verify_68b1378b9ea27.png', NULL, 'e4465f7a-349f-4420-b43a-22bf1eeacae0', 'qr_18.svg', NULL, NULL, NULL),
-(19, 'Ronaldo', 'patient', NULL, '1998-09-23', 'Ronaldo', 'dhanalfonso@gmail.com', '09183239884', '$2y$12$cv4Xm1BeKnh7V./Sn5xdn.UOHRf6RbHjHZNr5Qp0fnbFUYCz13c.O', NULL, '2025-10-08 05:08:48', '2025-10-08 05:08:48', NULL, NULL, 0, NULL, 'Delos Reyes', 'Valenzuela', NULL, NULL, 'Marilao', 'Prenza 1, Marilao Bulacan', 'verify_68b7382b96b7c.jpg', NULL, 'cee34ca2-d67c-4676-8ff8-1acb556cd041', 'qr_19.svg', NULL, NULL, NULL),
-(22, 'Admin', 'admin', NULL, NULL, 'Admin', NULL, NULL, '$2y$12$D3wdaMRxqMXOqcb/KSsACO6VtDbh9JtR8rZC08Lov/kcxo1i0XNNC', NULL, '2025-10-14 03:20:43', '2025-10-14 03:20:43', NULL, 'admin', 0, NULL, NULL, 'Admin', NULL, NULL, NULL, NULL, NULL, NULL, '10a7d672-b0e8-4844-8fa5-6e085fc9cda1', 'qr_22.svg', NULL, NULL, NULL),
-(24, 'Admin', 'admin', NULL, NULL, 'Admin1', NULL, NULL, '$2y$12$drlKxr8WLRK585/yF6O8uuU7o5a6KrdV7h7kJr.5ER4MixldzWJFi', NULL, '2025-10-14 03:41:10', '2025-10-14 03:41:42', NULL, 'admin', 0, NULL, NULL, 'Admin', NULL, NULL, NULL, NULL, NULL, NULL, '3dc25ae5-e654-4de6-b060-6185eeefd593', 'qr_24.svg', NULL, NULL, '2025-10-14 03:41:42'),
-(26, 'Marieta', 'admin', NULL, NULL, 'Marieta', NULL, NULL, '$2y$12$kH2iZejDSvlN5k.hJStnceguLgw48MOI.nAWkBLC09gIMTX4xJVuO', NULL, '2025-10-14 04:00:26', '2025-10-14 05:26:50', NULL, 'Dentist', 0, NULL, NULL, 'Amancio', NULL, NULL, NULL, NULL, NULL, '68ee4f9a76268.jpg', '2ac9bad9-6049-40b5-a167-55a62f089378', 'qr_26.svg', NULL, NULL, NULL),
-(30, 'Abelardo', 'admin', NULL, NULL, 'Abelardo', NULL, NULL, '$2y$12$mL6AtGGDgpcQJT5abHGPouhFMpD4yqWWkX9jExq9c4M3mzR81bMtS', NULL, '2025-10-14 04:01:43', '2025-10-14 06:30:54', NULL, 'Dentist', 0, NULL, NULL, 'Santiago', NULL, NULL, NULL, NULL, NULL, '68ee5e9ec2717.jpg', '7621a5ee-c885-4b31-be50-add793034a58', 'qr_30.svg', NULL, NULL, NULL),
-(31, 'Sophia', 'admin', NULL, NULL, 'Sophia', NULL, NULL, '$2y$12$/f3VFNvlFsXapaMydrtgc.ynMKscMXDdv2HGP3PrGrM3L9oxrJIRG', NULL, '2025-10-14 04:02:20', '2025-10-14 06:12:27', NULL, 'Dentist', 0, NULL, NULL, 'Amancio', NULL, NULL, NULL, NULL, NULL, '68ee5a4bed193.jpg', '96284677-af80-4bc6-b5ee-fed5909129b9', 'qr_31.svg', NULL, NULL, NULL),
-(32, 'Mhara Grace', 'admin', NULL, NULL, 'Mhara Grace', NULL, NULL, '$2y$12$eS9gRRYHwh2hriuX5Zf7Wu.X/q5i2qNZseiQmp8si1oSMyKw92kLi', NULL, '2025-10-14 04:03:05', '2025-10-14 06:18:07', NULL, 'Receptionist', 0, NULL, NULL, 'Robles', NULL, NULL, NULL, NULL, NULL, '68ee5b9f26481.jpg', '2cc4edc4-a649-4c73-a3f4-e4c93ece931c', 'qr_32.svg', NULL, NULL, NULL),
-(33, 'Sherry', 'admin', NULL, NULL, 'Sherry', NULL, NULL, '$2y$12$gU64TU4ZXztAausvkac4C.Mr6mtXaP9zVsxWQbg0bYlMNvlaBVsIS', NULL, '2025-10-14 04:03:54', '2025-10-14 06:18:53', NULL, 'Receptionist', 0, NULL, NULL, 'Antonio', NULL, NULL, NULL, NULL, NULL, '68ee5bcd2729b.jpg', '167c88e2-c720-4f7d-8c77-20c25d71d3bd', 'qr_33.svg', NULL, NULL, NULL),
-(34, 'Gloria', 'admin', NULL, NULL, 'Gloria', NULL, NULL, '$2y$12$yvY7M7VZ0WUG.25tRUIhje7nzap8mFqXzhe4rIYIPisWBOBhaTQ42', NULL, '2025-10-14 04:06:07', '2025-10-14 06:21:43', NULL, 'Receptionist', 0, NULL, NULL, 'Espiritu', NULL, NULL, NULL, NULL, NULL, '68ee5c7790e93.jpg', 'fcdbc738-256e-4d51-9f7f-db9455533af5', 'qr_34.svg', NULL, NULL, NULL),
-(35, 'Joseph', 'patient', NULL, '1997-08-16', 'Joseph', 'leonardogomezalfonso@gmail.com', '09183239884', '$2y$12$lXpwY1CpK.R/8wB6U4dj0Osb/j2HWiRanKCAaa/gMt9FdbuGdq/FO', NULL, '2025-10-15 20:56:08', '2025-10-15 23:50:19', '770ed6d66f9d876eeb3bd2b8a1fe2f23', NULL, 0, NULL, NULL, 'Villanueva', NULL, NULL, 'Loma De Gato', 'Prenza 1, Marilao Bulacan', 'verify_68f07a6d21076.png', NULL, '9eeaf30c-87ee-4f04-aec5-1f3f1bf08342', 'qr_35.svg', NULL, 1, NULL),
-(36, 'Charmaine Joy', 'patient', NULL, '2025-10-16', 'Joy', 'lenardx48@gmail.com', '09164115414', '$2y$12$6G73rLQjemYyv/oYUcf5x.SVk/dEwLwigF9NCjXBMLa.nuyEMczlO', NULL, '2025-10-15 22:13:50', '2025-10-15 22:19:01', NULL, NULL, 0, NULL, 'Mabini', 'Barora', 'Jr.', NULL, 'Dasmariñas Cavite', 'Patubig Marilao Bulacan', 'verify_68f08b8b823d9.png', NULL, 'f6f937aa-6025-46e3-8fc0-d05781703f98', 'qr_36.svg', NULL, 1, NULL),
-(37, 'Ayesha', 'patient', NULL, '2008-07-11', 'matchayesha', 'ayeshajassenc@gmail.com', '09623887507', '$2y$12$RbohKFeEmt/U2ngLetXYSuSpoErkGItcrwuFvyddLG9bpcdSUG2QG', NULL, '2025-10-17 08:12:05', '2025-10-17 08:24:10', NULL, NULL, 0, NULL, NULL, 'Jassen', NULL, NULL, 'Quezon City', 'Mandaue City, Cebu', 'verify_68f26a9144640.jpg', NULL, 'affe40ca-3edf-4924-8c32-91ac9ed292c5', 'qr_37.svg', NULL, 1, '2025-10-17 08:24:10'),
-(38, 'John Christopher', 'patient', NULL, '1999-01-11', 'Jc', 'jcbarora@gmail.com', '09927756676', '$2y$12$.laTKj4cuiPSXhoFU9mcj.hg3mZLPpbMRvn4.gyIZhCC8hh09U5Mi', NULL, '2025-10-19 17:27:33', '2025-10-19 17:27:33', NULL, NULL, 0, NULL, 'Mabini', 'Barora', NULL, NULL, 'Trece Martires, Cavite', '91 Maligaya St. Patubig, Marilao, Bulacan', 'verify_68f58fb9e5b60.jpg', NULL, 'e9591aff-9b15-49ab-9b2e-b1b29f87d09d', 'qr_38.svg', NULL, NULL, NULL),
-(41, 'Joan', 'patient', NULL, '2004-01-28', 'JoanGail', 'zarate.joangail0128@gmail.com', '09887654321', '$2y$12$hZAeK/1Sn8LeQa1Vd2JtTevMnZOKQy70WmiFYjVPJEKeqc64IhHPC', NULL, '2025-10-21 02:17:43', '2025-10-21 02:17:43', NULL, NULL, 0, NULL, 'Caluag', 'Zarate', NULL, NULL, 'Caloocan', 'Sta.Rosa 1, Marilao Bulacan', 'verify_68f75d9d32498.png', NULL, '5a6af60c-fd07-4950-8b9b-043f7a3caa7d', 'qr_41.svg', NULL, NULL, NULL),
-(42, 'Joan Gail', 'patient', NULL, '2025-10-21', 'Gail', 'zarate.joangail1028@gmail.com', '0912345678', '$2y$12$Nz3dzoApFERzlKmKmOjxj.9/3LvFeDz0t2LBBis4BSy7cHXkGZKDi', NULL, '2025-10-21 02:42:28', '2025-10-21 02:42:28', NULL, NULL, 0, NULL, 'Caluag', 'Zarate', NULL, NULL, 'Malolos Bulacan', 'Sta.rosa II, Marilao Bulacan', 'verify_68f7637e2db8e.png', NULL, 'b386e7ba-61d0-4223-8471-36e949b4c873', 'qr_42.svg', NULL, NULL, NULL),
-(43, 'Czamaya', 'patient', NULL, '2024-08-07', 'Czamaya', 'cbarora.pdm@gmail.com', '09515170014', '$2y$12$gkCICimwle6wKKKf0x4e7O632dlS40RCkqwdpnUqv2Zu1t6BJy0iW', NULL, '2025-10-31 16:56:50', '2025-10-31 16:56:50', NULL, NULL, 0, NULL, NULL, 'Barao', NULL, NULL, 'Basilan', 'Marilao Bulacan', 'verify_69055a7eecf23.jpg', NULL, '15b533b9-6a66-42ae-bc55-d05dd15ba3fc', 'qr_43.svg', NULL, NULL, NULL),
-(44, 'Lea', 'patient', NULL, '1998-05-02', 'LeaGomez10', 'kevinkurt071@gmail.com', '09183239884', '$2y$12$c/TL0zOpx7z3GJ3TWCgJsOMPrEJYpQSI9Y9.x67jcuy7eSY/Zy/vG', NULL, '2025-11-11 06:21:06', '2025-11-12 05:26:59', NULL, NULL, 0, NULL, 'Santos', 'Alfonso', NULL, NULL, 'Marilao, Bulacan', 'Sta.Rosa II, Marilao Bulacan', 'verify_691346313fefd.png', NULL, 'a49fd28a-65b8-4eab-8d89-9cf49df9ff99', 'qr_44.svg', NULL, 1, NULL),
-(45, 'Barora', 'patient', NULL, '2025-11-12', 'Czarlyn', 'czarlynchavez@gmail.com', '09515170010', '$2y$12$Mc7gnSIC5bLTCUVnvlB4vuQHwAXEJmtEg7TdsE6KPfjFb/uSA0Mw2', NULL, '2025-11-12 00:03:39', '2025-11-12 00:04:49', NULL, NULL, 0, NULL, NULL, 'CJ', NULL, NULL, 'Dasma', 'Marilao', 'verify_69143f07e8d1b.jpeg', NULL, '50518f09-ffc5-43bb-a9fb-c970aeb2f86d', 'qr_45.svg', NULL, 1, NULL),
-(50, 'Dan', 'patient', NULL, '2025-11-25', 'Dan123', 'dhanleonardoalfonso16@gmail.com', '09876543212', '$2y$12$RmQMBAzWv0KN2sjYf.TQ0eudcXYi7XGyPEzHrDgXWMwqbHQ5D7ote', NULL, '2025-11-24 16:11:46', '2025-11-24 16:13:39', NULL, NULL, 0, NULL, NULL, 'Alfonso', NULL, NULL, 'Marilao', 'Marilao', 'verify_6924f416de3d1.jpeg', NULL, '39997e9b-d1eb-4a08-a5bb-8eb44fc8c63f', 'qr_50.svg', NULL, 1, NULL),
-(51, 'Rey', 'patient', NULL, '2004-02-10', 'Junichi', 'reyjundiaz28@gmail.com', '09610812705', '$2y$12$VHiK7iV9GO8bz.hw8HV/kumbDlkMYGspjHuliWUbMuJU0dAnDwnN6', NULL, '2025-11-26 07:34:10', '2025-11-26 07:36:38', NULL, NULL, 0, NULL, 'Bahil', 'Diaz', 'Jr.', NULL, 'Davao City', 'Santa Maria Bulacan', 'verify_69271ddbae218.jpg', NULL, '24d82a05-0611-4206-bb64-6c6dbf7999d2', 'qr_51.svg', NULL, 1, NULL),
-(52, 'Ryle', 'patient', NULL, '2001-12-21', 'Ryle', 'alfonsodhanleonardogomez@gmail.com', '09183239884', '$2y$12$ij9ONTtMMxEhMxcs2.z9y.JvgzTZRlRe0/L63pAWybBdMTQC8Dnra', NULL, '2025-11-29 07:59:15', '2025-11-29 07:59:15', NULL, NULL, 0, NULL, 'Fernandez', 'Mendoza', NULL, NULL, 'Marilao', 'Laot, Prenza 1, Marilao Bulacan', 'verify_68f2836165363.png', NULL, '293d7abe-26f6-42f3-8018-7e97a7e5bc27', 'qr_52.svg', NULL, NULL, NULL),
-(53, 'Joshua Anderson', 'patient', NULL, '2026-01-13', 'andersonandy046', 'andersonandy046@gmail.com', '09454454744', '$2y$12$cux2NYrTDB/r5sBuOOsppOUifeCy5.3J/GHUWdkPDEKO4vS5Wvx7y', NULL, '2026-01-13 02:11:43', '2026-01-13 02:11:43', NULL, NULL, 0, NULL, 'Raymundo', 'Padilla', NULL, NULL, 'sta.maria gen', '9e callejon tinajeros malabon', 'verify_69661a488d8d4.jpg', NULL, 'bd6ccbd6-a87c-4855-b95f-54f7661768fc', 'qr_53.svg', NULL, NULL, NULL),
-(54, 'Dhan Leonardo', 'patient', NULL, '1998-08-25', 'Leo', 'ravenkade01@gmail.com', '09183239884', '$2y$12$qWr9oU2j3BIbhbIG/MobFe1wuA048rlMsLbh5M5K5IskOX2ZV/Cdy', NULL, '2026-01-13 02:16:32', '2026-01-13 02:17:10', NULL, NULL, 0, NULL, 'Gomez', 'Alfonso', NULL, NULL, 'Malolos', 'Prenza 1, Marilao Bulacan', 'verify_69661b69a32c4.jpeg', NULL, '9792d5ad-574c-4556-b1b7-efde92ff3206', 'qr_54.svg', NULL, 1, NULL),
-(55, 'john', 'patient', NULL, '2026-01-13', 'JoshuaPogi123', 'padillajoshuaanderson.pdm@gmail.com', '09454454744', '$2y$12$pTBZ.v2MLKzu5ymFy0fFyeza4O0tCdISn2ptEm8bMJ2wcwuV.NtPi', NULL, '2026-01-13 02:20:44', '2026-01-13 02:20:44', NULL, NULL, 0, NULL, NULL, 'doe', NULL, NULL, 'sta.maria', 'mexico pampanga', 'verify_69661c616274c.png', NULL, 'f52704b7-cb8f-4e46-a828-fff97d4ed4f8', 'qr_55.svg', NULL, NULL, NULL);
+INSERT INTO `users` (`id`, `name`, `account_type`, `is_managed`, `status`, `birth_date`, `user`, `email`, `contact_number`, `password`, `remember_token`, `created_at`, `updated_at`, `face_token`, `face_descriptor`, `position`, `is_verified`, `otp_code`, `middlename`, `lastname`, `suffix`, `birthdate`, `birthplace`, `birthplace_municipality`, `birthplace_province`, `current_address`, `address_other_details`, `address_house_number`, `address_street`, `address_barangay`, `address_municipality`, `address_province`, `verification_id`, `profile_image`, `qr_token`, `qr_code`, `formstatus`, `is_consent`, `deleted_at`) VALUES
+(1, 'qwe', 'admin', 0, NULL, NULL, 'qwe', NULL, '09999999999', '$2y$12$ML4eIg4E/VG4TIj86ej/VO1kS5QraTFPgFyNMeTOSLAWfOtorjrS2', NULL, '2025-08-17 21:59:37', '2026-01-31 18:35:11', NULL, NULL, 'admin', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68e4e9569f302.jpg', '675945c8-a059-460a-a730-929e7278e77b', 'qr_1.svg', 1, NULL, '2026-01-31 18:35:11'),
+(3, 'Lenard', 'admin', 0, NULL, NULL, 'Lenard', NULL, NULL, '$2y$12$CY4Ri9701m3pxpeUHYKDreasUDBb5oMVBU15PzuFNJYke04ihwqjC', NULL, '2025-08-28 04:20:40', '2025-10-14 03:15:08', NULL, NULL, 'admin', 0, NULL, 'Espiritu', 'Dela Cruz', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ca948182392.jpeg', '03c1317c-0873-453a-98bc-45dc30eefb46', 'qr_3.svg', NULL, NULL, '2025-10-14 03:15:08'),
+(6, 'Dhan Leonardo', 'admin', 0, NULL, NULL, 'Dhan', 'dhanalfonso@gmail.com', '09949499451', '$2y$12$8tUA.9MFvd3FTlc5KP/1qOikWOQQItOG1dPuM3xIBDKUn4vrYg0IG', NULL, '2025-08-28 04:22:37', '2025-10-14 03:18:33', NULL, NULL, 'Dentist', 0, NULL, 'Gomez', 'Alfonso', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ca9264a1933.jpg', '13adc600-df57-47d9-90e9-7ce8922bc213', 'qr_6.svg', NULL, NULL, '2025-10-14 03:18:33'),
+(7, 'Czarina Jade', 'admin', 0, NULL, NULL, 'CzarinaJade', 'baroraczarinajade@gmail.com', '09339247279', '$2y$12$rT6EqmpfPrn3WRzPvHbVWe0ba7/aIXrujMLyUBtmqDU3FqkMCHDc6', NULL, '2025-08-28 04:22:59', '2025-10-14 03:18:51', NULL, NULL, 'Dentist', 0, NULL, 'Mabini', 'Barora', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68c80f9fd8277.jpg', '5fafe406-8d05-410f-a568-dc498536ed63', 'qr_7.svg', NULL, NULL, '2025-10-14 03:18:51'),
+(8, 'Dani', 'admin', 0, NULL, NULL, 'Dani', 'kimjeonlee03@gmail.com', '09183239884', '$2y$12$IEtaGQqw3dTufz2Mv0zexuY2ngItaE2CMxMzsFK0if3Wkm4GQ0OVy', NULL, '2025-08-28 04:23:22', '2025-10-14 03:12:40', NULL, NULL, 'Receptionist', 0, NULL, 'Gomez', 'Alfonso', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68c80f02c7c4a.jpg', 'e58ed137-2f8c-44c2-b2f0-de9175fec727', 'qr_8.svg', NULL, NULL, '2025-10-14 03:12:40'),
+(9, 'Czarina Jade', 'admin', 0, NULL, NULL, 'Jade', 'barorac.26@gmail.com', '09515170014', '$2y$12$7C9E2l4cktpftWutmb/JReyxjUW5GfFDZH7oim1zllZJrywiUm1jK', NULL, '2025-08-28 04:23:41', '2025-10-14 03:13:12', NULL, NULL, 'Receptionist', 0, NULL, 'Mabini', 'Barora', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68c80ed97b4b1.jpg', '53b8edf5-c5c9-4858-9823-8cd76b87592b', 'qr_9.svg', NULL, NULL, '2025-10-14 03:13:12'),
+(10, 'Joan Gail', 'admin', 0, NULL, NULL, 'Joan', 'zaratejoangail1028@gmail.com', '09949499453', '$2y$12$s.avtG/WCQ.Wh9p4rSRSye3J7p60d4raO1z3C/11Xx/eh7j.dSa7u', NULL, '2025-08-28 04:24:10', '2025-10-14 03:13:58', NULL, NULL, 'Receptionist', 0, NULL, 'Caluag', 'Zarate', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68c7cac583e00.jpg', 'c242a93c-9a22-4f90-8b93-6da6484d09d7', 'qr_10.svg', NULL, NULL, '2025-10-14 03:13:58'),
+(16, 'Lailla', 'admin', 0, NULL, NULL, 'Lailacruz', NULL, NULL, '$2y$12$eds0wqa7ZhyECiTv/lN/v.N0hT/JSVwzGs8bNYkY14IjAR6Jho5hC', NULL, '2025-10-07 22:22:18', '2025-10-14 03:19:04', NULL, NULL, 'Dentist', 0, NULL, NULL, 'Gomez', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'eb39a2c8-1713-4c7f-96d6-e3faada76655', 'qr_16.svg', NULL, NULL, '2025-10-14 03:19:04'),
+(17, 'Elijah', 'admin', 0, NULL, NULL, 'Elijahvergara', NULL, NULL, '$2y$12$3BoNQleFlwyRVFbdNN9TVe3c21VQCrm1oaxceV5WwSgSawJOTjfqC', NULL, '2025-10-07 22:26:37', '2025-10-14 03:20:20', NULL, NULL, 'Dentist', 0, NULL, NULL, 'Vergara', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2ca00ba3-1321-4fc4-9164-57f19a52a12f', 'qr_17.svg', NULL, NULL, '2025-10-14 03:20:20'),
+(22, 'Admin', 'admin', 0, NULL, NULL, 'Admin', NULL, NULL, '$2y$12$D3wdaMRxqMXOqcb/KSsACO6VtDbh9JtR8rZC08Lov/kcxo1i0XNNC', NULL, '2025-10-14 03:20:43', '2026-04-10 03:50:47', NULL, NULL, 'admin', 0, NULL, NULL, 'Admin', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '10a7d672-b0e8-4844-8fa5-6e085fc9cda1', 'qr_22.png', NULL, NULL, NULL),
+(24, 'Admin', 'admin', 0, NULL, NULL, 'Admin1', NULL, NULL, '$2y$12$drlKxr8WLRK585/yF6O8uuU7o5a6KrdV7h7kJr.5ER4MixldzWJFi', NULL, '2025-10-14 03:41:10', '2025-10-14 03:41:42', NULL, NULL, 'admin', 0, NULL, NULL, 'Admin', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '3dc25ae5-e654-4de6-b060-6185eeefd593', 'qr_24.svg', NULL, NULL, '2025-10-14 03:41:42'),
+(26, 'Marieta', 'admin', 0, NULL, NULL, 'Marieta', NULL, NULL, '$2y$12$kH2iZejDSvlN5k.hJStnceguLgw48MOI.nAWkBLC09gIMTX4xJVuO', NULL, '2025-10-14 04:00:26', '2026-05-01 10:31:34', NULL, NULL, 'Dentist', 0, NULL, NULL, 'Amancio', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '69f3eef7534f9.jpg', '48cd6954-bbab-4780-a36b-664f2fe91f98', 'qr_26.png', NULL, NULL, NULL),
+(30, 'Abelardo', 'admin', 0, NULL, NULL, 'Abelardo', NULL, NULL, '$2y$12$mL6AtGGDgpcQJT5abHGPouhFMpD4yqWWkX9jExq9c4M3mzR81bMtS', NULL, '2025-10-14 04:01:43', '2026-04-10 03:50:47', NULL, NULL, 'Dentist', 0, NULL, NULL, 'Santiago', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ee5e9ec2717.jpg', '7621a5ee-c885-4b31-be50-add793034a58', 'qr_30.png', NULL, NULL, NULL),
+(31, 'Sophia', 'admin', 0, NULL, NULL, 'Sophia', NULL, NULL, '$2y$12$/f3VFNvlFsXapaMydrtgc.ynMKscMXDdv2HGP3PrGrM3L9oxrJIRG', NULL, '2025-10-14 04:02:20', '2026-04-10 03:50:47', NULL, NULL, 'Dentist', 0, NULL, NULL, 'Amancio', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ee5a4bed193.jpg', '96284677-af80-4bc6-b5ee-fed5909129b9', 'qr_31.png', NULL, NULL, NULL),
+(32, 'Mhara Grace', 'admin', 0, NULL, NULL, 'Mhara Grace', NULL, NULL, '$2y$12$eS9gRRYHwh2hriuX5Zf7Wu.X/q5i2qNZseiQmp8si1oSMyKw92kLi', NULL, '2025-10-14 04:03:05', '2026-04-10 03:50:47', NULL, NULL, 'Receptionist', 0, NULL, NULL, 'Robles', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ee5b9f26481.jpg', '2cc4edc4-a649-4c73-a3f4-e4c93ece931c', 'qr_32.png', NULL, NULL, NULL),
+(33, 'Sherry', 'admin', 0, NULL, NULL, 'Sherry', NULL, NULL, '$2y$12$gU64TU4ZXztAausvkac4C.Mr6mtXaP9zVsxWQbg0bYlMNvlaBVsIS', NULL, '2025-10-14 04:03:54', '2026-04-10 03:50:47', NULL, NULL, 'Receptionist', 0, NULL, NULL, 'Antonio', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ee5bcd2729b.jpg', '167c88e2-c720-4f7d-8c77-20c25d71d3bd', 'qr_33.png', NULL, NULL, NULL),
+(34, 'Gloria', 'admin', 0, NULL, NULL, 'Gloria', NULL, NULL, '$2y$12$yvY7M7VZ0WUG.25tRUIhje7nzap8mFqXzhe4rIYIPisWBOBhaTQ42', NULL, '2025-10-14 04:06:07', '2026-04-10 03:50:47', NULL, NULL, 'Receptionist', 0, NULL, NULL, 'Espiritu', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '68ee5c7790e93.jpg', 'fcdbc738-256e-4d51-9f7f-db9455533af5', 'qr_34.png', NULL, NULL, NULL),
+(82, 'juan', 'patient', 0, NULL, '2000-04-10', 'andersonandy046', 'andersonandy046@gmail.com', '09454454744', '$2y$12$FOk8QxWNoAUl8GOyjqk9SOZQknbT8uiV.ED2i8ssJcEUb4AE1csNa', NULL, '2026-05-01 00:18:20', '2026-07-09 03:55:54', NULL, NULL, NULL, 0, NULL, 'san', 'pedro', NULL, NULL, 'Sta.Maria, Bulacan', 'Sta.Maria', 'Bulacan', 'Apartment, 9999, tibagan, sta.rosa 2, Marilao, Bulacan', 'Apartment', '9999', 'tibagan', 'sta.rosa 2', 'Marilao', 'Bulacan', NULL, NULL, '5c25fe20-295d-431b-9be9-201db3e52b6b', 'qr_82.png', 1, 1, NULL),
+(84, 'padilla joshua', 'patient', 0, NULL, '2000-04-10', 'padillajoshuaanderson.pdm', 'padillajoshuaanderson.pdm@gmail.com', '09454454744', '$2y$12$PRQVDYoyY64vWP7or/AmueuQtwYgr6jxvuppDsq7/9FuCU6vTos2W', NULL, '2026-05-04 01:50:44', '2026-05-04 01:51:12', NULL, NULL, NULL, 0, NULL, 'san', 'pedro', NULL, NULL, 'Sta.Maria, Bulacan', 'Sta.Maria', 'Bulacan', 'Apartment, 9999, tibagan, sta.rosa 2, Marilao, Bulacan', 'Apartment', '9999', 'tibagan', 'sta.rosa 2', 'Marilao', 'Bulacan', NULL, NULL, '5e7c353f-7ebb-4cb0-991b-781800b1a13a', 'qr_84.png', 1, 1, NULL),
+(85, 'bong bong', 'patient', 1, NULL, '2026-07-02', 'dep_vocyo6navohk', NULL, '09454454744', '$2y$12$eLs4J7abyQW/BYkmZQ2dQOiK.9XzmVFNU3DpkvqIwltfDf5.9DBaq', NULL, '2026-07-02 07:52:33', '2026-07-02 07:53:24', NULL, NULL, NULL, 0, NULL, NULL, 'marcos', NULL, NULL, NULL, NULL, NULL, 'Apartment, 9999, tibagan, sta.rosa 2, Marilao, Bulacan', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '14e422cd-8e4a-4ce7-a09e-945a7b138c1a', 'qr_85.png', 1, 1, NULL);
 
 --
 -- Indexes for dumped tables
@@ -1109,7 +1250,8 @@ ALTER TABLE `cache_locks`
 ALTER TABLE `daily_logs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `daily_logs_user_id_foreign` (`user_id`),
-  ADD KEY `daily_logs_appointment_id_foreign` (`appointment_id`);
+  ADD KEY `daily_logs_appointment_id_foreign` (`appointment_id`),
+  ADD KEY `daily_logs_store_id_foreign` (`store_id`);
 
 --
 -- Indexes for table `dental_charts`
@@ -1117,6 +1259,22 @@ ALTER TABLE `daily_logs`
 ALTER TABLE `dental_charts`
   ADD PRIMARY KEY (`id`),
   ADD KEY `dental_charts_patient_id_foreign` (`patient_id`);
+
+--
+-- Indexes for table `dental_teeth`
+--
+ALTER TABLE `dental_teeth`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `dental_teeth_patient_id_tooth_unique` (`patient_id`,`tooth`);
+
+--
+-- Indexes for table `doctor_schedules`
+--
+ALTER TABLE `doctor_schedules`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `doctor_schedule_unique` (`dentist_id`,`store_id`,`schedule_date`),
+  ADD KEY `doctor_schedules_store_id_foreign` (`store_id`),
+  ADD KEY `doctor_schedules_schedule_date_index` (`schedule_date`);
 
 --
 -- Indexes for table `failed_jobs`
@@ -1198,10 +1356,27 @@ ALTER TABLE `notifications`
   ADD KEY `notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`);
 
 --
+-- Indexes for table `parent_child_links`
+--
+ALTER TABLE `parent_child_links`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `parent_child_unique` (`parent_user_id`,`child_user_id`),
+  ADD UNIQUE KEY `parent_child_links_verification_token_unique` (`verification_token`),
+  ADD KEY `parent_child_links_child_user_id_index` (`child_user_id`);
+
+--
 -- Indexes for table `password_reset_tokens`
 --
 ALTER TABLE `password_reset_tokens`
   ADD PRIMARY KEY (`email`);
+
+--
+-- Indexes for table `patient_medications`
+--
+ALTER TABLE `patient_medications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `patient_medications_user_id_foreign` (`user_id`),
+  ADD KEY `patient_medications_appointment_id_foreign` (`appointment_id`);
 
 --
 -- Indexes for table `patient_records`
@@ -1249,6 +1424,13 @@ ALTER TABLE `stores`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `store_schedule_overrides`
+--
+ALTER TABLE `store_schedule_overrides`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `store_schedule_overrides_store_id_schedule_date_unique` (`store_id`,`schedule_date`);
+
+--
 -- Indexes for table `store_staff`
 --
 ALTER TABLE `store_staff`
@@ -1271,19 +1453,31 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `appointments`
 --
 ALTER TABLE `appointments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT for table `daily_logs`
 --
 ALTER TABLE `daily_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `dental_charts`
 --
 ALTER TABLE `dental_charts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+
+--
+-- AUTO_INCREMENT for table `dental_teeth`
+--
+ALTER TABLE `dental_teeth`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+
+--
+-- AUTO_INCREMENT for table `doctor_schedules`
+--
+ALTER TABLE `doctor_schedules`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -1307,61 +1501,73 @@ ALTER TABLE `medical_forms`
 -- AUTO_INCREMENT for table `medicines`
 --
 ALTER TABLE `medicines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `medicine_batches`
 --
 ALTER TABLE `medicine_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `medicine_movements`
 --
 ALTER TABLE `medicine_movements`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT for table `newusers`
 --
 ALTER TABLE `newusers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `parent_child_links`
+--
+ALTER TABLE `parent_child_links`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `patient_medications`
+--
+ALTER TABLE `patient_medications`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `patient_records`
 --
 ALTER TABLE `patient_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `sale_items`
 --
 ALTER TABLE `sale_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `stores`
@@ -1370,16 +1576,22 @@ ALTER TABLE `stores`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `store_schedule_overrides`
+--
+ALTER TABLE `store_schedule_overrides`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `store_staff`
 --
 ALTER TABLE `store_staff`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
 
 --
 -- Constraints for dumped tables
@@ -1398,6 +1610,7 @@ ALTER TABLE `appointments`
 --
 ALTER TABLE `daily_logs`
   ADD CONSTRAINT `daily_logs_appointment_id_foreign` FOREIGN KEY (`appointment_id`) REFERENCES `appointments` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `daily_logs_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `daily_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
@@ -1405,6 +1618,19 @@ ALTER TABLE `daily_logs`
 --
 ALTER TABLE `dental_charts`
   ADD CONSTRAINT `dental_charts_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `dental_teeth`
+--
+ALTER TABLE `dental_teeth`
+  ADD CONSTRAINT `dental_teeth_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `doctor_schedules`
+--
+ALTER TABLE `doctor_schedules`
+  ADD CONSTRAINT `doctor_schedules_dentist_id_foreign` FOREIGN KEY (`dentist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `doctor_schedules_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `medical_forms`
@@ -1436,6 +1662,20 @@ ALTER TABLE `messages`
   ADD CONSTRAINT `messages_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `parent_child_links`
+--
+ALTER TABLE `parent_child_links`
+  ADD CONSTRAINT `parent_child_links_child_user_id_foreign` FOREIGN KEY (`child_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `parent_child_links_parent_user_id_foreign` FOREIGN KEY (`parent_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `patient_medications`
+--
+ALTER TABLE `patient_medications`
+  ADD CONSTRAINT `patient_medications_appointment_id_foreign` FOREIGN KEY (`appointment_id`) REFERENCES `appointments` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `patient_medications_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `patient_records`
 --
 ALTER TABLE `patient_records`
@@ -1456,6 +1696,12 @@ ALTER TABLE `sale_items`
   ADD CONSTRAINT `sale_items_medicine_batch_id_foreign` FOREIGN KEY (`medicine_batch_id`) REFERENCES `medicine_batches` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `sale_items_medicine_id_foreign` FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `sale_items_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `store_schedule_overrides`
+--
+ALTER TABLE `store_schedule_overrides`
+  ADD CONSTRAINT `store_schedule_overrides_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `store_staff`

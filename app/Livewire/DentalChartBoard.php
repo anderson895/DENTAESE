@@ -10,9 +10,11 @@ class DentalChartBoard extends Component
 {
     public $patient;
     public $chart = [];
-    public function mount(User $patient)
+    public $readonly = false; // force view-only regardless of the auth user's role
+    public function mount(User $patient, $readonly = false)
     {
         $this->patient = $patient;
+        $this->readonly = (bool) $readonly;
 
         // load chart as array for Livewire binding
         $this->chart = DentalChart::firstOrCreate([
@@ -22,7 +24,9 @@ class DentalChartBoard extends Component
 
    public function updated($propertyName, $value)
 {
-  
+    if ($this->readonly || $this->userCannotEditChart()) {
+        return;
+    }
 
     $data = collect($this->chart)
         ->only((new DentalChart)->getFillable())
@@ -35,6 +39,19 @@ class DentalChartBoard extends Component
         $data
     );
 }
+    /**
+     * Only dentists/doctors may modify the dental chart.
+     * Admins, receptionists and patients are view-only.
+     */
+    private function userCannotEditChart(): bool
+    {
+        $user = auth()->user();
+
+        return !$user
+            || $user->account_type === 'patient'
+            || in_array($user->position, ['admin', 'Receptionist'], true);
+    }
+
     public function render()
     {
         return view('livewire.dental-chart-board');

@@ -11,9 +11,9 @@
 @php
     $authPosition  = auth()->user()->position ?? '';
     $isReceptionist = $authPosition === 'Receptionist';
-    // Receptionist always lands on "checkin" first; Dentist/Admin land on Dental Chart
-    // and may persist their last-active tab via localStorage.
-    $defaultTab = $isReceptionist ? 'checkin' : 'info';
+    // Receptionist always lands on "checkin" first; Dentist/Admin land on Current Status
+    // (first tab) and may persist their last-active tab via localStorage.
+    $defaultTab = $isReceptionist ? 'checkin' : 'medication';
 @endphp
 <div x-data="{
         tab: (new URLSearchParams(window.location.search).get('tab')) || (@js($isReceptionist) ? @js($defaultTab) : (localStorage.getItem('activeTab') || @js($defaultTab))),
@@ -25,11 +25,11 @@
 
     <!-- Tabs -->
     <div class="flex border-b mb-4">
+        <button @click="tab='medication'" :class="tab==='medication' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Current Status</button>
         <button @click="tab='info'" :class="tab==='info' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Dental Chart</button>
-        <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='rx'" :class="tab==='rx' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">RX</button>
         <button @click="tab='pos'" :class="tab==='pos' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">POS</button>
-        <button @click="tab='medication'" :class="tab==='medication' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Current Medication</button>
+        <button @click="tab='checkin'" :class="tab==='checkin' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Check-in</button>
         <button @click="tab='treatment'" :class="tab==='treatment' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Treatment Record</button>
         <button @click="tab='patient'" :class="tab==='patient' ? 'text-blue-500 font-bold border-b-2 border-blue-500' : 'text-gray-500'" class="py-2 px-4">Patient Information</button>
     </div>
@@ -56,7 +56,7 @@
         <h2 class="text-2xl font-bold mb-4">Finalize Payment</h2>
         <!-- Next button (right) -->
         <button
-            @click="tab='rx'"
+            @click="tab='treatment'"
             class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
         >
             Next
@@ -104,16 +104,25 @@
 
         <p><strong>Date:</strong> {{ $date }}</p>
         <p><strong>Time:</strong> {{ $start }} - {{ $end }}</p>
+        @php $apptType = $appointment->appointment_type ?? 'scheduled'; @endphp
+        <p>
+            <strong>Appointment Status:</strong>
+            <span class="px-2 py-0.5 rounded text-sm font-semibold
+                {{ $apptType === 'walkin' ? 'bg-green-100 text-green-700' : ($apptType === 'emergency' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700') }}">
+                {{ $apptType === 'walkin' ? 'Walk-in' : ucfirst($apptType) }}
+            </span>
+        </p>
         <p>
             <strong>Arrived at:</strong>
-            @if($arrived)
+            @if(in_array($apptType, ['walkin', 'emergency']))
+                <span class="text-gray-500 italic">Not applicable</span>
+            @elseif($arrived)
                 <span class="text-green-700 font-semibold">{{ $arrived }}</span>
             @else
                 <span class="text-gray-500 italic">Not yet arrived</span>
             @endif
         </p>
         <p><strong>Branch:</strong> {{ $appointment->store->name ?? 'N/A' }}</p>
-        <p><strong>Description:</strong> {{ $appointment->desc }}</p>
 
         <form id="finalizeAppointmentForm"
               data-id="{{ $appointment->id }}"
@@ -144,6 +153,58 @@
                 </ul>
             </div>
 
+            @php
+                // Medicines bought for this visit (mula sa POS sales na nakatali sa appointment)
+                $checkinSales = \App\Models\Sale::with('items.medicine')
+                    ->forAppointment($appointment)
+                    ->get();
+                $checkinMedicineTotal = $checkinSales->sum('total_amount');
+                $checkinMedicineQty   = $checkinSales->flatMap->items->sum('quantity');
+            @endphp
+
+            {{-- MEDICINES BOUGHT --}}
+            <div class="mt-4">
+                <label class="block font-semibold mb-1">Medicines Bought ({{ $checkinMedicineQty }} item{{ $checkinMedicineQty == 1 ? '' : 's' }})</label>
+                @if($checkinSales->count())
+                    <ul class="list-disc ml-5 text-sm">
+                        @foreach($checkinSales as $sale)
+                            @foreach($sale->items as $item)
+                                <li>
+                                    {{ $item->medicine->name ?? '—' }}
+                                    ({{ $item->quantity }} × ₱{{ number_format($item->price, 2) }})
+                                    — ₱{{ number_format($item->subtotal ?? ($item->quantity * $item->price), 2) }}
+                                </li>
+                            @endforeach
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="text-sm text-gray-500 italic">No medicines bought for this visit.</p>
+                @endif
+            </div>
+
+            {{-- SERVICE PRICE --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Service Price (₱)</label>
+                <input type="number"
+                       name="total_price"
+                       id="service_price_input"
+                       value="{{ $appointment->total_price }}"
+                       step="0.01"
+                       min="0"
+                       class="w-full border rounded p-2 " >
+            </div>
+
+            {{-- MEDICINE TOTAL PRICE --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Medicine Total Price (₱)</label>
+                <input type="text"
+                       id="medicine_total_display"
+                       value="{{ number_format($checkinMedicineTotal, 2) }}"
+                       data-amount="{{ $checkinMedicineTotal }}"
+                       class="w-full border rounded p-2 bg-gray-100"
+                       readonly>
+            </div>
+
             {{-- PAYMENT TYPE --}}
             <div class="mt-4">
                 <label class="block font-semibold">Payment Type</label>
@@ -156,15 +217,38 @@
                 </select>
             </div>
 
-            {{-- TOTAL PRICE --}}
+            {{-- TOTAL PRICE (service + medicines) --}}
             <div class="mt-4">
                 <label class="block font-semibold">Total Price (₱)</label>
+                <input type="text"
+                       id="grand_total_display"
+                       value="{{ number_format((float) $appointment->total_price + $checkinMedicineTotal, 2) }}"
+                       class="w-full border rounded p-2 bg-gray-100 font-semibold"
+                       readonly>
+            </div>
+
+            {{-- AMOUNT GIVEN --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Amount Given (₱)</label>
                 <input type="number"
-                       name="total_price"
-                       value=""
+                       name="amount_given"
+                       id="amount_given_input"
+                       value="{{ $appointment->amount_given }}"
                        step="0.01"
                        min="0"
-                       class="w-full border rounded p-2 " >
+                       class="w-full border rounded p-2">
+                <p id="amount_given_error" class="text-red-600 text-sm mt-1 hidden"></p>
+            </div>
+
+            {{-- CHANGE (SUKLI) --}}
+            <div class="mt-4">
+                <label class="block font-semibold">Change / Sukli (₱)</label>
+                <input type="text"
+                       id="change_display"
+                       value="{{ $appointment->change_amount !== null ? number_format((float) $appointment->change_amount, 2) : '0.00' }}"
+                       class="w-full border rounded p-2 bg-gray-100 font-semibold text-green-700"
+                       readonly>
+                <input type="hidden" name="change_amount" id="change_amount_input" value="{{ $appointment->change_amount }}">
             </div>
 
             {{-- RECEIPT --}}
@@ -224,7 +308,7 @@
             <div class="flex items-center mt-2 mb-4">
                 <h2 class="text-xl font-bold">POS — Medicine Purchase</h2>
                 <button
-                    @click="tab='medication'"
+                    @click="tab='checkin'"
                     class="ml-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
                     Next
                 </button>
@@ -233,14 +317,12 @@
             <p class="text-sm text-gray-600 mb-4">
                 Open the POS to record medicine purchases for
                 <strong>{{ $appointment->user->name }} {{ $appointment->user->lastname }}</strong>.
-                The total ay automatic na rin makukuha sa Treatment Record at sa final receipt.
+                The total will be carried over automatically to the Treatment Record and the final receipt.
             </p>
 
             @php
                 $patientSales = \App\Models\Sale::with('items.medicine')
-                    ->where('patient_id', $appointment->user_id)
-                    ->where('store_id', $appointment->store_id)
-                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->forAppointment($appointment)
                     ->get();
                 $patientMedicineTotal = $patientSales->sum('total_amount');
             @endphp
@@ -329,9 +411,9 @@
 >
 
 
-    <!-- MODAL CONTENT -->
+    <!-- MODAL CONTENT (compact + fully visible on screen) -->
     <div
-        class="bg-white rounded-lg shadow-lg w-[700px] p-6 relative z-10"
+        class="bg-white rounded-lg shadow-lg w-[640px] max-w-[95vw] max-h-[90vh] overflow-y-auto p-4 text-sm relative z-10"
         @click.stop
     >
 
@@ -398,16 +480,14 @@
                     </span>
                     ) in full / partial payment for
                     <span style="border-bottom:1px solid #000; display:inline-block; width:45%;">
-                        {{ $appointment->service_name }}
+                        {{ $serviceNames->implode(', ') }}
                     </span>
                 </div>
             </div>
 
             @php
                 $combinedSales = \App\Models\Sale::with('items.medicine')
-                    ->where('patient_id', $appointment->user_id)
-                    ->where('store_id', $appointment->store_id)
-                    ->whereDate('created_at', $appointment->appointment_date)
+                    ->forAppointment($appointment)
                     ->get();
                 $combinedMedTotal = $combinedSales->sum('total_amount');
                 $combinedTreatmentTotal = (float) ($appointment->total_price ?? 0);
@@ -447,6 +527,14 @@
                                 <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">Grand Total</td>
                                 <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">₱{{ number_format($combinedGrandTotal, 2) }}</td>
                             </tr>
+                            <tr>
+                                <td style="border:1px solid #000; padding:3px; text-align:right;">Amount Given</td>
+                                <td style="border:1px solid #000; padding:3px; text-align:right;">₱<span id="receipt-given-amount">{{ number_format((float) $appointment->amount_given, 2) }}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">Change (Sukli)</td>
+                                <td style="border:1px solid #000; padding:3px; text-align:right; font-weight:bold;">₱<span id="receipt-change-amount">{{ number_format((float) $appointment->change_amount, 2) }}</span></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -464,11 +552,17 @@
             </div>
         </div>
 
-        <!-- PRINT BUTTON -->
-        <div class="mt-6 flex justify-end no-print">
+        <!-- ACTION BUTTONS -->
+        <div class="mt-6 flex justify-end gap-3 no-print">
+            <button
+                @click="openReceiptModal = false; localStorage.setItem('activeTab', 'rx'); location.reload();"
+                class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
+            >
+                Close
+            </button>
             <button
                 onclick="printCheckinReceipt()"
-                class="bg-green-600 text-white px-4 py-2 rounded"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
             >
                 Print
             </button>
@@ -514,46 +608,8 @@
 @endif
 <script>
 function printCheckinReceipt() {
-    const receipt = document.getElementById('ack-receipt-print');
-    if (!receipt) return;
-
-    const printWindow = window.open('', '_blank', 'width=900,height=600');
-
-    const doc = printWindow.document;
-
-    // Title
-    const title = doc.createElement('title');
-    title.textContent = 'Check-in Receipt';
-    doc.head.appendChild(title);
-
-    // Print styles
-    const style = doc.createElement('style');
-    style.textContent = `
-        @media print {
-            @page { margin: 10mm; }
-            body {
-                font-family: system-ui, sans-serif;
-                margin: 0;
-            }
-        }
-    `;
-    doc.head.appendChild(style);
-
-    // Tailwind (optional)
-    const tailwind = doc.createElement('link');
-    tailwind.rel = 'stylesheet';
-    tailwind.href = 'https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css';
-    doc.head.appendChild(tailwind);
-
-    // Content
-    const clone = receipt.cloneNode(true);
-    doc.body.appendChild(clone);
-
-    // Wait for styles & content
-    setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-    }, 500);
+    // Default na 4x6 ang papel ng lahat ng resibo — nasa partials/print-scripts.
+    window.printReceipt('ack-receipt-print', 'Acknowledgement Receipt');
 }
 </script>
 
@@ -592,26 +648,124 @@ $(document).on('click', '#saveDentistBtn', function () {
     });
 });
 
-$(document).on('input', 'input[name="total_price"]', function () {
-    let value = parseFloat($(this).val());
+function currentGrandTotal() {
+    const servicePrice  = parseFloat($('#service_price_input').val()) || 0;
+    const medicineTotal = parseFloat($('#medicine_total_display').data('amount')) || 0;
+    return servicePrice + medicineTotal;
+}
 
-    if (!value || value <= 0) {
-        // $('#receipt-sum-amount').text('_________');
-        $('#receipt-sum-words').text('__________________________');
-        return;
-    }
-
-    // Format number ₱
-    let formattedAmount = value.toLocaleString('en-PH', {
+function peso(value) {
+    return value.toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
+}
 
-    // $('#receipt-sum-amount').text(formattedAmount);
+// Ginagawang salita ang halaga para sa linyang "the sum of" ng resibo,
+// hal. 500 → "Five Hundred Pesos Only".
+const AMOUNT_ONES = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+    'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+const AMOUNT_TENS = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+const AMOUNT_SCALES = [
+    { value: 1000000000, name: 'Billion' },
+    { value: 1000000,    name: 'Million' },
+    { value: 1000,       name: 'Thousand' },
+];
 
-    // OPTIONAL: words (simple version)
-    $('#receipt-sum-words').text(formattedAmount + ' PESOS ONLY');
-});
+function amountBelowThousandToWords(n) {
+    let words = [];
+    if (n >= 100) {
+        words.push(AMOUNT_ONES[Math.floor(n / 100)], 'Hundred');
+        n %= 100;
+    }
+    if (n >= 20) {
+        words.push(AMOUNT_TENS[Math.floor(n / 10)]);
+        n %= 10;
+        if (n) words.push(AMOUNT_ONES[n]);
+    } else if (n > 0) {
+        words.push(AMOUNT_ONES[n]);
+    }
+    return words.join(' ');
+}
+
+function amountToWords(n) {
+    n = Math.floor(Math.abs(n));
+    if (n === 0) return 'Zero';
+
+    let words = [];
+    AMOUNT_SCALES.forEach(scale => {
+        if (n >= scale.value) {
+            words.push(amountBelowThousandToWords(Math.floor(n / scale.value)), scale.name);
+            n %= scale.value;
+        }
+    });
+    if (n > 0) words.push(amountBelowThousandToWords(n));
+
+    return words.join(' ');
+}
+
+function pesoInWords(amount) {
+    const pesos    = Math.floor(Math.abs(amount));
+    const centavos = Math.round((Math.abs(amount) - pesos) * 100);
+
+    let words = amountToWords(pesos) + (pesos === 1 ? ' Peso' : ' Pesos');
+    if (centavos > 0) {
+        words += ' and ' + amountToWords(centavos) + (centavos === 1 ? ' Centavo' : ' Centavos');
+    }
+    return words + ' Only';
+}
+
+function refreshPaymentTotals() {
+    const grandTotal     = currentGrandTotal();
+    const formattedTotal = peso(grandTotal);
+
+    $('#grand_total_display').val(formattedTotal);
+
+    if (grandTotal > 0) {
+        $('#receipt-sum-amount').text(formattedTotal);
+        $('#receipt-sum-words').text(pesoInWords(grandTotal));
+    } else {
+        $('#receipt-sum-amount').text('');
+        $('#receipt-sum-words').text('__________________________');
+    }
+
+    refreshChange();
+}
+
+// Kalkulahin ang sukli at harangan ang kulang na bayad
+function refreshChange() {
+    const grandTotal = currentGrandTotal();
+    const givenRaw   = $('#amount_given_input').val();
+    const given      = parseFloat(givenRaw) || 0;
+    const hasAmount  = givenRaw !== '' && givenRaw !== null;
+    const change     = given - grandTotal;
+    const short      = hasAmount && change < 0;
+
+    $('#change_display').val(short ? '0.00' : peso(Math.max(0, change)));
+    $('#change_amount_input').val(short ? '' : Math.max(0, change).toFixed(2));
+
+    const err = $('#amount_given_error');
+    if (short) {
+        err.text('Amount given is less than the total (₱' + peso(Math.abs(change)) + ' short).').removeClass('hidden');
+    } else {
+        err.addClass('hidden');
+    }
+
+    // Update receipt change line
+    $('#receipt-change-amount').text(short ? '0.00' : peso(Math.max(0, change)));
+    $('#receipt-given-amount').text(hasAmount ? peso(given) : '0.00');
+
+    // Huwag payagang i-complete kapag kulang ang bayad
+    const completeBtn = $('#action-buttons button[data-status="completed"]');
+    completeBtn.prop('disabled', short)
+               .toggleClass('opacity-50 cursor-not-allowed', short);
+
+    return !short;
+}
+
+$(document).on('input', '#service_price_input', refreshPaymentTotals);
+$(document).on('input', '#amount_given_input', refreshChange);
+$(document).ready(refreshPaymentTotals);
     $(document).ready(function () {
                 $('#payment_receipt_input').on('change', function (event) {
             const [file] = this.files;
@@ -637,6 +791,13 @@ $(document).on('input', 'input[name="total_price"]', function () {
 
             const button = $(this);
             const status = button.data('status');
+
+            // Bawal i-complete kapag kulang ang amount given sa total
+            if (status === 'completed' && !refreshChange()) {
+                Swal.fire('Insufficient Amount', $('#amount_given_error').text(), 'warning');
+                return;
+            }
+
             $('#status').val(status); // set hidden input
 
             const form = $('#finalizeAppointmentForm')[0];
@@ -683,15 +844,13 @@ $(document).on('input', 'input[name="total_price"]', function () {
                                         Paid
                                     </span>
                                 `);
+                                // Receipt is only shown for completed (paid) appointments
+                                window.dispatchEvent(new CustomEvent('open-receipt'));
                             } else if (newStatus === 'no_show') {
-                                $('#action-buttons').replaceWith(`
-                                    <span class="inline-block bg-red-100 text-red-700 px-4 py-2 rounded font-semibold">
-                                        No Show
-                                    </span>
-                                `);
+                                // No receipt for No Show — reload so the whole page
+                                // (status, buttons, tables) reflects the new status.
+                                location.reload();
                             }
-
-                            window.dispatchEvent(new CustomEvent('open-receipt'));
                         });
                     },
                     error: function (xhr) {
@@ -714,41 +873,10 @@ $(document).on('input', 'input[name="total_price"]', function () {
 
 
 <script>
+    // Back-compat: nasa partials/print-scripts.blade.php na ang totoong printer.
+    // Hindi na sinisira ang pahina kaya wala nang reload/redirect pagkatapos.
     function printDiv(divId) {
-        const redirectUrl = "{{ route('appointments.view', ['id' => $appointment->id]) }}";
-    
-        // Clone the div to preserve structure
-        const contentDiv = document.getElementById(divId);
-        const clone = contentDiv.cloneNode(true);
-    
-        // Copy current values for all inputs/selects/textarea
-        const originalInputs = contentDiv.querySelectorAll('input, select, textarea');
-        const clonedInputs = clone.querySelectorAll('input, select, textarea');
-    
-        originalInputs.forEach((input, index) => {
-            if (input.type === 'checkbox' || input.type === 'radio') {
-                clonedInputs[index].checked = input.checked;
-            } else {
-                clonedInputs[index].value = input.value;
-            }
-        });
-        const originalBody = document.body.innerHTML;
-        document.body.innerHTML = `
-        
-            <style>
-                @media print {
-                    @page { margin: 0; }
-                    body { margin: 1mm; font-family: system-ui, sans-serif; }
-                    .no-print { display: none !important; }
-                }
-                body { font-family: system-ui, sans-serif; margin: 5mm; }
-            </style>
-        `;
-        document.body.appendChild(clone);
-        window.print();
-        setTimeout(() => {
-            window.location.href = redirectUrl;
-        }, 200);
+        window.printSection(divId, { paper: 'Letter', scale: 80 });
     }
     </script>
 

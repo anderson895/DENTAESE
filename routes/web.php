@@ -9,6 +9,7 @@ use  App\Models\User;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SmsLogController;
 
 use function Laravel\Prompts\password;
 use Illuminate\Support\Facades\Storage;
@@ -99,6 +100,8 @@ Route::post('/cregister-face-registration', [FaceRecognitionController::class, '
 
 
 
+Route::view('/terms', 'auth.terms')->name('terms');
+
 Route::get('/qr',[AuthUi::class, 'Qr'])->name('Qr');
 Route::post('/qr-login', [QrController::class, 'LoginQr'])->name('qr.login');
 
@@ -112,6 +115,12 @@ Route::middleware('auth')->group(function () {
 
 Route::post('/signupform', [AuthUi::class, 'SignUpForm'])->name('signupform');
 Route::post('/loginform', [AuthUi::class, 'LoginForm'])->name('loginform');
+
+// Forgot password (OTP-based)
+Route::get('/forgot-password', [AuthUi::class, 'ForgotPasswordUi'])->name('password.forgot');
+Route::post('/forgot-password/send-otp', [AuthUi::class, 'forgotPasswordSendOtp'])->name('password.sendOtp');
+Route::post('/forgot-password/verify-otp', [AuthUi::class, 'forgotPasswordVerifyOtp'])->name('password.verifyOtp');
+Route::post('/forgot-password/reset', [AuthUi::class, 'forgotPasswordReset'])->name('password.reset');
 Route::post('/login-face', [AuthUi::class, 'loginFace'])->name('login-face');
 
 
@@ -135,6 +144,8 @@ Route::get('/dental-chart/{patient}', function (User $patient) {
 
 // ADMIN
 Route::middleware('auth')->group(function () {
+    Route::get('/sms-logs', [SmsLogController::class, 'index'])->name('sms-logs.index');
+
     Route::get('/chat', [MessageController::class, 'index'])->name('chat.index');
     Route::get('/patients', [MessageController::class, 'patients'])->name('patients.list');
     Route::get('/messages/{storeId}/{userId}', [MessageController::class, 'fetch'])->name('messages.fetch');
@@ -143,6 +154,12 @@ Route::middleware('auth')->group(function () {
     // ✅ ADMIN FILE UPLOAD
     Route::post('/messages/upload', [MessageController::class, 'adminUpload'])
         ->name('messages.upload');
+
+    // ✅ BRANCH-TO-BRANCH (Dentist / Receptionist / Admin)
+    Route::get('/branch-messages/branches', [MessageController::class, 'staffBranches'])->name('branch.messages.list');
+    Route::get('/branch-messages/{storeId}', [MessageController::class, 'branchMessages'])->name('branch.messages');
+    Route::post('/branch-messages', [MessageController::class, 'sendBranchMessage'])->name('branch.messages.store');
+    Route::post('/branch-messages/upload', [MessageController::class, 'uploadBranchFile'])->name('branch.messages.upload');
 });
 
 // PATIENT

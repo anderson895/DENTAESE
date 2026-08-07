@@ -13,15 +13,25 @@
                         class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="medical-tab">Patient Information</button>
                 </li>
-                {{-- <li>
+                <li>
                     <button
                         class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="chart-tab">Dental Chart</button>
-                </li> --}}
+                </li>
                 <li>
                     <button
                         class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
                         data-tab="record-tab">Treatment Record</button>
+                </li>
+                <li>
+                    <button
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
+                        data-tab="medication-tab">Current Medication</button>
+                </li>
+                <li>
+                    <button
+                        class="tab-button border-b-2 border-transparent py-2 px-4 hover:text-primary hover:border-primary"
+                        data-tab="consent-tab">Consent</button>
                 </li>
             @endif
 
@@ -42,45 +52,34 @@
                         <h2 class="mt-3 text-lg font-bold text-gray-800 text-center">{{ $user->name }} {{ $user->lastname }}</h2>
                         <span class="text-xs text-gray-500 capitalize">{{ $user->account_type }}</span>
 
-                        <form class="w-full mt-5 space-y-4">
+                        {{-- View-only profile details --}}
+                        <div class="w-full mt-5 space-y-4">
                             <div>
-                                <label for="lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                                <input type="text" name="lastname" id="lastname" value="{{ $user->lastname }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" value="{{ $user->lastname }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
                             <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                                <input type="text" name="name" id="name" value="{{ $user->name }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" value="{{ $user->name }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
                             <div>
-                                <label for="middlename" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
-                                <input type="text" name="middlename" id="middlename" value="{{ $user->middlename }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                                <input type="text" value="{{ $user->middlename }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
                             <div>
-                                <label for="suffix" class="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
-                                <select name="suffix" id="suffix"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white">
-                                    <option value="">-- Select Suffix --</option>
-                                    <option value="Jr." {{ old('suffix', $user->suffix ?? '') == 'Jr.' ? 'selected' : '' }}>Jr.</option>
-                                    <option value="Sr." {{ old('suffix', $user->suffix ?? '') == 'Sr.' ? 'selected' : '' }}>Sr.</option>
-                                    <option value="II" {{ old('suffix', $user->suffix ?? '') == 'II' ? 'selected' : '' }}>II</option>
-                                    <option value="III" {{ old('suffix', $user->suffix ?? '') == 'III' ? 'selected' : '' }}>III</option>
-                                    <option value="IV" {{ old('suffix', $user->suffix ?? '') == 'IV' ? 'selected' : '' }}>IV</option>
-                                    <option value="V" {{ old('suffix', $user->suffix ?? '') == 'V' ? 'selected' : '' }}>V</option>
-                                </select>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
+                                <input type="text" value="{{ $user->suffix ?: '—' }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
                             <div>
-                                <label for="birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
-                                <input type="date" name="birthdate" id="birthdate" value="{{ $user->birth_date }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
+                                <input type="date" value="{{ $user->birth_date }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
-                        </form>
-                        <button id="deletebtn" data-id="{{ $user->id }}"
-                            class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                            <i class="fa-solid fa-trash-can mr-1"></i> Delete
-                        </button>
+                        </div>
                     </div>
                 </div>
 
@@ -108,39 +107,28 @@
                         </div>
                     </div>
 
-                    {{-- Account Settings --}}
+                    {{-- Account Details (view-only) --}}
                     <div class="bg-white rounded-xl shadow-sm p-5">
                         <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 mb-4">
-                            <i class="fa-solid fa-user-gear text-primary"></i> Account Settings
+                            <i class="fa-solid fa-user-gear text-primary"></i> Account Details
                         </h3>
-                        <form id="updateProfile" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="hidden" name="id" id="id" value="{{ $user->id }}">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input type="text" name="email" id="email" value="{{ $user->email }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                            </div>
-                            <div>
-                                <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                                <input type="number" name="contact" id="contact" value="{{ $user->contact_number }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="text" value="{{ $user->email }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
                             <div>
-                                <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                                <input type="text" name="user" id="user" value="{{ $user->user }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                                <input type="text" value="{{ $user->contact_number }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
                             <div>
-                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                                <input type="password" name="password" id="password" placeholder="Leave blank to keep current password"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" value="{{ $user->user }}" readonly
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
                             </div>
-                            <div class="md:col-span-2 flex justify-end">
-                                <button class="bg-primary hover:bg-sky-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition" type="submit">
-                                    <i class="fa-solid fa-floppy-disk mr-1"></i> Update
-                                </button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -192,19 +180,37 @@
     </div>
 
     <div id="medical-tab" class="tab-content hidden">
-      
-       @include('client.patient_record', ['patient'=> $patient])
-        
+        @include('client.patient_record', ['patient'=> $patient, 'readonly' => true])
     </div>
+    <style>
+        /* View User Details modal is view-only — hide save/submit actions inside the tabs */
+        #medical-tab button[type="submit"] { display: none !important; }
+    </style>
+    <script>
+        // View-only: disable every field in Patient Information (nav buttons stay usable)
+        document.querySelectorAll('#medical-tab input, #medical-tab select, #medical-tab textarea')
+            .forEach(el => el.disabled = true);
+    </script>
 
     <div id="record-tab" class="tab-content hidden">
         @include('admin.dental-chart.treatment-record', ['record' => $record])
     </div>
 
     <div id="chart-tab" class="tab-content hidden">
-        @include('admin.dental-chart.index', ['patient'=> $patient])
+        @include('admin.dental-chart.index', ['patient'=> $patient, 'chartReadonly' => true])
     </div>
-    
+
+    <div id="medication-tab" class="tab-content hidden">
+        @include('client.current-medication', [
+            'currentMedications' => $currentMedications,
+            'medIntro' => "Current medication intake being monitored for {$user->name} {$user->lastname}.",
+        ])
+    </div>
+
+    <div id="consent-tab" class="tab-content hidden">
+        @include('client.consentpage')
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -231,146 +237,42 @@
         });
     </script>
     <script>
-        $('#deletebtn').click(function(e) {
-            e.preventDefault(); // prevent default if inside a form or link
+        (function () {
+            function initModalSlides() {
+                const slides = document.querySelectorAll('.medical-form-slide');
+                const nextBtn = document.getElementById('nextBtn');
+                const prevBtn = document.getElementById('prevBtn');
+                const indicator = document.getElementById('slideIndicator');
+                let currentSlide = 0;
 
-            const userId = $(this).data('id');
+                if (!slides.length || !nextBtn || !prevBtn) return;
 
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'You will not be able to recover this user!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'No, cancel!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        type: "POST",
-                        url: "{{ route('deleteuser') }}",
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            id: userId
-                        },
-                        dataType: "json",
-                        success: function(response) {
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: response.message,
-                                icon: 'success',
-                                confirmButtonText: 'OK'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-
-                                    window.location.href = '/useraccount';
-                                }
-                            });
-                        },
-                        error: function(xhr) {
-                            Swal.fire('Error', xhr.responseJSON.message ||
-                                'Something went wrong.', 'error');
-                        }
+                function showSlide(index) {
+                    slides.forEach((slide, i) => {
+                        slide.classList.toggle('hidden', i !== index);
                     });
+                    if (indicator) indicator.textContent = `${index + 1} of ${slides.length}`;
                 }
-            });
-        });
-    </script>
 
-    <script>
-        ///update profile
-        $('#updateProfile').submit(function(event) {
-            event.preventDefault();
-            var formData = {
-                id: $('input[name="id"]').val(),
-                email: $('input[name="email"]').val(),
-                name: $('input[name="name"]').val(),
-                lastname: $('input[name="lastname"]').val(),
-                middlename: $('input[name="middlename"]').val(),
-                suffix: $('select[name="suffix"]').val(),
-                birthdate: $('input[name="birthdate"]').val(),
-                contact: $('input[name="contact"]').val(),
-                user: $('input[name="user"]').val(),
-                password: $('input[name="password"]').val(),
-
-
-            }
-            $.ajax({
-                type: "patch",
-                url: "{{ route('updateUser') }}",
-                data: formData,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (response.status == 'success') {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: response.message,
-                            icon: 'success',
-
-                        })
-                    } else {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: response.message,
-                            icon: 'error',
-
-                        })
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) {
-                        const errors = xhr.responseJSON.errors;
-                        let errorList = '';
-
-                        for (let field in errors) {
-                            errorList += `${errors[field].join(', ')}\n`;
-                        }
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Validation Error',
-                            text: errorList.trim(),
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Something went wrong!',
-                        });
-                    }
-                }
-            });
-        })
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const slides = document.querySelectorAll('.medical-form-slide');
-            const nextBtn = document.getElementById('nextBtn');
-            const prevBtn = document.getElementById('prevBtn');
-            const indicator = document.getElementById('slideIndicator');
-            let currentSlide = 0;
-
-            function showSlide(index) {
-                slides.forEach((slide, i) => {
-                    slide.classList.toggle('hidden', i !== index);
+                nextBtn.addEventListener('click', () => {
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    showSlide(currentSlide);
                 });
-                indicator.textContent = `${index + 1} of ${slides.length}`;
+
+                prevBtn.addEventListener('click', () => {
+                    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                    showSlide(currentSlide);
+                });
+
+                showSlide(currentSlide);
             }
 
-            nextBtn.addEventListener('click', () => {
-                currentSlide = (currentSlide + 1) % slides.length;
-                showSlide(currentSlide);
-            });
-
-            prevBtn.addEventListener('click', () => {
-                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-                showSlide(currentSlide);
-            });
-
-            showSlide(currentSlide);
-        });
+            // Runs immediately when injected via AJAX (DOMContentLoaded has already fired)
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initModalSlides);
+            } else {
+                initModalSlides();
+            }
+        })();
     </script>
 

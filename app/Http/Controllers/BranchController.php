@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Store;
+use App\Services\Notifier;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -22,6 +23,17 @@ class BranchController extends Controller
     $store->closing_time = $request->closing_time;
     $store->open_days = $request->open_days;
     $store->save();
+
+    $hours = \Carbon\Carbon::parse($store->opening_time)->format('g:i A')
+        . ' - ' . \Carbon\Carbon::parse($store->closing_time)->format('g:i A');
+    $days = collect($store->open_days ?? [])->map(fn ($d) => ucfirst($d))->implode(', ');
+
+    Notifier::staffAndAdmins(
+        $store->id,
+        'Branch Schedule Updated',
+        "{$store->name} schedule was updated. Hours: {$hours}. Open days: {$days}.",
+        '/branch'
+    );
 
     return response()->json(['status' => 'success']);
 }
