@@ -17,7 +17,7 @@ class AppointmentSms
     public function booked(Appointment $appointment): bool
     {
         return $this->send($appointment, 'appointment_booked', sprintf(
-            'DentalEase: Hi %s, your appointment request at %s on %s at %s has been received. Please wait for the clinic to confirm.',
+            'Hi %s, your appointment request at %s on %s at %s has been received. Please wait for the clinic to confirm.',
             $this->firstName($appointment),
             $this->storeName($appointment),
             $this->date($appointment),
@@ -28,7 +28,7 @@ class AppointmentSms
     public function approved(Appointment $appointment): bool
     {
         return $this->send($appointment, 'appointment_confirmed', sprintf(
-            'DentalEase: Hi %s, your appointment at %s is CONFIRMED on %s, %s. Please arrive 10 minutes early.',
+            'Hi %s, your appointment at %s is CONFIRMED on %s, %s. Please arrive 10 minutes early.',
             $this->firstName($appointment),
             $this->storeName($appointment),
             $this->date($appointment),
@@ -39,7 +39,7 @@ class AppointmentSms
     public function rescheduled(Appointment $appointment): bool
     {
         return $this->send($appointment, 'appointment_rescheduled', sprintf(
-            'DentalEase: Hi %s, your appointment at %s has been RESCHEDULED to %s, %s. See you then!',
+            'Hi %s, your appointment at %s has been RESCHEDULED to %s, %s. See you then!',
             $this->firstName($appointment),
             $this->storeName($appointment),
             $this->date($appointment),
@@ -50,7 +50,7 @@ class AppointmentSms
     public function cancelled(Appointment $appointment): bool
     {
         return $this->send($appointment, 'appointment_cancelled', sprintf(
-            'DentalEase: Hi %s, your appointment at %s on %s at %s has been CANCELLED. You may book again anytime.',
+            'Hi %s, your appointment at %s on %s at %s has been CANCELLED. You may book again anytime.',
             $this->firstName($appointment),
             $this->storeName($appointment),
             $this->date($appointment),

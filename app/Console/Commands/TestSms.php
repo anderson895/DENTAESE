@@ -35,7 +35,7 @@ class TestSms extends Command
 
         $ok = $sms->send(
             $number,
-            $this->option('message') ?: 'DentalEase: This is a test message. SMS notifications are working.'
+            $this->option('message') ?: 'This is a test message. SMS notifications are working.'
         );
 
         if (!$ok) {

@@ -152,7 +152,7 @@ class AuthUi extends Controller
 
         $smsSent = app(SmsGateway::class)->sendOtp(
             $user->contact_number,
-            'DentalEase: Your password reset code is {otp}. Valid for 10 minutes. Do not share this code with anyone.',
+            'Your password reset code is {otp}. Valid for 10 minutes. Do not share this code with anyone.',
             $otp,
             'password_reset_otp'
         );
@@ -403,7 +403,7 @@ class AuthUi extends Controller
         // Step 4 ng signup wizard: ipadala rin ang OTP sa contact number.
         $smsSent = app(SmsGateway::class)->sendOtp(
             $request->contact_number,
-            'DentalEase: Your verification code is {otp}. Do not share this code with anyone.',
+            'Your verification code is {otp}. Do not share this code with anyone.',
             $otp,
             'signup_otp'
         );

@@ -44,13 +44,19 @@ class SmsStatus extends Command
             ])->all()
         );
 
-        $approved = collect($senders)->contains(
-            fn ($s) => strcasecmp($s['status'] ?? '', 'Approved') === 0
+        // Ang Semaphore ay nagsasauli ng "Active" (hindi "Approved") kapag
+        // aprubado na. Ang isinusuri ay ang sender name na aktuwal na gagamitin
+        // ng .env — puwedeng Active ang isa habang Banned ang iba sa listahan.
+        $configured = (string) config('services.semaphore.sender_name');
+
+        $active = collect($senders)->first(
+            fn ($s) => strcasecmp($s['name'] ?? '', $configured) === 0
+                && in_array(strtolower($s['status'] ?? ''), ['active', 'approved'], true)
         );
 
-        $approved
-            ? $this->info('Approved sender name found. SMS sending should work.')
-            : $this->warn('No approved sender name yet. Sends will keep failing until approval.');
+        $active
+            ? $this->info("Sender name '{$configured}' is approved. SMS sending should work.")
+            : $this->warn("Configured sender name '{$configured}' is not approved yet. Sends will keep failing.");
 
         return self::SUCCESS;
     }
