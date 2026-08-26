@@ -204,6 +204,9 @@ Route::prefix('pos')->group(function () {
     Route::post('/{store}/update', [POSController::class, 'updateCart'])->name('pos.update');
     Route::post('/{store}/remove', [POSController::class, 'removeFromCart'])->name('pos.remove');
     Route::post('/{store}/checkout', [POSController::class, 'checkout'])->name('pos.checkout');
+    // Nakalagay pagkatapos ng /checkout: mas tiyak ang /{store}/sales/... kaya
+    // walang banggaan sa mga nauna.
+    Route::post('/{store}/sales/{sale}/void', [POSController::class, 'voidSale'])->name('pos.sale.void');
 });
 
 //transaction

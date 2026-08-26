@@ -29,9 +29,13 @@
         </select>
         <select name="status" class="border rounded p-2">
             <option value="">-- Status --</option>
+            {{-- Ang enum ng sales.status ay pending / completed / void lamang.
+                 Dating "voided" ang halaga rito at "refunded" ang isa pang
+                 option — pareho silang walang katumbas sa DB, kaya laging
+                 walang laman ang resulta. --}}
             <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-            <option value="voided"    {{ request('status') == 'voided' ? 'selected' : '' }}>Voided</option>
-            <option value="refunded"  {{ request('status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
+            <option value="void"      {{ request('status') == 'void' ? 'selected' : '' }}>Voided</option>
+            <option value="pending"   {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
         </select>
         <button class="px-4 py-2 bg-sky-600 text-white rounded">Filter</button>
         <a href="{{ route('transactions.index', ['storeId' => $storeId]) }}" class="px-4 py-2 bg-gray-300 rounded">Reset</a>
