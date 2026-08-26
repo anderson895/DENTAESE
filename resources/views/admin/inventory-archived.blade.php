@@ -62,7 +62,7 @@
                             @if($batch->status === 'expired')
                                 <span class="text-gray-400 text-sm italic">Expired stock</span>
                             @elseif($depleted)
-                                <span class="text-gray-400 text-sm italic">Walang stock — magdagdag ng bagong batch</span>
+                                <span class="text-gray-400 text-sm italic">Out of stock — add a new batch</span>
                             @else
                                 <form method="POST" action="{{ route('batch.reactivate', $batch->id) }}" class="inline">
                                     @csrf
