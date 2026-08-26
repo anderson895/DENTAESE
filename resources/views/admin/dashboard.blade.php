@@ -5,140 +5,8 @@
 
 <!-- Content -->
 <div class="p-6 overflow-y-auto">
-    @if (auth()->user()->position === 'admin')
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-   <!-- STAFF CARD -->
-<a href="/useraccount"
-   class="bg-white rounded-md border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 block lg:col-span-2">
-
-    <!-- Header -->
-    <div class="mb-5">
-        <div class="text-3xl font-semibold text-primary">{{ $staffTotal }}</div>
-        <div class="text-sm font-medium text-gray-400">Total Staff</div>
-    </div>
-
-    <!-- Role Breakdown -->
-    <div class="grid grid-cols-3 gap-3">
-
-        <!-- Doctors -->
-        <div class="flex items-center gap-2 p-3 rounded-md bg-gray-50 border">
-            <div class="text-blue-500 text-xl">👨‍⚕️</div>
-            <div>
-                <div class="text-lg font-semibold text-gray-800">{{ $doctorCount }}</div>
-                <div class="text-xs text-gray-500">Doctors</div>
-            </div>
-        </div>
-
-        <!-- Receptionists -->
-        <div class="flex items-center gap-2 p-3 rounded-md bg-gray-50 border">
-            <div class="text-green-500 text-xl">🧑‍💼</div>
-            <div>
-                <div class="text-lg font-semibold text-gray-800">{{ $receptionistCount }}</div>
-                <div class="text-xs text-gray-500">Receptionists</div>
-            </div>
-        </div>
-
-        <!-- Admins -->
-        <div class="flex items-center gap-2 p-3 rounded-md bg-gray-50 border">
-            <div class="text-purple-500 text-xl">🛡️</div>
-            <div>
-                <div class="text-lg font-semibold text-gray-800">{{ $adminCount }}</div>
-                <div class="text-xs text-gray-500">Admins</div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="mt-4 text-accent font-medium text-sm hover:underline text-right">
-        View Staff
-    </div>
-</a>
-
-
-<!-- PATIENTS -->
-<a href="/patientaccount"
-   class="bg-white rounded-md border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 block relative">
-
-    <div>
-        <div class="text-3xl font-semibold text-primary">
-            {{ \App\Models\User::where('account_type', 'patient')->count() }}
-        </div>
-        <div class="text-sm font-medium text-gray-400">
-            Patients
-        </div>
-    </div>
-
-  
-    <div class="absolute bottom-4 right-4 text-accent font-medium text-sm hover:underline">
-        View
-    </div>
-</a>
-
-</div>
-@endif
-   @if (auth()->user()->position === 'admin')
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-
-    <!-- SALES THIS MONTH -->
-    <div class="bg-white rounded-md border p-6 shadow">
-        <div class="text-2xl font-semibold text-primary">
-            ₱{{ number_format($monthlySalesTotal, 2) }}
-        </div>
-        <div class="text-sm text-gray-400">Total Sales (This Month)</div>
-    </div>
-
-    <!-- APPOINTMENT EARNINGS -->
-    <div class="bg-white rounded-md border p-6 shadow">
-        <div class="text-2xl font-semibold text-primary">
-            ₱{{ number_format($monthlyAppointmentTotal, 2) }}
-        </div>
-        <div class="text-sm text-gray-400">Appointment Earnings (This Month)</div>
-    </div>
-
-    <!-- ACCUMULATED TOTAL -->
-    <div class="bg-white rounded-md border p-6 shadow">
-        <div class="text-2xl font-semibold text-primary">
-            ₱{{ number_format($monthlySalesTotal + $monthlyAppointmentTotal, 2) }}
-        </div>
-        <div class="text-sm text-gray-400">Total Earnings All Branches (This Month)</div>
-    </div>
-
-</div>
-<script>
-    console.log(@json(session('active_branch_id')));
-</script>
-
-@endif
- @if (session('active_branch_id') == "admin")
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-    <!-- SALES PER BRANCH -->
-    <div class="bg-white rounded-md border p-6 shadow">
-        <h3 class="text-lg font-semibold mb-4 text-gray-700">Sales per Branch (This Month)</h3>
-        <canvas id="salesPerBranchChart"></canvas>
-    </div>
-
-    <!-- APPOINTMENTS PER BRANCH -->
-    <div class="bg-white rounded-md border p-6 shadow">
-        <h3 class="text-lg font-semibold mb-4 text-gray-700">Appointments per Branch (This Month)</h3>
-        <canvas id="appointmentsPerBranchChart"></canvas>
-    </div>
-</div>
-
-<!-- TOTAL ACCUMULATED SALES & APPOINTMENTS -->
-<div class="bg-white rounded-md border p-6 shadow mb-6">
-    <h3 class="text-lg font-semibold mb-4 text-gray-700">Total Accumulated Sales & Appointments (Monthly)</h3>
-    <canvas id="totalAccumulatedChart"></canvas>
-</div>
-
-{{-- <canvas id="monthlySalesChart"></canvas>
-<canvas id="monthlyAppointmentsChart"></canvas> --}}
-@endif
- @if (session('active_branch_id') != "admin")
-
-    {{-- ================= GREETING ================= --}}
+    {{-- ================= GREETING (lahat ng view) ================= --}}
     @php
         $now  = now();
         $hour = (int) $now->format('G');
@@ -146,6 +14,12 @@
         $me = auth()->user();
         // Dr. + apelyido para sa dentista; pangalan lang para sa iba.
         $who = $me->position === 'Dentist' ? 'Dr. ' . $me->lastname : $me->name;
+        $isAdminView = session('active_branch_id') == 'admin';
+
+        // Mahahaba ang pangalan ng branch ("Prenza 1 Santiago-Amancio Branch") at
+        // nagkakapatong sa x-axis. Tinatanggap ng ApexCharts ang array bilang
+        // isang category — bawat elemento ay isang linya.
+        $wrapLabel = fn ($n) => explode("\n", wordwrap((string) $n, 16, "\n", false));
     @endphp
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
@@ -153,63 +27,129 @@
             <p class="text-sm text-gray-500 mt-1">Here's what's happening in your clinic today.</p>
         </div>
         <div class="flex items-center gap-5 text-sm text-gray-500">
-            <span class="flex items-center gap-2">
-                <i class="fa-regular fa-calendar text-gray-400"></i>{{ $now->format('l, F j, Y') }}
-            </span>
-            <span class="flex items-center gap-2">
-                <i class="fa-regular fa-clock text-gray-400"></i>
-                {{-- Ang epoch ng server ang simula, para sundin ang Asia/Manila
-                     kahit mali ang orasan ng PC na ginagamit. --}}
-                <span id="dashClock" data-epoch="{{ $now->getTimestamp() }}">{{ $now->format('h:i A') }}</span>
-            </span>
+            @if ($isAdminView)
+                {{-- Nakapirming panahon: ganito ang saklaw ng lahat ng KPI at
+                     per-branch chart sa ibaba (AdminController). Label lang ito,
+                     hindi pang-filter — huwag gawing mukhang mapipili. --}}
+                <span class="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1.5 bg-white">
+                    <i class="fa-regular fa-calendar text-gray-400"></i>{{ $now->format('F Y') }}
+                </span>
+            @else
+                <span class="flex items-center gap-2">
+                    <i class="fa-regular fa-calendar text-gray-400"></i>{{ $now->format('l, F j, Y') }}
+                </span>
+                <span class="flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-gray-400"></i>
+                    {{-- Ang epoch ng server ang simula, para sundin ang Asia/Manila
+                         kahit mali ang orasan ng PC na ginagamit. --}}
+                    <span id="dashClock" data-epoch="{{ $now->getTimestamp() }}">{{ $now->format('h:i A') }}</span>
+                </span>
+            @endif
         </div>
     </div>
 
-    {{-- PENDING APPOINTMENTS FOR APPROVAL --}}
-    <div class="bg-white border-l-4 border-yellow-400 border border-gray-200 shadow-md p-6 rounded-md mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <div class="font-medium flex items-center gap-2">
-                <i class="fa-solid fa-hourglass-half text-yellow-500"></i>
-                Pending Appointments — For Approval
-                <span class="text-xs px-2 py-0.5 rounded-full {{ $pendingApprovals->count() ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-500' }} font-semibold">
-                    {{ $pendingApprovals->count() }}
-                </span>
+    @include('admin.partials.pending-approvals')
+
+    @if ($isAdminView)
+    {{-- ================= ADMIN KPI CARDS ================= --}}
+    {{-- Ang tatlong pang-pera ay may sparkline ng 12 buwan at pagbabago
+         kumpara sa nakaraang buwan. Itinatago ang badge kapag null ang
+         pagbabago — Enero o zero ang nakaraan, kaya walang masasabing
+         porsiyento (tingnan ang AdminController::$pctChange). --}}
+    @php
+        $kpis = [
+            ['label' => 'Total Sales',              'value' => $monthlySalesTotal,
+             'series' => $monthlySalesArr,   'change' => $salesChange,
+             'icon' => 'fa-solid fa-peso-sign', 'tone' => 'purple'],
+            ['label' => 'Appointment Earnings',     'value' => $monthlyAppointmentTotal,
+             'series' => $monthlyEarningsArr, 'change' => $earningsChange,
+             'icon' => 'fa-regular fa-calendar-check', 'tone' => 'blue'],
+            ['label' => 'Total Earnings All Branches', 'value' => $monthlySalesTotal + $monthlyAppointmentTotal,
+             'series' => $combinedArr,       'change' => $combinedChange,
+             'icon' => 'fa-solid fa-building-columns', 'tone' => 'green'],
+        ];
+    @endphp
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+        <a href="/useraccount" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition block">
+            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-user-group"></i>
             </div>
-            <a href="{{ route('admin.booking', ['status' => 'pending']) }}" class="text-sm text-primary hover:underline font-medium">View All</a>
+            <div class="text-2xl font-bold text-gray-800 leading-none">{{ $staffTotal }}</div>
+            <div class="text-sm text-gray-500 mt-1">Total Staff</div>
+            <div class="text-xs text-gray-400 mt-1">
+                {{ $doctorCount }} dentists · {{ $receptionistCount }} receptionists · {{ $adminCount }} admins
+            </div>
+            <div class="text-xs text-primary font-medium mt-3">View Staff &rarr;</div>
+        </a>
+
+        <a href="/patientaccount" class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition block">
+            <div class="w-11 h-11 rounded-xl bg-green-50 text-green-500 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-800 leading-none">{{ $patientCount }}</div>
+            <div class="text-sm text-gray-500 mt-1">Patients</div>
+            <div class="text-xs text-gray-400 mt-1">Across {{ $branchCount }} branches</div>
+            <div class="text-xs text-primary font-medium mt-3">View Patients &rarr;</div>
+        </a>
+
+        @foreach ($kpis as $i => $kpi)
+            <div class="bg-white border border-gray-200 rounded-xl p-5">
+                <div class="w-11 h-11 rounded-xl bg-{{ $kpi['tone'] }}-50 text-{{ $kpi['tone'] }}-500 flex items-center justify-center mb-3">
+                    <i class="{{ $kpi['icon'] }}"></i>
+                </div>
+                <div class="text-xl font-bold text-gray-800 leading-none">₱{{ number_format($kpi['value'], 2) }}</div>
+                <div class="text-sm text-gray-500 mt-1">{{ $kpi['label'] }}</div>
+                <div class="text-xs text-gray-400">({{ $now->format('F Y') }})</div>
+                <div class="flex items-end justify-between gap-2 mt-2">
+                    <div class="flex-1 min-w-0 kpi-spark"
+                         data-series="{{ json_encode($kpi['series']) }}"
+                         data-tone="{{ $kpi['tone'] }}"></div>
+                    @if (!is_null($kpi['change']))
+                        <span class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full
+                            {{ $kpi['change'] >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }}">
+                            {{ $kpi['change'] >= 0 ? '↑' : '↓' }} {{ abs($kpi['change']) }}%
+                        </span>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+    @endif
+@if ($isAdminView)
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <h3 class="font-semibold text-sm text-gray-700">Sales per Branch ({{ $now->format('F Y') }})</h3>
+                <a href="{{ route('reports.sales') }}"
+                   class="text-xs font-medium text-primary border border-gray-200 rounded-md px-3 py-1 hover:bg-gray-50">View Report</a>
+            </div>
+            <div id="salesPerBranchChart"></div>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[540px]">
-                <tbody>
-                    @forelse ($pendingApprovals->take(5) as $pendingAppointment)
-                    <tr class="hover:bg-yellow-50 cursor-pointer transition"
-                        onclick="window.location='{{ route('admin.booking', ['status' => 'pending']) }}'">
-                        <td class="py-2 px-4 border-b border-gray-100">
-                            <span class="text-gray-600 text-sm font-medium">
-                                {{ $pendingAppointment->user->full_name ?? 'Unknown' }}
-                            </span>
-                        </td>
-                        <td class="py-2 px-4 border-b border-gray-100">
-                            <span class="text-[13px] font-medium text-gray-400">
-                                {{ \Carbon\Carbon::parse($pendingAppointment->appointment_date)->format('M d, Y') }}
-                                {{ \Carbon\Carbon::parse($pendingAppointment->appointment_time)->format('h:i A') }}
-                            </span>
-                        </td>
-                        <td class="py-2 px-4 border-b border-gray-100">
-                            <span class="text-[13px] font-medium text-gray-400">{{ $pendingAppointment->service_name }}</span>
-                        </td>
-                        <td class="py-2 px-4 border-b border-gray-100 text-right">
-                            <span class="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800 font-semibold">Pending</span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="4" class="py-2 px-4 text-center text-gray-400 text-sm">No pending appointments for approval. 🎉</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <h3 class="font-semibold text-sm text-gray-700">Appointments per Branch ({{ $now->format('F Y') }})</h3>
+                <a href="{{ route('reports.appointments') }}"
+                   class="text-xs font-medium text-primary border border-gray-200 rounded-md px-3 py-1 hover:bg-gray-50">View Report</a>
+            </div>
+            <div id="appointmentsPerBranchChart"></div>
         </div>
     </div>
+
+    {{-- Dalawang y-axis: piso sa kaliwa, bilang sa kanan. Magkaibang unit sila,
+         kaya iisang axis ay magpapalabas ng patag na linya sa isa sa kanila. --}}
+    <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <h3 class="font-semibold text-sm text-gray-700">Total Accumulated Sales &amp; Appointments (Monthly)</h3>
+            <span class="text-xs text-gray-500 border border-gray-200 rounded-md px-3 py-1">{{ $now->format('Y') }}</span>
+        </div>
+        <div id="totalAccumulatedChart"></div>
+    </div>
+@endif
+
+@if (session('active_branch_id') != "admin")
 
     {{-- ================= STAT CARDS ================= --}}
     {{-- Wala rito ang Pending: nasa banner na sa itaas, at hindi ito sumusunod
@@ -552,136 +492,86 @@ $(document).ready(function () {
     loadAppointmentStats();
 });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-//     const salesPerBranchCtx = document.getElementById('salesPerBranchChart');
+// ================= ADMIN CHARTS (ApexCharts) =================
+// Lahat ay nakabantay sa element: sa branch view ay wala ang mga ito, kaya
+// tahimik lang itong lalaktaw imbes na magbato ng error sa console.
+(function () {
+    if (typeof ApexCharts === 'undefined') return;
 
-// new Chart(document.getElementById('salesPerBranchChart'), {
-//     type: 'bar',
-//     data: {
-//         labels: {!! json_encode($salesPerBranch->pluck('name')) !!},
-//         datasets: [{
-//             label: 'Sales',
-//             data: {!! json_encode($salesPerBranch->pluck('total')) !!}
-//         }]
-//     }
-// });
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const peso = (v) => '₱' + Number(v).toLocaleString('en-PH', { maximumFractionDigits: 0 });
 
-// new Chart(document.getElementById('appointmentsPerBranchChart'), {
-//     type: 'bar',
-//     data: {
-//         labels: {!! json_encode($appointmentsPerBranch->pluck('name')) !!},
-//         datasets: [{
-//             label: 'Appointments',
-//             data: {!! json_encode($appointmentsPerBranch->pluck('total')) !!}
-//         }]
-//     }
-// });
-
-// new Chart(document.getElementById('totalAccumulatedChart'), {
-//     type: 'line',
-//     data: {
-//         labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-//         datasets: [
-//             {
-//                 label: 'Sales',
-//                 data: {!! json_encode($monthlySales->pluck('total')) !!}
-//             },
-//             {
-//                 label: 'Appointments',
-//                 data: {!! json_encode($monthlyAppointments->pluck('total')) !!}
-//             }
-//         ]
-//     }
-// });
-
-
-// SALES PER BRANCH
-const salesPerBranchEl = document.getElementById('salesPerBranchChart');
-if (salesPerBranchEl) new Chart(salesPerBranchEl, {
-    type: 'bar',
-    data: {
-        labels: {!! json_encode($salesPerBranch->pluck('name')) !!},
-        datasets: [{
-            label: 'Sales (₱)',
-            data: {!! json_encode($salesPerBranch->pluck('total')) !!},
-            backgroundColor: '#3B82F6' // Tailwind blue-500
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: { mode: 'index', intersect: false }
+    // SALES PER BRANCH
+    const salesEl = document.getElementById('salesPerBranchChart');
+    if (salesEl) new ApexCharts(salesEl, {
+        chart: { type: 'bar', height: 300, toolbar: { show: false } },
+        series: [{ name: 'Sales', data: {!! json_encode($salesPerBranch->pluck('total')->map(fn ($v) => (float) $v)) !!} }],
+        xaxis: {
+            categories: {!! json_encode($salesPerBranch->pluck('name')->map($wrapLabel)) !!},
+            labels: { style: { fontSize: '10px' } }
         },
-        scales: {
-            y: { beginAtZero: true, title: { display: true, text: 'Sales (₱)' } },
-            x: { title: { display: true, text: 'Branch' } }
-        }
-    }
-});
+        yaxis: { title: { text: 'Sales (₱)' }, labels: { formatter: (v) => Math.round(v).toLocaleString() } },
+        colors: ['#3b82f6'],
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '45%' } },
+        dataLabels: { enabled: true, formatter: peso, offsetY: -20, style: { colors: ['#374151'], fontSize: '11px' } },
+        legend: { show: false },
+        tooltip: { y: { formatter: peso } },
+        noData: { text: 'No sales this month' }
+    }).render();
 
-// APPOINTMENTS PER BRANCH
-const appointmentsPerBranchEl = document.getElementById('appointmentsPerBranchChart');
-if (appointmentsPerBranchEl) new Chart(appointmentsPerBranchEl, {
-    type: 'bar',
-    data: {
-        labels: {!! json_encode($appointmentsPerBranch->pluck('name')) !!},
-        datasets: [{
-            label: 'Appointments',
-            data: {!! json_encode($appointmentsPerBranch->pluck('total')) !!},
-            backgroundColor: '#10B981' // Tailwind green-500
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: { mode: 'index', intersect: false }
+    // APPOINTMENTS PER BRANCH
+    const apptEl = document.getElementById('appointmentsPerBranchChart');
+    if (apptEl) new ApexCharts(apptEl, {
+        chart: { type: 'bar', height: 300, toolbar: { show: false } },
+        series: [{ name: 'Appointments', data: {!! json_encode($appointmentsPerBranch->pluck('total')->map(fn ($v) => (int) $v)) !!} }],
+        xaxis: {
+            categories: {!! json_encode($appointmentsPerBranch->pluck('name')->map($wrapLabel)) !!},
+            labels: { style: { fontSize: '10px' } }
         },
-        scales: {
-            y: { beginAtZero: true, title: { display: true, text: 'Appointments' } },
-            x: { title: { display: true, text: 'Branch' } }
-        }
-    }
-});
+        yaxis: { title: { text: 'Appointments' }, labels: { formatter: (v) => Math.round(v) } },
+        colors: ['#10b981'],
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '45%' } },
+        dataLabels: { enabled: true, offsetY: -20, style: { colors: ['#374151'], fontSize: '11px' } },
+        legend: { show: false },
+        noData: { text: 'No appointments this month' }
+    }).render();
 
-// TOTAL ACCUMULATED SALES & APPOINTMENTS (LINE)
-const totalAccumulatedEl = document.getElementById('totalAccumulatedChart');
-if (totalAccumulatedEl) new Chart(totalAccumulatedEl, {
-    type: 'line',
-    data: {
-        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-        datasets: [
-            {
-                label: 'Sales (₱)',
-                data: {!! json_encode($monthlySalesArr) !!}, // make sure this is 12 months
-                borderColor: '#3B82F6',
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                tension: 0.3,
-                fill: true
-            },
-            {
-                label: 'Appointments',
-                data: {!! json_encode($monthlyAppointmentsArr) !!}, // 12 months
-                borderColor: '#10B981',
-                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                tension: 0.3,
-                fill: true
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { position: 'top' } },
-        scales: {
-            y: { beginAtZero: true },
-            x: { title: { display: true, text: 'Month' } }
-        }
-    }
-});
+    // TOTAL ACCUMULATED — dalawang y-axis: piso sa kaliwa, bilang sa kanan.
+    // Magkaibang unit sila; sa iisang axis ay lalapat sa zero ang bilang.
+    const accEl = document.getElementById('totalAccumulatedChart');
+    if (accEl) new ApexCharts(accEl, {
+        chart: { type: 'area', height: 340, toolbar: { show: false } },
+        series: [
+            { name: 'Sales (₱)',    data: {!! json_encode($monthlySalesArr->map(fn ($v) => (float) $v)) !!} },
+            { name: 'Appointments', data: {!! json_encode($monthlyAppointmentsArr->map(fn ($v) => (int) $v)) !!} }
+        ],
+        xaxis: { categories: MONTHS },
+        yaxis: [
+            { title: { text: 'Sales (₱)' }, labels: { formatter: (v) => Math.round(v).toLocaleString() } },
+            { opposite: true, title: { text: 'Appointments' }, labels: { formatter: (v) => Math.round(v) } }
+        ],
+        colors: ['#3b82f6', '#10b981'],
+        stroke: { curve: 'smooth', width: 2 },
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
+        dataLabels: { enabled: false },
+        markers: { size: 4 },
+        legend: { position: 'top', horizontalAlign: 'left' },
+        tooltip: { shared: true, intersect: false }
+    }).render();
 
+    // SPARKLINE sa bawat KPI card — 12 buwan ng kasaysayan sa likod ng numero.
+    document.querySelectorAll('.kpi-spark').forEach(function (el) {
+        const tones = { purple: '#a855f7', blue: '#3b82f6', green: '#22c55e' };
+        new ApexCharts(el, {
+            chart: { type: 'line', height: 44, sparkline: { enabled: true } },
+            series: [{ name: 'Monthly', data: JSON.parse(el.dataset.series).map(Number) }],
+            stroke: { curve: 'smooth', width: 2 },
+            colors: [tones[el.dataset.tone] || '#3b82f6'],
+            tooltip: { enabled: false }
+        }).render();
+    });
+})();
 </script>
 
 @endsection
