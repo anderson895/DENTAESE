@@ -129,6 +129,27 @@ class POSController extends Controller
         return back()->withErrors(['cart' => 'Cart is empty!']);
     }
 
+    // Muling suriin ang bawat batch bago itala ang benta. Nasa session ang
+    // cart, kaya puwedeng nag-iba na ang lagay mula nang idagdag ito: lumipas
+    // na ang expiry, may ibang cashier na nakaubos, sinuspinde ang batch, o
+    // nagpalit ng branch ang gumagamit. Hindi sapat ang tseke sa addToCart().
+    foreach ($cart as $item) {
+        $batch = medicine_batches::find($item['batch_id']);
+        $name  = $item['medicine_name'] ?? 'This item';
+
+        if (! $batch || $batch->store_id != $storeId || $batch->status !== 'active') {
+            $error = "{$name} is no longer available for sale. Please remove it from the cart.";
+        } elseif (\Carbon\Carbon::parse($batch->expiration_date)->toDateString() < today()->toDateString()) {
+            $error = "{$name} (Batch #{$batch->id}) has expired and cannot be sold.";
+        } elseif ($batch->quantity < $item['quantity']) {
+            $error = "{$name} only has {$batch->quantity} left, but the cart has {$item['quantity']}.";
+        } else {
+            continue;
+        }
+
+        return back()->withErrors(['cart' => $error])->withInput();
+    }
+
     // Bawal mag-checkout kapag kulang ang amount given sa kabuuang halaga.
     $cartTotal = collect($cart)->sum('subtotal');
     if ($request->filled('amount_given') && floatval($request->amount_given) < $cartTotal) {
