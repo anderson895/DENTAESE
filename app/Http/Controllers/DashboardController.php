@@ -28,7 +28,11 @@ class DashboardController extends Controller
         $query->whereMonth('appointment_date', Carbon::now()->month);
     }
 
-    $active = (clone $query)->where('status', 'approved')->count();
+    // Kasama ang 'arrived': aktibo pa rin ang pasyenteng naka-check-in na.
+    // Noong 'approved' lang ang binibilang, walang card na sumasaklaw sa
+    // 'arrived', kaya may appointment na hindi lumilitaw kahit saan sa hanay
+    // at hindi nagtutugma ang kabuuan nito sa hanay ng Appointment Type.
+    $active = (clone $query)->whereIn('status', ['approved', 'arrived'])->count();
     $completed = (clone $query)->where('status', 'completed')->count();
     $canceled = (clone $query)->where('status', 'cancelled')->count();
     $noshow = (clone $query)->where('status', 'no_show')->count();
@@ -43,12 +47,23 @@ class DashboardController extends Controller
         ->whereDate('appointment_date', '>=', Carbon::today())
         ->count();
 
+    // Ibang dimensyon ito sa status — ang isang scheduled ay puwedeng completed
+    // din. Hiwalay ang hanay nila sa dashboard para hindi magmukhang dapat
+    // silang magsama-sama sa iisang total. Sumusunod ito sa period filter:
+    // makatuwiran ang "ilang walk-in ngayong araw".
+    $scheduled = (clone $query)->where('appointment_type', 'scheduled')->count();
+    $walkin    = (clone $query)->where('appointment_type', 'walkin')->count();
+    $emergency = (clone $query)->where('appointment_type', 'emergency')->count();
+
     return response()->json([
         'active' => $active,
         'completed' => $completed,
         'canceled' => $canceled,
         'noshow' => $noshow,
         'pending' => $pending,
+        'scheduled' => $scheduled,
+        'walkin' => $walkin,
+        'emergency' => $emergency,
     ]);
 }
 
