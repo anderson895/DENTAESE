@@ -153,12 +153,27 @@
                     <option value="gcash">GCash</option>
                 </select>
 
+                {{-- Kapag galing sa appointment, puwedeng iwang blangko: itatala
+                     ang gamot bilang hindi pa bayad at isasama sa Amount Due sa
+                     Finalize Payment. Sa walk-in ay sapilitan — walang susunod
+                     na pagkakataong maningil. --}}
                 <label for="amount_given" class="block text-sm font-medium">
-                    Amount Given <span class="text-red-600">*</span>
+                    Amount Given
+                    @if ($appointmentId)
+                        <span class="text-gray-400 text-xs font-normal">— optional</span>
+                    @else
+                        <span class="text-red-600">*</span>
+                    @endif
                 </label>
-                <input type="number" step="0.01" name="amount_given" id="amount_given" required
+                <input type="number" step="0.01" name="amount_given" id="amount_given"
+                    @unless ($appointmentId) required @endunless
                     class="border rounded p-2 w-full" placeholder="₱0.00"
                     oninput="calcChange()">
+                @if ($appointmentId)
+                    <p class="text-xs text-gray-500">
+                        Leave blank to bill this to the appointment and collect once at checkout.
+                    </p>
+                @endif
 
                 <div id="changeDisplay" class="text-sm font-semibold text-green-700 hidden">
                     Change: ₱<span id="changeAmount">0.00</span>
@@ -366,6 +381,8 @@ const POS_PATIENTS = @json($posPatients);
 })();
 
 const POS_TOTAL = {{ collect($cart)->sum('subtotal') }};
+// Kapag naka-bill sa appointment, tanggap ang blangkong Amount Given.
+const POS_ALLOW_BLANK = {{ $appointmentId ? 'true' : 'false' }};
 
 function calcChange() {
     const givenRaw = document.getElementById('amount_given').value;
@@ -374,9 +391,11 @@ function calcChange() {
     const changeAmt = document.getElementById('changeAmount');
     const btn = document.getElementById('checkoutBtn');
 
-    // Bawal mag-checkout kapag blangko o kulang ang amount given. Dating
-    // `givenRaw !== ''`, kaya ang blangko ay itinuturing na ayos.
-    const insufficient = givenRaw === '' || given < POS_TOTAL;
+    // Bawal mag-checkout kapag kulang ang ibinigay. Ang blangko ay bawal LANG
+    // kung walang appointment na pagsisingilan — kung meron, ibig sabihin nito
+    // ay "singilin sa dulo", hindi "nakalimutang punan".
+    const insufficient = (givenRaw === '' && !POS_ALLOW_BLANK) ||
+                         (givenRaw !== '' && given < POS_TOTAL);
 
     if (givenRaw !== '' && given > 0) {
         changeEl.classList.remove('hidden');
@@ -405,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const givenRaw = document.getElementById('amount_given').value;
         const given = parseFloat(givenRaw) || 0;
 
-        if (givenRaw === '') {
+        if (givenRaw === '' && !POS_ALLOW_BLANK) {
             e.preventDefault();
             const msg = 'Please enter the amount given before checking out.';
             if (window.Swal) {
@@ -416,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (given < POS_TOTAL) {
+        if (givenRaw !== '' && given < POS_TOTAL) {
             e.preventDefault();
             const short = (POS_TOTAL - given).toFixed(2);
             if (window.Swal) {

@@ -283,12 +283,16 @@ public function settle(Request $request, $id)
         'payment_receipt' => 'nullable|image|max:2048',
     ]);
 
-    // SERBISYO lang ang sisingilin dito. BAYAD NA ang gamot sa POS — bawat
-    // Sale ay may sariling amount_given at change_amount, at kinokolekta ng
-    // kahera ang bayad bago pa maitala ang benta (POSController::checkout).
-    // Dating idinadagdag dito ang kabuuang gamot, kaya nadodoble ang singil:
-    // appt #155 ay sumingil ng 297 sa POS at 297 ulit dito.
-    $grandTotal = (float) $validated['total_price'];
+    // Ang amount_given ng isang Sale ang nagsasabi kung bayad na ito:
+    //   may halaga = nakolekta na sa POS  -> HUWAG nang singilin (dating
+    //                nadodoble: appt #155 ay sumingil ng 297 sa POS at 297 dito)
+    //   NULL       = sinadyang i-bill sa appointment na ito -> isama sa Amount Due
+    $unpaidSales = \App\Models\Sale::forAppointment($appointment)
+        ->whereNull('amount_given')
+        ->get();
+
+    $unpaidMedicineTotal = (float) $unpaidSales->sum('total_amount');
+    $grandTotal = (float) $validated['total_price'] + $unpaidMedicineTotal;
 
     // Bawal tapusin ang bayad kapag kulang ang ibinigay na halaga
     if ($request->filled('amount_given') && (float) $validated['amount_given'] < $grandTotal) {
@@ -320,7 +324,19 @@ public function settle(Request $request, $id)
         $data['payment_image'] = $filename;
     }
 
-    $appointment->update($data);
+    \Illuminate\Support\Facades\DB::transaction(function () use ($appointment, $data, $unpaidSales) {
+        $appointment->update($data);
+
+        // Markahang bayad ang mga gamot na kasama sa koleksiyong ito. Kung
+        // hindi, mananatili silang amount_given = NULL at masisingil ULIT sa
+        // susunod na pag-finalize — mismong doble-singil na inaayos natin.
+        foreach ($unpaidSales as $sale) {
+            $sale->update([
+                'amount_given'  => $sale->total_amount,
+                'change_amount' => 0,
+            ]);
+        }
+    });
 
     return response()->json([
         'status' => 'success',
