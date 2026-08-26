@@ -283,6 +283,9 @@
                    class="rounded-md border border-dashed border-yellow-300 bg-yellow-50 p-4 hover:bg-yellow-100 hover:border-yellow-500 transition cursor-pointer block">
                     <div class="text-xl font-semibold text-yellow-600" id="pending-count">0</div>
                     <span class="text-yellow-700 text-sm">Pending Approval</span>
+                    {{-- Sinasadyang hindi sumusunod sa period filter — tingnan ang
+                         DashboardController::getAppointmentStats(). --}}
+                    <span class="block text-yellow-600 text-xs">Upcoming — not filtered by period</span>
                 </a>
                 <a href="{{ route('admin.booking', ['status' => 'approved']) }}"
                    class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">

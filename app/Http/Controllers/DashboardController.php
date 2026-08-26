@@ -32,7 +32,16 @@ class DashboardController extends Controller
     $completed = (clone $query)->where('status', 'completed')->count();
     $canceled = (clone $query)->where('status', 'cancelled')->count();
     $noshow = (clone $query)->where('status', 'no_show')->count();
-    $pending = (clone $query)->where('status', 'pending')->count();
+
+    // Work queue ang Pending, hindi istatistika ng panahon: kailangan pa ring
+    // aprubahan NGAYON ang appointment sa susunod na linggo. Sinasadyang hindi
+    // ito sumusunod sa filter — kung "Today" ang saklaw nito, nagpapakita ito
+    // ng 0 samantalang may 1 sa banner sa itaas at may 1 sa listahang bubukas
+    // kapag pinindot ang card. Katugma ito ng AdminController::$pendingApprovals.
+    $pending = Appointment::where('store_id', $branchId)
+        ->where('status', 'pending')
+        ->whereDate('appointment_date', '>=', Carbon::today())
+        ->count();
 
     return response()->json([
         'active' => $active,
