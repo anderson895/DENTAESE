@@ -26,10 +26,15 @@ class Sale extends Model
      * this Patient". Kasama pa rin ang lumang paraan ng pagtutugma (pasyente +
      * branch + petsa ng appointment) para hindi mawala ang mga naunang record
      * na wala pang appointment_id.
+     *
+     * Hindi kasama ang VOID — inalis na 'yon ng kahera at naibalik na ang
+     * stock, kaya hindi na dapat lumitaw sa singil, sa Treatment Record, o sa
+     * resibo. Dito ito isinasala para sabay maayos ang lahat ng gumagamit.
+     * Tandaan: 'void' ang halaga sa enum ng `sales.status`, hindi 'voided'.
      */
     public function scopeForAppointment($query, $appointment)
     {
-        return $query->where(function ($q) use ($appointment) {
+        return $query->where('status', '!=', 'void')->where(function ($q) use ($appointment) {
             $q->where('appointment_id', $appointment->id)
               ->orWhere(function ($legacy) use ($appointment) {
                   $legacy->whereNull('appointment_id')

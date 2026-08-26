@@ -252,6 +252,65 @@ class POSController extends Controller
     ->with('receipt', $sale->load('items.medicine', 'patient', 'user'));
 }
 
+    /**
+     * Ibasura ang isang maling naitalang benta at ibalik ang stock.
+     *
+     * HINDI PA BAYAD lang ang puwede: kapag may nakolektang pera, refund na ang
+     * usapin — kailangang itala kung magkano at kanino isinauli, at wala pa
+     * tayong ganoon. Hindi rin binubura ang record; minamarkahan lang itong
+     * 'void' para buo ang audit trail at para awtomatiko itong mawala sa mga
+     * ulat, na pawang nagsasala ng status = 'completed'.
+     *
+     * 'void' ang halaga — 'yan ang nasa enum ng `sales.status`. Ang filter sa
+     * Transaction History ay 'voided' dati, kaya wala itong naabot kailanman.
+     */
+    public function voidSale(Request $request, $storeId, $saleId)
+    {
+        $sale = Sale::with('items')->where('store_id', $storeId)->findOrFail($saleId);
+
+        if ($sale->status === 'void') {
+            return back()->withErrors(['sale' => 'This sale is already voided.']);
+        }
+
+        if ($sale->amount_given !== null) {
+            return back()->withErrors([
+                'sale' => 'This sale was already paid at the POS and cannot be voided here. A refund is required.',
+            ]);
+        }
+
+        DB::transaction(function () use ($sale, $storeId) {
+            foreach ($sale->items as $item) {
+                $batch = medicine_batches::find($item->medicine_batch_id);
+                if (! $batch) {
+                    continue;   // nabura na ang batch — wala nang pagbabalikan ng stock
+                }
+
+                $batch->increment('quantity', $item->quantity);
+
+                // Awtomatikong sinuspinde ng checkout ang batch nang maubos ito;
+                // may laman na ulit, kaya dapat itong maging active muli — kung
+                // hindi, mananatiling hindi mabebenta ang naibalik na stock.
+                if ($batch->status === 'suspended' && $batch->quantity > 0) {
+                    $batch->status = 'active';
+                }
+                $batch->save();
+
+                MedicineMovement::create([
+                    'medicine_id'       => $item->medicine_id,
+                    'store_id'          => $storeId,
+                    'medicine_batch_id' => $item->medicine_batch_id,
+                    'type'              => 'stock_in',
+                    'quantity'          => $item->quantity,
+                    'remarks'           => "Voided Sale #{$sale->id}",
+                ]);
+            }
+
+            $sale->update(['status' => 'void']);
+        });
+
+        return back()->with('success', "Sale #{$sale->id} has been voided and the stock returned.");
+    }
+
     public function updateCart(Request $request, $storeId)
 {
     $request->validate([

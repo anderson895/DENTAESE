@@ -368,6 +368,8 @@
                         <th class="border px-3 py-2 text-left">Receipt #</th>
                         <th class="border px-3 py-2 text-left">Items</th>
                         <th class="border px-3 py-2 text-right">Total</th>
+                        <th class="border px-3 py-2 text-center">Payment</th>
+                        <th class="border px-3 py-2 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -385,10 +387,33 @@
                                 </ul>
                             </td>
                             <td class="border px-3 py-2 text-right">₱{{ number_format($sale->total_amount, 2) }}</td>
+                            <td class="border px-3 py-2 text-center">
+                                @if(is_null($sale->amount_given))
+                                    <span class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-semibold">Unpaid</span>
+                                @else
+                                    <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-semibold">Paid</span>
+                                @endif
+                            </td>
+                            <td class="border px-3 py-2 text-center">
+                                {{-- Hindi pa bayad lang ang puwedeng i-void. Kapag may
+                                     nakolektang pera, refund na ang usapin. --}}
+                                @if(is_null($sale->amount_given))
+                                    <form method="POST" class="inline void-sale-form"
+                                          action="{{ route('pos.sale.void', ['store' => $sale->store_id, 'sale' => $sale->id]) }}">
+                                        @csrf
+                                        <button type="submit"
+                                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
+                                            Void
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-gray-400 text-xs italic">Refund required</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center text-gray-500 py-4">
+                            <td colspan="5" class="text-center text-gray-500 py-4">
                                 No medicine purchases yet for this visit.
                             </td>
                         </tr>
@@ -399,6 +424,7 @@
                         <tr>
                             <td colspan="2" class="border px-3 py-2 text-right font-semibold">Medicine Total</td>
                             <td class="border px-3 py-2 text-right font-semibold">₱{{ number_format($patientMedicineTotal, 2) }}</td>
+                            <td class="border px-3 py-2" colspan="2"></td>
                         </tr>
                     </tfoot>
                 @endif
@@ -633,6 +659,15 @@
     });
 </script>
 @endif
+@if($errors->any())
+{{-- Walang tagapagpakita ng error ang pahinang ito dati, kaya tahimik lang
+     sanang babalik ang tinanggihang void na parang walang nangyari. --}}
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire('Cannot do that', @json($errors->first()), 'warning');
+    });
+</script>
+@endif
 <script>
 function printCheckinReceipt() {
     // Default na 4x6 ang papel ng lahat ng resibo — nasa partials/print-scripts.
@@ -684,6 +719,27 @@ function currentGrandTotal() {
     const unpaidMeds   = parseFloat($('#medicine_total_display').data('amount')) || 0;
     return servicePrice + unpaidMeds;
 }
+
+// Kumpirmahin bago i-void — hindi ito mababawi mula sa UI.
+$(document).on('submit', '.void-sale-form', function (e) {
+    const form = this;
+    if (form.dataset.confirmed) return;     // pumasa na sa kumpirmasyon
+
+    e.preventDefault();
+    Swal.fire({
+        title: 'Void this sale?',
+        text: 'The medicines will be returned to stock and removed from this appointment. This cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Yes, void it',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.dataset.confirmed = '1';
+            form.submit();
+        }
+    });
+});
 
 function peso(value) {
     return value.toLocaleString('en-PH', {
