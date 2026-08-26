@@ -15,6 +15,20 @@
         .hidden { display: none; }
         body { visibility: hidden; }
         body.tw-ready { visibility: visible; }
+
+        /* Nananatili ang top bar kapag nag-scroll. */
+        #topbar { position: sticky; top: 0; z-index: 50; }
+
+        /* Sa desktop, dumidikit ang sidebar sa ILALIM ng top bar, hindi sa
+           itaas ng viewport — kung hindi, magkakapatong sila. Sinusukat ng JS
+           ang totoong taas ng header papuntang --header-h; ang 4.5rem ay
+           panakip lang bago pa tumakbo ang JS at kung sakaling mabigo ito. */
+        @media (min-width: 640px) {
+            #sidebar {
+                top: var(--header-h, 4.5rem);
+                height: calc(100vh - var(--header-h, 4.5rem));
+            }
+        }
     </style>
 
     <!-- Tailwind CSS -->
@@ -22,6 +36,22 @@
 
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Isinusukat ang totoong taas ng top bar para eksaktong sa ilalim nito
+         dumikit ang sidebar. Sinusundan ang resize dahil nagbabago ang taas
+         kapag pumipilipit ang header sa makikitid na screen. -->
+    <script>
+        (function () {
+            function syncHeaderHeight() {
+                var bar = document.getElementById('topbar');
+                if (!bar) return;
+                document.documentElement.style.setProperty('--header-h', bar.offsetHeight + 'px');
+            }
+            document.addEventListener('DOMContentLoaded', syncHeaderHeight);
+            window.addEventListener('resize', syncHeaderHeight);
+            window.addEventListener('load', syncHeaderHeight);
+        })();
+    </script>
 
     <!-- Reveal the page once Tailwind has generated its styles (prevents FOUC flicker) -->
     <script>
@@ -61,7 +91,7 @@
     <div class="flex flex-col min-h-screen">
 
         <!-- Header -->
-        <header class="bg-primary px-6 py-4 shadow-lg flex justify-between items-center">
+        <header id="topbar" class="bg-primary px-6 py-4 shadow-lg flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <button id="toggleSidebar" class="text-white text-2xl sm:hidden">
                     <i class="fa-solid fa-bars"></i>
@@ -141,7 +171,14 @@
 
         <div class="flex flex-1">
             <!-- Sidebar -->
-            <aside id="sidebar" class="bg-secondary sm:w-64 w-56 fixed sm:relative z-40 min-h-full px-4 py-6 shadow-md transform transition-transform duration-300 -translate-x-full sm:translate-x-0">
+            {{-- sm:sticky + sm:self-start = hindi sumasama sa scroll ang sidebar.
+                 Kailangan ang self-start: sa flex row, ini-unat ng default na
+                 align-items:stretch ang aside sa buong taas ng row, kaya walang
+                 puwang na madudulasan ng sticky at hindi ito gumagana.
+                 Ang `top` at `height` ay nasa <style> sa head — nakadepende
+                 sila sa --header-h. Sa mobile ay `fixed` pa rin ito: drawer na
+                 binubuksan ng #toggleSidebar, kaya sm: lang ang bagong klase. --}}
+            <aside id="sidebar" class="bg-secondary sm:w-64 w-56 fixed sm:sticky sm:self-start sm:overflow-y-auto z-40 min-h-full px-4 py-6 shadow-md transform transition-transform duration-300 -translate-x-full sm:translate-x-0">
                 <nav class="flex flex-col space-y-1 text-sm text-accent font-medium">
                     @if (auth()->user()->position == 'admin')
                         <select id="branchSelector" class="mb-4 border border-gray-300 rounded px-2 py-1 w-full text-sm">

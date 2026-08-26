@@ -55,7 +55,13 @@ class DashboardController extends Controller
     $walkin    = (clone $query)->where('appointment_type', 'walkin')->count();
     $emergency = (clone $query)->where('appointment_type', 'emergency')->count();
 
+    // Lahat ng appointment sa napiling panahon, anuman ang status. Katumbas
+    // ito ng scheduled + walkin + emergency, kaya may pantasteng tugma ang
+    // dalawang hanay sa dashboard.
+    $total = (clone $query)->count();
+
     return response()->json([
+        'total' => $total,
         'active' => $active,
         'completed' => $completed,
         'canceled' => $canceled,
