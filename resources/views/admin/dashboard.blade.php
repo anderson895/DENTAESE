@@ -138,6 +138,33 @@
 @endif
  @if (session('active_branch_id') != "admin")
 
+    {{-- ================= GREETING ================= --}}
+    @php
+        $now  = now();
+        $hour = (int) $now->format('G');
+        $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+        $me = auth()->user();
+        // Dr. + apelyido para sa dentista; pangalan lang para sa iba.
+        $who = $me->position === 'Dentist' ? 'Dr. ' . $me->lastname : $me->name;
+    @endphp
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ $greeting }}, {{ $who }}! 👋</h1>
+            <p class="text-sm text-gray-500 mt-1">Here's what's happening in your clinic today.</p>
+        </div>
+        <div class="flex items-center gap-5 text-sm text-gray-500">
+            <span class="flex items-center gap-2">
+                <i class="fa-regular fa-calendar text-gray-400"></i>{{ $now->format('l, F j, Y') }}
+            </span>
+            <span class="flex items-center gap-2">
+                <i class="fa-regular fa-clock text-gray-400"></i>
+                {{-- Ang epoch ng server ang simula, para sundin ang Asia/Manila
+                     kahit mali ang orasan ng PC na ginagamit. --}}
+                <span id="dashClock" data-epoch="{{ $now->getTimestamp() }}">{{ $now->format('h:i A') }}</span>
+            </span>
+        </div>
+    </div>
+
     {{-- PENDING APPOINTMENTS FOR APPROVAL --}}
     <div class="bg-white border-l-4 border-yellow-400 border border-gray-200 shadow-md p-6 rounded-md mb-6">
         <div class="flex justify-between items-center mb-4">
@@ -184,13 +211,81 @@
         </div>
     </div>
 
+    {{-- ================= STAT CARDS ================= --}}
+    {{-- Wala rito ang Pending: nasa banner na sa itaas, at hindi ito sumusunod
+         sa period filter kaya hindi ito kauri ng apat na ito. Ang Total ay
+         hindi link — walang "lahat ng status" na filter ang booking list, kaya
+         hindi magtutugma ang bilang sa listahang bubukas. --}}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-calendar text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="text-2xl font-bold text-gray-800 leading-none" id="total-count">0</div>
+                <div class="text-sm text-gray-600 mt-1">Total Appointments</div>
+                <div class="text-xs text-gray-400 period-label">Today</div>
+            </div>
+        </div>
+
+        <a href="{{ route('admin.booking', ['status' => 'approved,arrived']) }}"
+           class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 hover:border-green-400 hover:shadow-sm transition">
+            <div class="w-11 h-11 rounded-xl bg-green-50 text-green-500 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-square-check text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="text-2xl font-bold text-gray-800 leading-none" id="active-count">0</div>
+                <div class="text-sm text-gray-600 mt-1">Active</div>
+                <div class="text-xs text-gray-400">Approved + Arrived</div>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.booking', ['status' => 'completed']) }}"
+           class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 hover:border-purple-400 hover:shadow-sm transition">
+            <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-clipboard text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="text-2xl font-bold text-gray-800 leading-none" id="completed-count">0</div>
+                <div class="text-sm text-gray-600 mt-1">Completed</div>
+                <div class="text-xs text-gray-400 period-label">Today</div>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.booking', ['status' => 'cancelled']) }}"
+           class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 hover:border-orange-400 hover:shadow-sm transition">
+            <div class="w-11 h-11 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-circle-xmark text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="text-2xl font-bold text-gray-800 leading-none" id="canceled-count">0</div>
+                <div class="text-sm text-gray-600 mt-1">Cancelled</div>
+                <div class="text-xs text-gray-400 period-label">Today</div>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.booking', ['status' => 'no_show']) }}"
+           class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 hover:border-teal-400 hover:shadow-sm transition">
+            <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-eye-slash text-lg"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="text-2xl font-bold text-gray-800 leading-none" id="noshow-count">0</div>
+                <div class="text-sm text-gray-600 mt-1">No Show</div>
+                <div class="text-xs text-gray-400 period-label">Today</div>
+            </div>
+        </a>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="p-6 relative flex flex-col min-w-0 mb-4 lg:mb-0 break-words bg-gray-50  w-full shadow-lg rounded">
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
             <div class="rounded-t mb-0 px-0 border-0">
-                <div class="flex flex-wrap items-center px-4 py-2">
-                    <div class="relative w-full max-w-full flex-grow flex-1">
-                        <h3 class="font-semibold text-base ">Expiring Soon Inventory</h3>
-                    </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 class="font-semibold text-base flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-red-500"></i>Expiring Soon Inventory
+                    </h3>
+                    <a href="{{ route('inventory') }}"
+                       class="text-xs font-medium text-primary border border-gray-200 rounded-md px-3 py-1 hover:bg-gray-50">View All</a>
                 </div>
                 <div class="block w-full overflow-x-auto">
                     <table class="items-center w-full bg-transparent border-collapse">
@@ -217,8 +312,10 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center py-4 text-gray-500 text-xs">
-                                    No medicines expiring soon 🎉
+                                <td colspan="3" class="text-center py-10">
+                                    <i class="fa-solid fa-box-open text-3xl text-gray-300"></i>
+                                    <div class="text-sm text-gray-500 mt-2">No medicines expiring soon</div>
+                                    <div class="text-xs text-gray-400">You're all set! 🎉</div>
                                 </td>
                             </tr>
                         @endforelse
@@ -229,9 +326,11 @@
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 shadow-md p-6 rounded-md">
-            <div class="flex justify-between mb-4 items-start">
-                <div class="font-medium">Appointment Today</div>
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex justify-between mb-4 items-center">
+                <h3 class="font-semibold text-base flex items-center gap-2">
+                    <i class="fa-regular fa-calendar text-blue-500"></i>Appointment Today
+                </h3>
             </div>
             <div class="overflow-hidden">
                 <table class="w-full min-w-[540px]">
@@ -259,7 +358,11 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="py-2 px-4 text-center text-gray-400 text-sm">No appointments for today.</td>
+                            <td colspan="3" class="py-10 px-4 text-center">
+                                <i class="fa-regular fa-calendar-check text-3xl text-gray-300"></i>
+                                <div class="text-sm text-gray-500 mt-2">No appointments for today.</div>
+                                <div class="text-xs text-gray-400">Enjoy your free time!</div>
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -268,89 +371,65 @@
         </div>
     </div>
 
+    {{-- ================= APPOINTMENT TYPE ================= --}}
+    {{-- Ibang dimensyon ito sa status sa itaas — ang isang scheduled ay puwede
+         ring completed — kaya hiwalay ang hanay. Kung pinagsama, magmumukhang
+         dapat silang magsama-sama sa iisang total. --}}
+    <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+            <div class="font-semibold text-sm text-gray-700 lg:w-40 shrink-0">Appointment Type</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                <a href="{{ route('admin.booking', ['type' => 'scheduled']) }}"
+                   class="rounded-lg bg-blue-50 p-4 flex items-center gap-3 hover:bg-blue-100 transition">
+                    <i class="fa-regular fa-calendar text-blue-500 text-lg"></i>
+                    <div>
+                        <div class="text-lg font-bold text-blue-600 leading-none" id="scheduled-count">0</div>
+                        <div class="text-sm text-blue-700">Scheduled</div>
+                    </div>
+                </a>
+                <a href="{{ route('admin.booking', ['type' => 'walkin']) }}"
+                   class="rounded-lg bg-green-50 p-4 flex items-center gap-3 hover:bg-green-100 transition">
+                    <i class="fa-solid fa-person-walking text-green-500 text-lg"></i>
+                    <div>
+                        <div class="text-lg font-bold text-green-600 leading-none" id="walkin-count">0</div>
+                        <div class="text-sm text-green-700">Walk-in</div>
+                    </div>
+                </a>
+                <a href="{{ route('admin.booking', ['type' => 'emergency']) }}"
+                   class="rounded-lg bg-red-50 p-4 flex items-center gap-3 hover:bg-red-100 transition">
+                    <i class="fa-solid fa-truck-medical text-red-500 text-lg"></i>
+                    <div>
+                        <div class="text-lg font-bold text-red-600 leading-none" id="emergency-count">0</div>
+                        <div class="text-sm text-red-700">Emergency</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================= CHARTS ================= --}}
+    {{-- Iisang tugon ng /dashboard/appointment-stats ang pinagmumulan ng mga
+         card sa itaas at ng dalawang chart, kaya sabay silang nag-a-update
+         kapag pinalitan ang period filter. Hindi kasama ang Pending sa status
+         chart — hindi ito naka-scope sa panahon, kaya maling ihanay sa apat. --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white border border-gray-200 shadow-md p-6 rounded-md lg:col-span-2">
-            <div class="flex items-center gap-2">
-                <div class="font-medium">Appointment Count</div>
-                <select id="appointmentFilter" class="ml-4 border rounded px-2 py-1 text-sm text-gray-600">
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="font-semibold text-sm text-gray-700">
+                    Status Breakdown
+                    <span class="text-gray-400 text-xs font-normal">(excludes Pending)</span>
+                </div>
+                <select id="appointmentFilter" class="border border-gray-200 rounded-md px-2 py-1 text-sm text-gray-600">
                     <option value="daily">Today</option>
                     <option value="weekly">This Week</option>
                     <option value="monthly">This Month</option>
                 </select>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                <a href="{{ route('admin.booking', ['status' => 'pending']) }}"
-                   class="rounded-md border border-dashed border-yellow-300 bg-yellow-50 p-4 hover:bg-yellow-100 hover:border-yellow-500 transition cursor-pointer block">
-                    <div class="text-xl font-semibold text-yellow-600" id="pending-count">0</div>
-                    <span class="text-yellow-700 text-sm">Pending Approval</span>
-                    {{-- Sinasadyang hindi sumusunod sa period filter — tingnan ang
-                         DashboardController::getAppointmentStats(). --}}
-                    <span class="block text-yellow-600 text-xs">Upcoming — not filtered by period</span>
-                </a>
-                <a href="{{ route('admin.booking', ['status' => 'approved,arrived']) }}"
-                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
-                    <div class="text-xl font-semibold text-primary" id="active-count">0</div>
-                    <span class="text-gray-400 text-sm">Active</span>
-                    <span class="block text-gray-400 text-xs">Approved + Arrived</span>
-                </a>
-                <a href="{{ route('admin.booking', ['status' => 'completed']) }}"
-                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
-                    <div class="text-xl font-semibold text-primary" id="completed-count">0</div>
-                    <span class="text-gray-400 text-sm">Completed</span>
-                </a>
-                <a href="{{ route('admin.booking', ['status' => 'cancelled']) }}"
-                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
-                    <div class="text-xl font-semibold text-primary" id="canceled-count">0</div>
-                    <span class="text-gray-400 text-sm">Cancelled</span>
-                </a>
-                <a href="{{ route('admin.booking', ['status' => 'no_show']) }}"
-                   class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
-                    <div class="text-xl font-semibold text-primary" id="noshow-count">0</div>
-                    <span class="text-gray-400 text-sm">No Show</span>
-                </a>
-            </div>
-
-            {{-- Hiwalay na hanay: ibang dimensyon ito sa status sa itaas. Ang isang
-                 scheduled ay puwedeng completed din, kaya hindi sila dapat pagsamahin
-                 sa iisang hanay — magmumukhang dapat silang magsama sa iisang total. --}}
-            <div class="border-t pt-4 mb-4">
-                <div class="font-medium mb-3">Appointment Type</div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="{{ route('admin.booking', ['type' => 'scheduled']) }}"
-                       class="rounded-md border border-dashed border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 hover:border-blue-500 transition cursor-pointer block">
-                        <div class="text-xl font-semibold text-blue-600" id="scheduled-count">0</div>
-                        <span class="text-blue-700 text-sm">Scheduled</span>
-                    </a>
-                    <a href="{{ route('admin.booking', ['type' => 'walkin']) }}"
-                       class="rounded-md border border-dashed border-green-200 bg-green-50 p-4 hover:bg-green-100 hover:border-green-500 transition cursor-pointer block">
-                        <div class="text-xl font-semibold text-green-600" id="walkin-count">0</div>
-                        <span class="text-green-700 text-sm">Walk-in</span>
-                    </a>
-                    <a href="{{ route('admin.booking', ['type' => 'emergency']) }}"
-                       class="rounded-md border border-dashed border-red-200 bg-red-50 p-4 hover:bg-red-100 hover:border-red-500 transition cursor-pointer block">
-                        <div class="text-xl font-semibold text-red-600" id="emergency-count">0</div>
-                        <span class="text-red-700 text-sm">Emergency</span>
-                    </a>
-                </div>
-            </div>
-
-            {{-- Parehong tugon ng /dashboard/appointment-stats ang pinagmumulan ng
-                 mga card sa itaas at ng dalawang chart, kaya sabay silang nag-a-update
-                 kapag pinalitan ang period filter. Hindi kasama ang Pending sa status
-                 chart — hindi ito naka-scope sa panahon, kaya maling ihanay sa apat. --}}
-            <div class="border-t pt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                    <div class="font-medium mb-2">
-                        Status Breakdown
-                        <span class="text-gray-400 text-xs font-normal">— excludes Pending</span>
-                    </div>
-                    <div id="statusChart"></div>
-                </div>
-                <div>
-                    <div class="font-medium mb-2">Appointment Type</div>
-                    <div id="typeChart"></div>
-                </div>
-            </div>
+            <div id="statusChart"></div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="font-semibold text-sm text-gray-700 mb-2">Appointment Type</div>
+            <div id="typeChart"></div>
         </div>
     </div>
     @endif
@@ -399,30 +478,69 @@ function renderAppointmentCharts(data) {
             series: typeSeries,
             labels: ['Scheduled', 'Walk-in', 'Emergency'],
             colors: ['#3b82f6', '#22c55e', '#ef4444'],
-            legend: { position: 'bottom' },
+            dataLabels: { enabled: false },
+            plotOptions: {
+                pie: { donut: { size: '68%', labels: {
+                    show: true,
+                    value: { fontSize: '22px', fontWeight: 700 },
+                    total: { show: true, label: 'Total', formatter: (w) =>
+                        w.globals.seriesTotals.reduce((a, b) => a + b, 0) }
+                } } }
+            },
+            legend: {
+                position: 'right',
+                markers: { radius: 12 },
+                // Ipinapakita ang aktwal na bilang at porsiyento sa tabi ng label.
+                formatter: function (label, opts) {
+                    const v = opts.w.globals.series[opts.seriesIndex];
+                    const sum = opts.w.globals.series.reduce((a, b) => a + b, 0);
+                    return label + '  ' + v + ' (' + (sum ? Math.round(v / sum * 100) : 0) + '%)';
+                }
+            },
             noData: { text: 'No appointments for this period' }
         });
         typeChart.render();
     }
 }
 
+const PERIOD_LABELS = { daily: 'Today', weekly: 'This Week', monthly: 'This Month' };
+
 function loadAppointmentStats(filter = 'daily') {
+    $('.period-label').text(PERIOD_LABELS[filter] || 'Today');
+
     $.ajax({
         url: '/dashboard/appointment-stats',
         data: { filter: filter },
         success: function(data) {
             renderAppointmentCharts(data);
+            $('#total-count').text(data.total);
             $('#active-count').text(data.active);
             $('#completed-count').text(data.completed);
             $('#canceled-count').text(data.canceled);
             $('#noshow-count').text(data.noshow);
-            $('#pending-count').text(data.pending);
             $('#scheduled-count').text(data.scheduled);
             $('#walkin-count').text(data.walkin);
             $('#emergency-count').text(data.emergency);
         }
     });
 }
+
+// Buhay na orasan. Ang epoch ng server ang simula, kaya Asia/Manila pa rin ang
+// sinusundan kahit mali ang oras ng PC — ang lumipas na oras lang ang mula sa browser.
+(function () {
+    const el = document.getElementById('dashClock');
+    if (!el) return;
+    const serverMs = Number(el.dataset.epoch) * 1000;
+    const startedAt = Date.now();
+    setInterval(function () {
+        const t = new Date(serverMs + (Date.now() - startedAt));
+        let h = t.getHours();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        el.textContent = String(h).padStart(2, '0') + ':' +
+            String(t.getMinutes()).padStart(2, '0') + ' ' + ampm;
+    }, 1000);
+})();
 
 $('#appointmentFilter').on('change', function () {
     const selected = $(this).val();
