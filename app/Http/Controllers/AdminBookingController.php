@@ -41,11 +41,21 @@ public function showBookings(Request $request)
     $query = Appointment::with('user')
         ->where('store_id', session('active_branch_id'));
 
-    // Status filter - default to active statuses if no filter
+    // Status filter - default to active statuses if no filter.
+    // Tumatanggap ng listahang pinaghihiwalay ng kuwit (hal. "approved,arrived")
+    // para tumugma ang Active card sa dashboard na bumibilang ng dalawa.
     if ($request->filled('status')) {
-        $query->where('status', $request->input('status'));
-    } else {
+        $query->whereIn('status', array_filter(explode(',', $request->input('status'))));
+    } elseif (! $request->filled('type')) {
         $query->whereIn('status', ['pending', 'approved','arrived']);
+    }
+
+    // Pinapatunguhan ng Appointment Type cards sa dashboard. Binibilang ng
+    // mga card ang LAHAT ng status, kaya hindi ipinapataw ang default na
+    // aktibong-status sa itaas kapag may type — kung hindi, mas kaunti ang
+    // lalabas sa listahan kaysa sa numerong pinindot.
+    if ($request->filled('type')) {
+        $query->where('appointment_type', $request->input('type'));
     }
 
     if ($user->position === 'Dentist') {

@@ -287,10 +287,11 @@
                          DashboardController::getAppointmentStats(). --}}
                     <span class="block text-yellow-600 text-xs">Upcoming — not filtered by period</span>
                 </a>
-                <a href="{{ route('admin.booking', ['status' => 'approved']) }}"
+                <a href="{{ route('admin.booking', ['status' => 'approved,arrived']) }}"
                    class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
                     <div class="text-xl font-semibold text-primary" id="active-count">0</div>
                     <span class="text-gray-400 text-sm">Active</span>
+                    <span class="block text-gray-400 text-xs">Approved + Arrived</span>
                 </a>
                 <a href="{{ route('admin.booking', ['status' => 'completed']) }}"
                    class="rounded-md border border-dashed border-gray-200 p-4 hover:bg-gray-50 hover:border-primary transition cursor-pointer block">
@@ -308,8 +309,47 @@
                     <span class="text-gray-400 text-sm">No Show</span>
                 </a>
             </div>
-            <div>
-                <canvas id="order-chart"></canvas>
+
+            {{-- Hiwalay na hanay: ibang dimensyon ito sa status sa itaas. Ang isang
+                 scheduled ay puwedeng completed din, kaya hindi sila dapat pagsamahin
+                 sa iisang hanay — magmumukhang dapat silang magsama sa iisang total. --}}
+            <div class="border-t pt-4 mb-4">
+                <div class="font-medium mb-3">Appointment Type</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="{{ route('admin.booking', ['type' => 'scheduled']) }}"
+                       class="rounded-md border border-dashed border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 hover:border-blue-500 transition cursor-pointer block">
+                        <div class="text-xl font-semibold text-blue-600" id="scheduled-count">0</div>
+                        <span class="text-blue-700 text-sm">Scheduled</span>
+                    </a>
+                    <a href="{{ route('admin.booking', ['type' => 'walkin']) }}"
+                       class="rounded-md border border-dashed border-green-200 bg-green-50 p-4 hover:bg-green-100 hover:border-green-500 transition cursor-pointer block">
+                        <div class="text-xl font-semibold text-green-600" id="walkin-count">0</div>
+                        <span class="text-green-700 text-sm">Walk-in</span>
+                    </a>
+                    <a href="{{ route('admin.booking', ['type' => 'emergency']) }}"
+                       class="rounded-md border border-dashed border-red-200 bg-red-50 p-4 hover:bg-red-100 hover:border-red-500 transition cursor-pointer block">
+                        <div class="text-xl font-semibold text-red-600" id="emergency-count">0</div>
+                        <span class="text-red-700 text-sm">Emergency</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- Parehong tugon ng /dashboard/appointment-stats ang pinagmumulan ng
+                 mga card sa itaas at ng dalawang chart, kaya sabay silang nag-a-update
+                 kapag pinalitan ang period filter. Hindi kasama ang Pending sa status
+                 chart — hindi ito naka-scope sa panahon, kaya maling ihanay sa apat. --}}
+            <div class="border-t pt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <div class="font-medium mb-2">
+                        Status Breakdown
+                        <span class="text-gray-400 text-xs font-normal">— excludes Pending</span>
+                    </div>
+                    <div id="statusChart"></div>
+                </div>
+                <div>
+                    <div class="font-medium mb-2">Appointment Type</div>
+                    <div id="typeChart"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -319,17 +359,67 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
+let statusChart = null;
+let typeChart = null;
+
+function renderAppointmentCharts(data) {
+    if (typeof ApexCharts === 'undefined') return;
+
+    const statusValues = [data.active, data.completed, data.canceled, data.noshow].map(Number);
+    const typeValues = [data.scheduled, data.walkin, data.emergency].map(Number);
+
+    // Walang maipapakitang singsing ang donut kapag puro zero — ipasa ang
+    // walang laman para lumabas ang noData na mensahe.
+    const typeSeries = typeValues.reduce((a, b) => a + b, 0) ? typeValues : [];
+
+    if (statusChart) {
+        statusChart.updateSeries([{ name: 'Appointments', data: statusValues }]);
+    } else {
+        statusChart = new ApexCharts(document.querySelector('#statusChart'), {
+            chart: { type: 'bar', height: 260, toolbar: { show: false } },
+            series: [{ name: 'Appointments', data: statusValues }],
+            xaxis: { categories: ['Active', 'Completed', 'Cancelled', 'No Show'] },
+            yaxis: { labels: { formatter: (v) => Math.round(v) } },
+            colors: ['#0ea5e9', '#22c55e', '#f97316', '#ef4444'],
+            plotOptions: { bar: { distributed: true, borderRadius: 4, columnWidth: '55%' } },
+            dataLabels: { enabled: true },
+            legend: { show: false },
+            noData: { text: 'No appointments for this period' }
+        });
+        statusChart.render();
+    }
+
+    if (typeChart) {
+        typeChart.updateSeries(typeSeries);
+    } else {
+        typeChart = new ApexCharts(document.querySelector('#typeChart'), {
+            chart: { type: 'donut', height: 260 },
+            series: typeSeries,
+            labels: ['Scheduled', 'Walk-in', 'Emergency'],
+            colors: ['#3b82f6', '#22c55e', '#ef4444'],
+            legend: { position: 'bottom' },
+            noData: { text: 'No appointments for this period' }
+        });
+        typeChart.render();
+    }
+}
+
 function loadAppointmentStats(filter = 'daily') {
     $.ajax({
         url: '/dashboard/appointment-stats',
         data: { filter: filter },
         success: function(data) {
+            renderAppointmentCharts(data);
             $('#active-count').text(data.active);
             $('#completed-count').text(data.completed);
             $('#canceled-count').text(data.canceled);
             $('#noshow-count').text(data.noshow);
             $('#pending-count').text(data.pending);
+            $('#scheduled-count').text(data.scheduled);
+            $('#walkin-count').text(data.walkin);
+            $('#emergency-count').text(data.emergency);
         }
     });
 }
