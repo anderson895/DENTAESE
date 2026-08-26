@@ -283,10 +283,12 @@ public function settle(Request $request, $id)
         'payment_receipt' => 'nullable|image|max:2048',
     ]);
 
-    // Kabuuang babayaran = serbisyo + gamot na binili para sa pagbisitang ito
-    $medicineTotal = \App\Models\Sale::forAppointment($appointment)->sum('total_amount');
-
-    $grandTotal = (float) $validated['total_price'] + (float) $medicineTotal;
+    // SERBISYO lang ang sisingilin dito. BAYAD NA ang gamot sa POS — bawat
+    // Sale ay may sariling amount_given at change_amount, at kinokolekta ng
+    // kahera ang bayad bago pa maitala ang benta (POSController::checkout).
+    // Dating idinadagdag dito ang kabuuang gamot, kaya nadodoble ang singil:
+    // appt #155 ay sumingil ng 297 sa POS at 297 ulit dito.
+    $grandTotal = (float) $validated['total_price'];
 
     // Bawal tapusin ang bayad kapag kulang ang ibinigay na halaga
     if ($request->filled('amount_given') && (float) $validated['amount_given'] < $grandTotal) {

@@ -76,8 +76,11 @@ class AdminController extends Controller
         ->get();
 
     // Pending appointments awaiting approval (today onwards)
+    // Sa admin view ay "admin" ang $branchId, hindi id ng tindahan, kaya laging
+    // zero ang where('store_id', 'admin') — hindi lumalabas ang banner doon.
+    // Sa admin, lahat ng branch ang isinasama.
     $pendingApprovals = Appointment::with('user')
-        ->where('store_id', $branchId)
+        ->when($branchId !== 'admin', fn ($q) => $q->where('store_id', $branchId))
         ->where('status', 'pending')
         ->whereDate('appointment_date', '>=', Carbon::today())
         ->orderBy('appointment_date')
@@ -195,6 +198,46 @@ $monthlyAppointmentsArr = collect(range(1,12))->map(function($m) use ($monthlyAp
     return $monthData ? $monthData->total : 0;
 });
 
+// KITA mula sa appointment kada buwan — halaga, hindi bilang. Ang
+// $monthlyAppointmentsArr ay COUNT, kaya hindi ito magagamit sa sparkline ng
+// "Appointment Earnings" o sa paghahambing ng halaga sa nakaraang buwan.
+$monthlyEarnings = Appointment::select(
+        DB::raw("MONTH(appointment_date) as month"),
+        DB::raw("SUM(total_price) as total")
+    )
+    ->where('status', 'completed')
+    ->whereBetween('appointment_date', [$startOfYear, $endOfYear])
+    ->groupBy(DB::raw("MONTH(appointment_date)"))
+    ->orderBy('month')
+    ->get();
+
+$monthlyEarningsArr = collect(range(1,12))->map(function ($m) use ($monthlyEarnings) {
+    $row = $monthlyEarnings->firstWhere('month', $m);
+    return $row ? (float) $row->total : 0;
+});
+
+$combinedArr = collect(range(0, 11))->map(
+    fn ($i) => (float) $monthlySalesArr[$i] + (float) $monthlyEarningsArr[$i]
+);
+
+// Pagbabago kumpara sa nakaraang buwan. NULL kapag Enero (walang naunang buwan
+// sa taon) o kapag zero ang nakaraan — walang kahulugan ang hatiin sa zero,
+// at mas mabuting walang ipakita kaysa magpakita ng mapanlinlang na "+100%".
+$thisMonth = (int) Carbon::now()->month;
+$pctChange = function ($arr) use ($thisMonth) {
+    if ($thisMonth < 2) {
+        return null;
+    }
+    $prev = (float) $arr[$thisMonth - 2];
+    $curr = (float) $arr[$thisMonth - 1];
+
+    return $prev > 0 ? round((($curr - $prev) / $prev) * 100, 1) : null;
+};
+
+$salesChange    = $pctChange($monthlySalesArr);
+$earningsChange = $pctChange($monthlyEarningsArr);
+$combinedChange = $pctChange($combinedArr);
+
 
     return view('admin.dashboard', compact(
     'adminCount',
@@ -212,10 +255,13 @@ $monthlyAppointmentsArr = collect(range(1,12))->map(function($m) use ($monthlyAp
         'monthlyAppointments',
         'salesPerBranch',
     'appointmentsPerBranch',
-        'monthlySalesArr',       
-    'monthlyAppointmentsArr' 
-
-        
+        'monthlySalesArr',
+    'monthlyAppointmentsArr',
+    'monthlyEarningsArr',
+    'combinedArr',
+    'salesChange',
+    'earningsChange',
+    'combinedChange'
 ));
 
     }

@@ -194,15 +194,20 @@
                        class="w-full border rounded p-2 " >
             </div>
 
-            {{-- MEDICINE TOTAL PRICE --}}
+            {{-- MEDICINE — PANG-ALAM LANG, hindi kasama sa sisingilin.
+                 Nabayaran na ito sa POS bago pa maitala ang benta. --}}
             <div class="mt-4">
-                <label class="block font-semibold">Medicine Total Price (₱)</label>
+                <label class="block font-semibold">
+                    Medicines
+                    <span class="text-green-600 text-xs font-normal">— already paid at POS</span>
+                </label>
                 <input type="text"
                        id="medicine_total_display"
                        value="{{ number_format($checkinMedicineTotal, 2) }}"
                        data-amount="{{ $checkinMedicineTotal }}"
-                       class="w-full border rounded p-2 bg-gray-100"
+                       class="w-full border rounded p-2 bg-gray-100 text-gray-500"
                        readonly>
+                <p class="text-xs text-gray-400 mt-1">Not included in the amount due below.</p>
             </div>
 
             {{-- PAYMENT TYPE --}}
@@ -217,12 +222,14 @@
                 </select>
             </div>
 
-            {{-- TOTAL PRICE (service + medicines) --}}
+            {{-- AMOUNT DUE — serbisyo lang. Kailangang tumugma ito sa
+                 AdminBookingController::$grandTotal; kung hindi, iba ang
+                 ipinapakita sa aktuwal na sinisingil. --}}
             <div class="mt-4">
-                <label class="block font-semibold">Total Price (₱)</label>
+                <label class="block font-semibold">Amount Due (₱) <span class="text-gray-400 text-xs font-normal">— service only</span></label>
                 <input type="text"
                        id="grand_total_display"
-                       value="{{ number_format((float) $appointment->total_price + $checkinMedicineTotal, 2) }}"
+                       value="{{ number_format((float) $appointment->total_price, 2) }}"
                        class="w-full border rounded p-2 bg-gray-100 font-semibold"
                        readonly>
             </div>
@@ -648,10 +655,11 @@ $(document).on('click', '#saveDentistBtn', function () {
     });
 });
 
+// Serbisyo lang — bayad na ang gamot sa POS. Dapat tumugma ito sa
+// AdminBookingController::$grandTotal, kung hindi ay tatanggihan ng server
+// ang halagang sinasabi ng UI na sapat na.
 function currentGrandTotal() {
-    const servicePrice  = parseFloat($('#service_price_input').val()) || 0;
-    const medicineTotal = parseFloat($('#medicine_total_display').data('amount')) || 0;
-    return servicePrice + medicineTotal;
+    return parseFloat($('#service_price_input').val()) || 0;
 }
 
 function peso(value) {
