@@ -15,9 +15,15 @@ class medicine_batches extends Model
         'status',
     ];
 
+    /**
+     * withTrashed: puwedeng ma-soft-delete ang gamot habang may natitira pang
+     * expired/suspended na batch (tingnan ang InventoryController::destroy).
+     * Kung walang ito, null ang relation at nagiging "—" ang pangalan sa
+     * archived list — o nagka-fatal error ang mga pahinang umaasa dito.
+     */
     public function medicine()
     {
-        return $this->belongsTo(medicines::class, 'medicine_id');
+        return $this->belongsTo(medicines::class, 'medicine_id')->withTrashed();
     }
 
     public function store()

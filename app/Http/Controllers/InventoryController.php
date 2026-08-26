@@ -374,7 +374,7 @@ public function stockIn(Request $request, $id)
 
             MedicineMovement::create([
                 'store_id'          => $batch->store_id,
-                'medicine_id'       => $batch->medicine->id,
+                'medicine_id'       => $batch->medicine_id,
                 'medicine_batch_id' => $batch->id,
                 'type'              => 'stock_in',
                 'quantity'          => $request->quantity,
@@ -417,7 +417,7 @@ public function stockIn(Request $request, $id)
         
         MedicineMovement::create([
             'store_id'          => $batch->store_id,
-            'medicine_id'       => $batch->medicine->id,
+            'medicine_id'       => $batch->medicine_id,
             'medicine_batch_id' => $batch->id,
             'type'              => 'stock_out',
             'quantity'          => $request->quantity,
@@ -452,7 +452,7 @@ public function stockIn(Request $request, $id)
             
             MedicineMovement::create([
                 'store_id'          => $batch->store_id,
-                'medicine_id'       => $batch->medicine->id,
+                'medicine_id'       => $batch->medicine_id,
                 'medicine_batch_id' => $batch->id,
                 'type'              => 'suspended',
                 'quantity'          => $batch->quantity,
@@ -483,7 +483,7 @@ public function stockIn(Request $request, $id)
             
             MedicineMovement::create([
                 'store_id'          => $batch->store_id,
-                'medicine_id'       => $batch->medicine->id,
+                'medicine_id'       => $batch->medicine_id,
                 'medicine_batch_id' => $batch->id,
                 'type'              => 'expired',
                 'quantity'          => $batch->quantity,
