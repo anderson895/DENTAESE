@@ -22,6 +22,9 @@ class POSController extends Controller
     ->where('store_id', $storeId)
     ->where('quantity', '>', 0)
     ->where('status', 'active')
+    // Manu-mano lang ang pagmarka ng 'expired', kaya may mga batch na lipas
+    // na ang petsa pero 'active' pa rin. Hindi puwedeng maibenta ang mga ito.
+    ->whereDate('expiration_date', '>=', today())
     ->get()
     ->groupBy('medicine_id')
     ->map(function ($batches) {
@@ -73,14 +76,22 @@ class POSController extends Controller
 
     $this->rememberPatient($request);
 
+    // Dito pinipili ang aktuwal na ibebenta, kaya dito rin dapat ang salain —
+    // hindi sapat ang listahan sa index(). Walang status filter dati, at dahil
+    // FIFO ito (pinakamalapit mag-expire ang una), ang lipas at suspendidong
+    // batch pa mismo ang unang naibebenta.
     $batch = medicine_batches::where('medicine_id', $request->medicine_id)
         ->where('store_id', $storeId)
+        ->where('status', 'active')
+        ->whereDate('expiration_date', '>=', today())
         ->where('quantity', '>=', $request->quantity)
         ->orderBy('expiration_date', 'asc') // FIFO
         ->first();
 
     if (!$batch) {
-        return back()->withErrors(['stock' => 'Not enough stock available!']);
+        return back()->withErrors([
+            'stock' => 'Not enough usable stock — expired and suspended batches are excluded.',
+        ]);
     }
 
     $medicine = $batch->medicine;
