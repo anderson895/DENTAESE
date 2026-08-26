@@ -160,6 +160,13 @@
                     ->get();
                 $checkinMedicineTotal = $checkinSales->sum('total_amount');
                 $checkinMedicineQty   = $checkinSales->flatMap->items->sum('quantity');
+
+                // Ang amount_given ang naghahati: may halaga = nakolekta na sa
+                // POS; NULL = sinadyang i-bill dito. Dapat tumugma ito sa
+                // AdminBookingController, kung hindi ay iba ang ipinapakitang
+                // babayaran sa aktuwal na sinisingil.
+                $checkinPaidTotal   = $checkinSales->whereNotNull('amount_given')->sum('total_amount');
+                $checkinUnpaidTotal = $checkinSales->whereNull('amount_given')->sum('total_amount');
             @endphp
 
             {{-- MEDICINES BOUGHT --}}
@@ -194,20 +201,33 @@
                        class="w-full border rounded p-2 " >
             </div>
 
-            {{-- MEDICINE — PANG-ALAM LANG, hindi kasama sa sisingilin.
-                 Nabayaran na ito sa POS bago pa maitala ang benta. --}}
+            {{-- Hinahati ang gamot: ang bayad na sa POS ay pang-alam lang, ang
+                 hindi pa bayad ay kasama sa Amount Due. --}}
+            @if ($checkinPaidTotal > 0)
+                <div class="mt-4">
+                    <label class="block font-semibold">
+                        Medicines
+                        <span class="text-green-600 text-xs font-normal">— already paid at POS</span>
+                    </label>
+                    <input type="text"
+                           value="{{ number_format($checkinPaidTotal, 2) }}"
+                           class="w-full border rounded p-2 bg-gray-100 text-gray-500"
+                           readonly>
+                    <p class="text-xs text-gray-400 mt-1">Not included in the amount due below.</p>
+                </div>
+            @endif
+
             <div class="mt-4">
                 <label class="block font-semibold">
-                    Medicines
-                    <span class="text-green-600 text-xs font-normal">— already paid at POS</span>
+                    Medicines to Collect (₱)
+                    <span class="text-gray-400 text-xs font-normal">— billed to this appointment</span>
                 </label>
                 <input type="text"
                        id="medicine_total_display"
-                       value="{{ number_format($checkinMedicineTotal, 2) }}"
-                       data-amount="{{ $checkinMedicineTotal }}"
-                       class="w-full border rounded p-2 bg-gray-100 text-gray-500"
+                       value="{{ number_format($checkinUnpaidTotal, 2) }}"
+                       data-amount="{{ $checkinUnpaidTotal }}"
+                       class="w-full border rounded p-2 bg-gray-100"
                        readonly>
-                <p class="text-xs text-gray-400 mt-1">Not included in the amount due below.</p>
             </div>
 
             {{-- PAYMENT TYPE --}}
@@ -226,10 +246,10 @@
                  AdminBookingController::$grandTotal; kung hindi, iba ang
                  ipinapakita sa aktuwal na sinisingil. --}}
             <div class="mt-4">
-                <label class="block font-semibold">Amount Due (₱) <span class="text-gray-400 text-xs font-normal">— service only</span></label>
+                <label class="block font-semibold">Amount Due (₱) <span class="text-gray-400 text-xs font-normal">— service + unpaid medicines</span></label>
                 <input type="text"
                        id="grand_total_display"
-                       value="{{ number_format((float) $appointment->total_price, 2) }}"
+                       value="{{ number_format((float) $appointment->total_price + $checkinUnpaidTotal, 2) }}"
                        class="w-full border rounded p-2 bg-gray-100 font-semibold"
                        readonly>
             </div>
@@ -655,11 +675,14 @@ $(document).on('click', '#saveDentistBtn', function () {
     });
 });
 
-// Serbisyo lang — bayad na ang gamot sa POS. Dapat tumugma ito sa
-// AdminBookingController::$grandTotal, kung hindi ay tatanggihan ng server
-// ang halagang sinasabi ng UI na sapat na.
+// Serbisyo + gamot na hindi pa bayad. Ang bayad na sa POS ay wala sa
+// #medicine_total_display, kaya hindi ito nadodoble. Dapat tumugma ito sa
+// AdminBookingController::$grandTotal, kung hindi ay hindi magkakasundo ang
+// ipinapakita sa UI at ang aktuwal na tinatanggap ng server.
 function currentGrandTotal() {
-    return parseFloat($('#service_price_input').val()) || 0;
+    const servicePrice = parseFloat($('#service_price_input').val()) || 0;
+    const unpaidMeds   = parseFloat($('#medicine_total_display').data('amount')) || 0;
+    return servicePrice + unpaidMeds;
 }
 
 function peso(value) {
