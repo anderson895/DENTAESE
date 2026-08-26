@@ -150,9 +150,19 @@ class POSController extends Controller
         return back()->withErrors(['cart' => $error])->withInput();
     }
 
-    // Bawal mag-checkout kapag kulang ang amount given sa kabuuang halaga.
     $cartTotal = collect($cart)->sum('subtotal');
-    if ($request->filled('amount_given') && floatval($request->amount_given) < $cartTotal) {
+
+    // Kailangan ang Amount Given sa lahat ng paraan ng bayad — ito ang tanging
+    // talaan ng aktuwal na natanggap. Dati ay filled() ang bantay, kaya ang
+    // BLANGKO ay lumalaktaw sa buong tseke: nakakapag-checkout nang walang
+    // naitalang bayad, at ipinapalit pa ng resibo ang total na parang bayad na.
+    if (! $request->filled('amount_given')) {
+        return back()->withErrors([
+            'amount_given' => 'Amount given is required.',
+        ])->withInput();
+    }
+
+    if (floatval($request->amount_given) < $cartTotal) {
         $short = number_format($cartTotal - floatval($request->amount_given), 2);
         return back()->withErrors([
             'amount_given' => "Amount given is less than the total (₱{$short} short). Please enter the full amount.",
@@ -168,8 +178,10 @@ class POSController extends Controller
 
     DB::transaction(function () use ($cart, $storeId, $request, $appointmentId, &$sale) {
         $totalAmount = collect($cart)->sum('subtotal');
-        $amountGiven = $request->amount_given ? floatval($request->amount_given) : null;
-        $changeAmount = $amountGiven ? max(0, $amountGiven - $totalAmount) : null;
+        // Garantisadong may laman na — at hindi na puwedeng maging null ang "0",
+        // na dating nangyayari dahil falsy ang "0" sa PHP.
+        $amountGiven  = floatval($request->amount_given);
+        $changeAmount = max(0, $amountGiven - $totalAmount);
 
         $sale = Sale::create([
             'store_id'       => $storeId,

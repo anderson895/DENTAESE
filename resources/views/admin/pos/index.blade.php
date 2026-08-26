@@ -153,8 +153,10 @@
                     <option value="gcash">GCash</option>
                 </select>
 
-                <label for="amount_given" class="block text-sm font-medium">Amount Given</label>
-                <input type="number" step="0.01" name="amount_given" id="amount_given" 
+                <label for="amount_given" class="block text-sm font-medium">
+                    Amount Given <span class="text-red-600">*</span>
+                </label>
+                <input type="number" step="0.01" name="amount_given" id="amount_given" required
                     class="border rounded p-2 w-full" placeholder="₱0.00"
                     oninput="calcChange()">
 
@@ -219,8 +221,11 @@
                 <div class="text-right font-bold text-lg border-t pt-2 foot">
                     <span>Total: ₱<span x-text="parseFloat(receipt.total_amount).toFixed(2)"></span></span>
                     <div class="text-sm font-normal mt-1">
-                        <p>Amount Given: ₱<span x-text="parseFloat(receipt.amount_given ?? receipt.total_amount).toFixed(2)"></span></p>
-                        <p>Change: ₱<span x-text="parseFloat(receipt.change_amount ?? 0).toFixed(2)"></span></p>
+                        {{-- Huwag ipalit ang total kapag walang naitalang bayad — iyon ay
+                             pagsasabing nagbayad nang tama ang pasyente gayong walang talaan.
+                             Puwede pa ring null ang mga lumang benta bago ito ginawang sapilitan. --}}
+                        <p>Amount Given: <span x-text="receipt.amount_given != null ? '₱' + parseFloat(receipt.amount_given).toFixed(2) : '—'"></span></p>
+                        <p>Change: <span x-text="receipt.change_amount != null ? '₱' + parseFloat(receipt.change_amount).toFixed(2) : '—'"></span></p>
                     </div>
                 </div>
                 <!-- Seller -->
@@ -369,8 +374,9 @@ function calcChange() {
     const changeAmt = document.getElementById('changeAmount');
     const btn = document.getElementById('checkoutBtn');
 
-    // Bawal mag-checkout kapag kulang ang amount given sa total
-    const insufficient = givenRaw !== '' && given < POS_TOTAL;
+    // Bawal mag-checkout kapag blangko o kulang ang amount given. Dating
+    // `givenRaw !== ''`, kaya ang blangko ay itinuturing na ayos.
+    const insufficient = givenRaw === '' || given < POS_TOTAL;
 
     if (givenRaw !== '' && given > 0) {
         changeEl.classList.remove('hidden');
@@ -398,7 +404,19 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', function (e) {
         const givenRaw = document.getElementById('amount_given').value;
         const given = parseFloat(givenRaw) || 0;
-        if (givenRaw !== '' && given < POS_TOTAL) {
+
+        if (givenRaw === '') {
+            e.preventDefault();
+            const msg = 'Please enter the amount given before checking out.';
+            if (window.Swal) {
+                Swal.fire('Amount Required', msg, 'warning');
+            } else {
+                alert(msg);
+            }
+            return;
+        }
+
+        if (given < POS_TOTAL) {
             e.preventDefault();
             const short = (POS_TOTAL - given).toFixed(2);
             if (window.Swal) {
@@ -408,6 +426,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
+
+    // Simulan nang naka-disable ang Checkout habang blangko pa ang field —
+    // `oninput` lang ang tumatawag sa calcChange(), kaya hindi ito tumatakbo
+    // hangga't walang tina-type.
+    calcChange();
 });
 </script>
 @endsection
