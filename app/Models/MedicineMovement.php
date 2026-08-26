@@ -15,9 +15,14 @@ class MedicineMovement extends Model
         'remarks',
     ];
 
+    /**
+     * withTrashed: kasaysayan ito ng stock, kaya dapat makita pa rin ang
+     * pangalan ng gamot kahit na-soft-delete na ito — kung hindi, null ang
+     * relation at nagba-blangko (o nagka-error) ang mga ulat.
+     */
     public function medicine()
     {
-        return $this->belongsTo(medicines::class, 'medicine_id');
+        return $this->belongsTo(medicines::class, 'medicine_id')->withTrashed();
     }
 
     public function batch()

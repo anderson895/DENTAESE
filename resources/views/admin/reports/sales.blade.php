@@ -214,7 +214,7 @@
                 @forelse ($groupedMovements[$type] ?? [] as $movement)
                     <tr>
                         <td class="border px-2 py-1">{{ $movement->created_at->format('Y-m-d') }}</td>
-                        <td class="border px-2 py-1">{{ $movement->medicine->name }}</td>
+                        <td class="border px-2 py-1">{{ $movement->medicine?->name ?? '—' }}</td>
                         <td class="border px-2 py-1">{{ $movement->batch?->medicine_id ?? 'N/A' }}</td>
                         <td class="border px-2 py-1">{{ $movement->quantity }}</td>
                         <td class="border px-2 py-1">{{ $movement->remarks }}</td>
