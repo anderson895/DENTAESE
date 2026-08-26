@@ -22,6 +22,9 @@ class POSController extends Controller
     ->where('store_id', $storeId)
     ->where('quantity', '>', 0)
     ->where('status', 'active')
+    // Manu-mano lang ang pagmarka ng 'expired', kaya may mga batch na lipas
+    // na ang petsa pero 'active' pa rin. Hindi puwedeng maibenta ang mga ito.
+    ->whereDate('expiration_date', '>=', today())
     ->get()
     ->groupBy('medicine_id')
     ->map(function ($batches) {
@@ -73,14 +76,22 @@ class POSController extends Controller
 
     $this->rememberPatient($request);
 
+    // Dito pinipili ang aktuwal na ibebenta, kaya dito rin dapat ang salain —
+    // hindi sapat ang listahan sa index(). Walang status filter dati, at dahil
+    // FIFO ito (pinakamalapit mag-expire ang una), ang lipas at suspendidong
+    // batch pa mismo ang unang naibebenta.
     $batch = medicine_batches::where('medicine_id', $request->medicine_id)
         ->where('store_id', $storeId)
+        ->where('status', 'active')
+        ->whereDate('expiration_date', '>=', today())
         ->where('quantity', '>=', $request->quantity)
         ->orderBy('expiration_date', 'asc') // FIFO
         ->first();
 
     if (!$batch) {
-        return back()->withErrors(['stock' => 'Not enough stock available!']);
+        return back()->withErrors([
+            'stock' => 'Not enough usable stock — expired and suspended batches are excluded.',
+        ]);
     }
 
     $medicine = $batch->medicine;
@@ -116,6 +127,27 @@ class POSController extends Controller
     $cart = session()->get('cart', []);
     if (empty($cart)) {
         return back()->withErrors(['cart' => 'Cart is empty!']);
+    }
+
+    // Muling suriin ang bawat batch bago itala ang benta. Nasa session ang
+    // cart, kaya puwedeng nag-iba na ang lagay mula nang idagdag ito: lumipas
+    // na ang expiry, may ibang cashier na nakaubos, sinuspinde ang batch, o
+    // nagpalit ng branch ang gumagamit. Hindi sapat ang tseke sa addToCart().
+    foreach ($cart as $item) {
+        $batch = medicine_batches::find($item['batch_id']);
+        $name  = $item['medicine_name'] ?? 'This item';
+
+        if (! $batch || $batch->store_id != $storeId || $batch->status !== 'active') {
+            $error = "{$name} is no longer available for sale. Please remove it from the cart.";
+        } elseif (\Carbon\Carbon::parse($batch->expiration_date)->toDateString() < today()->toDateString()) {
+            $error = "{$name} (Batch #{$batch->id}) has expired and cannot be sold.";
+        } elseif ($batch->quantity < $item['quantity']) {
+            $error = "{$name} only has {$batch->quantity} left, but the cart has {$item['quantity']}.";
+        } else {
+            continue;
+        }
+
+        return back()->withErrors(['cart' => $error])->withInput();
     }
 
     // Bawal mag-checkout kapag kulang ang amount given sa kabuuang halaga.
@@ -175,7 +207,11 @@ class POSController extends Controller
                 'store_id'          => $storeId,
                 'medicine_batch_id' => $item['batch_id'],
                 'type'              => 'stock_out',
-                'quantity'          => -$item['quantity'],
+                // Positibo ang itinatala — ang `type` na ang nagsasabi kung
+                // papasok o palabas. Lahat ng ibang movement (stock_in, Manual
+                // Decrease, suspended, expired) ay positibo rin, at nagkakamali
+                // ang kabuuan sa ulat kapag naghalo ang sign.
+                'quantity'          => $item['quantity'],
                 'remarks'           => "Sale #{$sale->id}",
             ]);
         }

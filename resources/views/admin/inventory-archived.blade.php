@@ -35,6 +35,14 @@
             </thead>
             <tbody>
                 @forelse($batches as $batch)
+                    @php
+                        // Awtomatikong sinususpinde ng POS ang batch kapag naubos ang laman
+                        // (POSController::store). Ibang usapin ito sa sadyang pagsuspinde,
+                        // kaya hiwalay ang label — at walang Reactivate dahil walang
+                        // maibabalik: bagong batch ang tama para sa bagong stock, may
+                        // sarili itong expiration date.
+                        $depleted = $batch->status === 'suspended' && $batch->quantity <= 0;
+                    @endphp
                     <tr class="text-center">
                         <td class="border px-4 py-2 text-left">{{ $batch->medicine->name ?? '—' }}</td>
                         <td class="border px-4 py-2">{{ $batch->id }}</td>
@@ -44,12 +52,18 @@
                         </td>
                         <td class="border px-4 py-2">
                             <span class="px-2 py-1 rounded text-xs font-semibold
-                                {{ $batch->status === 'expired' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700' }}">
-                                {{ ucfirst($batch->status) }}
+                                @if($batch->status === 'expired') bg-red-100 text-red-700
+                                @elseif($depleted) bg-gray-100 text-gray-600
+                                @else bg-yellow-100 text-yellow-700 @endif">
+                                {{ $depleted ? 'Depleted' : ucfirst($batch->status) }}
                             </span>
                         </td>
                         <td class="border px-4 py-2">
-                            @if($batch->status === 'suspended')
+                            @if($batch->status === 'expired')
+                                <span class="text-gray-400 text-sm italic">Expired stock</span>
+                            @elseif($depleted)
+                                <span class="text-gray-400 text-sm italic">Out of stock — add a new batch</span>
+                            @else
                                 <form method="POST" action="{{ route('batch.reactivate', $batch->id) }}" class="inline">
                                     @csrf
                                     <button type="submit"
@@ -57,8 +71,6 @@
                                         Reactivate
                                     </button>
                                 </form>
-                            @else
-                                <span class="text-gray-400 text-sm italic">Expired stock</span>
                             @endif
                         </td>
                     </tr>
