@@ -207,7 +207,11 @@ class POSController extends Controller
                 'store_id'          => $storeId,
                 'medicine_batch_id' => $item['batch_id'],
                 'type'              => 'stock_out',
-                'quantity'          => -$item['quantity'],
+                // Positibo ang itinatala — ang `type` na ang nagsasabi kung
+                // papasok o palabas. Lahat ng ibang movement (stock_in, Manual
+                // Decrease, suspended, expired) ay positibo rin, at nagkakamali
+                // ang kabuuan sa ulat kapag naghalo ang sign.
+                'quantity'          => $item['quantity'],
                 'remarks'           => "Sale #{$sale->id}",
             ]);
         }
