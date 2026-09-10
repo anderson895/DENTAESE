@@ -139,8 +139,23 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
         }
     } else {
         $dayName = strtolower(Carbon::parse($date)->format('D'));
-        $openDays = is_array($store->open_days) ? $store->open_days : json_decode($store->open_days, true);
-        if (!in_array($dayName, $openDays ?? [])) {
+        $openDays = is_array($store->open_days)
+            ? $store->open_days
+            : (json_decode($store->open_days ?? '[]', true) ?: []);
+
+        // Wala pang naitakdang araw ang branch — ibang usapan ito sa "sarado
+        // ngayong araw", at dapat malaman ng pasyente kaysa isipin niyang puno.
+        if (empty($openDays)) {
+            return response()->json([
+                'status' => 'success',
+                'slots' => [],
+                'booked_slots' => [],
+                'reason' => 'no_hours',
+                'message' => 'This branch has no schedule set yet. Please contact the clinic or choose another branch.',
+            ]);
+        }
+
+        if (!in_array($dayName, $openDays)) {
             return response()->json([
                 'status' => 'success',
                 'slots' => [],
@@ -152,9 +167,7 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
     }
 
     // Honor doctor schedule override for this date (off / custom hours)
-    $docSchedule = DoctorSchedule::where('dentist_id', $dentistId)
-        ->where('schedule_date', $date)
-        ->first();
+    $docSchedule = DoctorSchedule::forDentistOn($dentistId, $date, $store->id);
     if ($docSchedule && $docSchedule->status === 'off') {
         $dentistName = trim($dentist->name . ' ' . $dentist->lastname) ?: 'The selected dentist';
         return response()->json([
@@ -166,16 +179,51 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
         ]);
     }
 
-    $opening = Carbon::parse(
-        ($docSchedule && $docSchedule->start_time)
-            ? $docSchedule->start_time
-            : (($clinicOverride && $clinicOverride->opening_time) ? $clinicOverride->opening_time : $store->opening_time)
-    );
-    $closing = Carbon::parse(
-        ($docSchedule && $docSchedule->end_time)
-            ? $docSchedule->end_time
-            : (($clinicOverride && $clinicOverride->closing_time) ? $clinicOverride->closing_time : $store->closing_time)
-    );
+    // Iba-iba ang date component ng pinagkukunan ng oras (Carbon cast ang store
+    // hours, string naman ang iba), kaya kinukuha muna ang H:i bago ikabit sa
+    // petsang hinihingi — nang hindi nagkakamali ang paghahambing sa baba.
+    $asTime = function ($value) {
+        if (empty($value)) {
+            return null;
+        }
+        return $value instanceof \DateTimeInterface
+            ? $value->format('H:i')
+            : Carbon::parse($value)->format('H:i');
+    };
+
+    $openingTime = $asTime($docSchedule?->start_time)
+        ?? $asTime($clinicOverride?->opening_time)
+        ?? $asTime($store->opening_time);
+    $closingTime = $asTime($docSchedule?->end_time)
+        ?? $asTime($clinicOverride?->closing_time)
+        ?? $asTime($store->closing_time);
+
+    // Walang naitakdang oras ang branch (karaniwan sa bagong gawa). Sabihin ito
+    // nang tahasan sa halip na magbalik ng blangkong listahan na parang puno na.
+    if (!$openingTime || !$closingTime) {
+        return response()->json([
+            'status' => 'success',
+            'slots' => [],
+            'booked_slots' => [],
+            'reason' => 'no_hours',
+            'message' => 'This branch has no clinic hours set yet. Please contact the clinic or choose another branch.',
+        ]);
+    }
+
+    $day = Carbon::parse($date)->startOfDay();
+    $opening = $day->copy()->setTimeFromTimeString($openingTime);
+    $closing = $day->copy()->setTimeFromTimeString($closingTime);
+
+    if ($closing->lte($opening)) {
+        return response()->json([
+            'status' => 'success',
+            'slots' => [],
+            'booked_slots' => [],
+            'reason' => 'invalid_hours',
+            'message' => 'The clinic hours for this date are not valid. Please contact the clinic or choose another date.',
+        ]);
+    }
+
     $slotDuration = 60; // minutes
 
     $bookings = Appointment::where('store_id', $store->id)
@@ -185,10 +233,21 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
         ->orderBy('appointment_time')
         ->get(['appointment_time', 'booking_end_time']);
 
+    // Oras lang ang nakaimbak sa appointment_time/booking_end_time, kaya
+    // ikinakabit din sila sa petsang hinihingi — kung "ngayon" ang magiging
+    // petsa nila samantalang nasa hinaharap ang mga slot, mali ang lalabas
+    // na overlap at hindi natatapos nang tama ang loop.
+    $spanOf = function ($booking) use ($day, $asTime, $slotDuration) {
+        $start = $day->copy()->setTimeFromTimeString($asTime($booking->appointment_time));
+        $end = $booking->booking_end_time
+            ? $day->copy()->setTimeFromTimeString($asTime($booking->booking_end_time))
+            : $start->copy()->addMinutes($slotDuration);
+        return [$start, $end];
+    };
+
     $bookedSlots = [];
     foreach ($bookings as $booking) {
-        $start = Carbon::parse($booking->appointment_time);
-        $end = Carbon::parse($booking->booking_end_time);
+        [$start, $end] = $spanOf($booking);
         while ($start->lt($end)) {
             $bookedSlots[] = $start->format('H:i');
             $start->addMinutes($slotDuration);
@@ -198,30 +257,31 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
     $availableSlots = [];
     $currentSlot = $opening->copy();
 
-    // Hide past slots when booking for today
-    $isToday = Carbon::parse($date)->isToday();
+    // Hide slots that have already passed (only bites when booking for today)
     $now = Carbon::now();
 
-   while ($currentSlot->lt($closing)) {
-    $slotEnd = $currentSlot->copy()->addMinutes($slotDuration);
+    while ($currentSlot->lt($closing)) {
+        $slotEnd = $currentSlot->copy()->addMinutes($slotDuration);
 
-    $overlapping = $bookings->first(function ($booking) use ($currentSlot, $slotEnd) {
-        $bookingStart = Carbon::parse($booking->appointment_time);
-        $bookingEnd = Carbon::parse($booking->booking_end_time);
-        return $currentSlot->lt($bookingEnd) && $slotEnd->gt($bookingStart);
-    });
+        $overlapping = $bookings->first(function ($booking) use ($currentSlot, $slotEnd, $spanOf) {
+            [$bookingStart, $bookingEnd] = $spanOf($booking);
+            return $currentSlot->lt($bookingEnd) && $slotEnd->gt($bookingStart);
+        });
 
-    if (!$overlapping) {
-        // Skip if the slot end has already passed (today only)
-        if (!$isToday || $slotEnd->setDateFrom($now)->gt($now)) {
-            $availableSlots[] = $currentSlot->format('H:i');
+        if (!$overlapping) {
+            if ($slotEnd->gt($now)) {
+                $availableSlots[] = $currentSlot->format('H:i');
+            }
+            $currentSlot->addMinutes($slotDuration);
+        } else {
+            // Jump to the end of the overlapping booking. Sumusulong pa rin kahit
+            // kulang ang naitalang end time para hindi maipit ang loop.
+            [, $bookingEnd] = $spanOf($overlapping);
+            $currentSlot = $bookingEnd->gt($currentSlot)
+                ? $bookingEnd
+                : $currentSlot->addMinutes($slotDuration);
         }
-        $currentSlot->addMinutes($slotDuration);
-    } else {
-        // Jump to the end of the overlapping booking
-        $currentSlot = Carbon::parse($overlapping->booking_end_time);
     }
-}
 
 
     // No selectable slots even though the clinic is open and the dentist is on
@@ -232,6 +292,9 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
         if (count($bookedSlots) > 0) {
             $reason = 'fully_booked';
             $message = 'All time slots are already booked on this date. Please choose another date.';
+        } elseif ($closing->lte($now)) {
+            $reason = 'closed_for_today';
+            $message = 'The clinic is already closed for today. Please choose another date.';
         } else {
             $reason = 'no_slots';
             $message = 'No available time slots for this date. Please choose another date.';
@@ -338,8 +401,11 @@ public function appointment(Request $request)
     }
 
     // Doctor schedule override (off-day) blocks booking
-    $docSchedule = DoctorSchedule::where('dentist_id', $validated['dentist_id'])
-        ->where('schedule_date', $validated['appointment_date'])->first();
+    $docSchedule = DoctorSchedule::forDentistOn(
+        $validated['dentist_id'],
+        $validated['appointment_date'],
+        $store->id
+    );
     if ($docSchedule && $docSchedule->status === 'off') {
         return response()->json(['status' => 'error', 'message' => 'Selected dentist is off on this date.']);
     }
@@ -505,8 +571,11 @@ public function appointmentadmin(Request $request)
     }
 
     // Doctor schedule override
-    $docSchedule = DoctorSchedule::where('dentist_id', $validated['dentist_id'])
-        ->where('schedule_date', $appointmentDate->toDateString())->first();
+    $docSchedule = DoctorSchedule::forDentistOn(
+        $validated['dentist_id'],
+        $appointmentDate->toDateString(),
+        $store->id
+    );
     if (!$isWalkinOrEmergency && $docSchedule && $docSchedule->status === 'off') {
         return response()->json([
             'status' => 'error',

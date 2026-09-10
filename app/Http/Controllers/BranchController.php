@@ -47,7 +47,14 @@ class BranchController extends Controller
             $store = new Store();
             $store->name = $branch;
             $store->address = $address;
-            $store->save(); 
+            // Bigyan ng gumaganang default na schedule ang bagong branch. Kapag
+            // NULL ang open_days/oras, "closed" ang basa ng booking sa lahat ng
+            // araw kaya walang lumalabas na timeslot kahit bagong gawa lang.
+            // Napapalitan naman ito sa Branch > Schedule.
+            $store->open_days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+            $store->opening_time = '09:00';
+            $store->closing_time = '18:00';
+            $store->save();
 
              return response()->json(['status' => 'success', 'message' => 'Branch added successfully']);
         } catch (QueryException $e) {

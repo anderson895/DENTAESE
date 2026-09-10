@@ -13,6 +13,15 @@ use PhpParser\Node\Stmt\TryCatch;
 
 class InventoryController extends Controller
 {
+    /**
+     * Ilang araw bago ang expiration ituturing nang "malapit nang mag-expire".
+     * Kasintugma ng "Expiring medicines" sa dashboard (isang buwan).
+     */
+    public const EXPIRY_WARNING_DAYS = 30;
+
+    /** Sa ilang natitirang piraso ituturing nang kaunti na ang stock. */
+    public const LOW_STOCK_THRESHOLD = 10;
+
     //
        public function inventory(){
         $units = Unit::orderBy('name')->get();
@@ -153,26 +162,68 @@ class InventoryController extends Controller
         $perPage = 5;
 
         $search = $request->input('search');
-          $branchId = session('active_branch_id');
-        // $position = $request->input('position');
-       
-        $query = medicines::where(function ($q) use ($search) {
-            if ($search) {
-                $q->where('name', 'like', "%{$search}%");
+        $statusFilter = $request->input('stock_status');
+        $branchId = session('active_branch_id');
+
+        // Kapag "admin" ang napiling branch, walang tiyak na store na masusukat
+        // kaya walang stock at status na maipapakita — gaya ng dating asal.
+        $hasBranch = is_numeric($branchId);
+
+        $today     = now()->toDateString();
+        $warnUntil = now()->addDays(self::EXPIRY_WARNING_DAYS)->toDateString();
+
+        // Ang binibilang na stock ay galing lang sa aktibong batch ng branch
+        // na kasalukuyang nakabukas.
+        $activeAtBranch = fn ($q) => $q->where('store_id', $branchId)->where('status', 'active');
+        $onHand = fn ($q) => $activeAtBranch($q)->where('quantity', '>', 0);
+
+        $query = medicines::query()
+            ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+            ->withSum(['batches as total_quantity' => $activeAtBranch], 'quantity')
+            ->withCount([
+                'batches as expired_batches' => fn ($q) => $onHand($q)
+                    ->whereDate('expiration_date', '<', $today),
+                'batches as near_expiry_batches' => fn ($q) => $onHand($q)
+                    ->whereDate('expiration_date', '>=', $today)
+                    ->whereDate('expiration_date', '<=', $warnUntil),
+            ])
+            ->withMin(['batches as nearest_expiration' => $onHand], 'expiration_date');
+
+        // Sinasala sa SQL para tama pa rin ang pagination kada pahina.
+        if ($hasBranch && $statusFilter) {
+            $stockOnHand = '(select coalesce(sum(quantity), 0) from medicine_batches'
+                . ' where medicine_batches.medicine_id = medicines.id'
+                . ' and medicine_batches.store_id = ?'
+                . " and medicine_batches.status = 'active')";
+
+            switch ($statusFilter) {
+                case 'out_of_stock':
+                    $query->whereRaw("{$stockOnHand} <= 0", [$branchId]);
+                    break;
+                case 'low_stock':
+                    $query->whereRaw("{$stockOnHand} > 0", [$branchId])
+                          ->whereRaw("{$stockOnHand} <= ?", [$branchId, self::LOW_STOCK_THRESHOLD]);
+                    break;
+                case 'expired':
+                    $query->whereHas('batches', fn ($q) => $onHand($q)
+                        ->whereDate('expiration_date', '<', $today));
+                    break;
+                case 'near_expiry':
+                    $query->whereHas('batches', fn ($q) => $onHand($q)
+                        ->whereDate('expiration_date', '>=', $today)
+                        ->whereDate('expiration_date', '<=', $warnUntil));
+                    break;
             }
-        })
-        ->withSum(['batches as total_quantity' => function ($q) use ($branchId) {
-        
-                $q->where('store_id', $branchId);
-                $q->where('status', 'active');
-          
-        }], 'quantity');
-        
-        
-    // if ($position) {
-    //     $query->where('position', $position);
-    // }
+        }
+
         $item = $query->paginate($perPage);
+
+        $item->getCollection()->transform(function ($medicine) use ($hasBranch) {
+            $total = (int) ($medicine->total_quantity ?? 0);
+            $medicine->total_quantity = $total;
+            $medicine->stock_labels = $hasBranch ? $this->stockLabels($medicine, $total) : [];
+            return $medicine;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -187,6 +238,36 @@ class InventoryController extends Controller
             ]
         ]);
 
+    }
+
+    /**
+     * Mga babalang ididikit sa isang gamot. Maaaring sabay-sabay ang ilan —
+     * puwedeng kaunti na ang natitira at malapit pa itong mag-expire — kaya
+     * listahan ang ibinabalik at hindi iisang estado lang.
+     */
+    private function stockLabels($medicine, int $total): array
+    {
+        $labels = [];
+
+        if (($medicine->expired_batches ?? 0) > 0) {
+            $labels[] = ['key' => 'expired', 'text' => 'Expired', 'tone' => 'red'];
+        }
+
+        if ($total <= 0) {
+            $labels[] = ['key' => 'out_of_stock', 'text' => 'Out of Stock', 'tone' => 'gray'];
+        } elseif ($total <= self::LOW_STOCK_THRESHOLD) {
+            $labels[] = ['key' => 'low_stock', 'text' => "Low Stock ({$total})", 'tone' => 'orange'];
+        }
+
+        if (($medicine->near_expiry_batches ?? 0) > 0) {
+            $labels[] = ['key' => 'near_expiry', 'text' => 'Near Expiry', 'tone' => 'yellow'];
+        }
+
+        if (empty($labels)) {
+            $labels[] = ['key' => 'in_stock', 'text' => 'In Stock', 'tone' => 'green'];
+        }
+
+        return $labels;
     }
 
 public function store(Request $request)

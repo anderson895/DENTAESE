@@ -19,12 +19,13 @@
     </div>
 
     <div class="flex flex-col sm:flex-row gap-2">
-      {{-- <select id="positionFilter" class="border rounded p-2 w-full sm:w-auto">
-        <option value="">All Positions</option>
-        <option value="Receptionist">Receptionist</option>
-        <option value="Dentist">Dentist</option>
-        <option value="Admin">Admin</option>
-      </select> --}}
+      <select id="stockStatusFilter" class="border rounded p-2 w-full sm:w-auto">
+        <option value="">All Status</option>
+        <option value="near_expiry">Near Expiry</option>
+        <option value="expired">Expired</option>
+        <option value="low_stock">Low Stock</option>
+        <option value="out_of_stock">Out of Stock</option>
+      </select>
       <input type="text" id="searchInput" placeholder="Search..." class="border rounded p-2 w-full sm:w-60" />
       <button onclick="InventoryList(1)" class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded">
         Search
@@ -41,6 +42,7 @@
           <th class="py-3 px-4 border">Unit</th>
           <th class="py-3 px-4 border">Price</th>
           <th class="border px-4 py-2">Total Stock</th>
+          <th class="py-3 px-4 border">Status</th>
               <th class="py-3 px-4 border">Description</th>
           <th class="py-3 px-4 border">Action</th>
         </tr>
@@ -300,20 +302,43 @@
 
   let currentPage = parseInt(localStorage.getItem('inventorycurrentpage')) || 1;
   let currentSearch = '';
+  let currentStatus = '';
+
+  // Kulay ng badge kada estado — pareho ng ibig sabihin sa buong pahina.
+  const STOCK_TONES = {
+    red:    'bg-red-100 text-red-700',
+    orange: 'bg-orange-100 text-orange-700',
+    yellow: 'bg-yellow-100 text-yellow-800',
+    gray:   'bg-gray-200 text-gray-700',
+    green:  'bg-green-100 text-green-700',
+  };
+
+  function stockBadges(item) {
+    const labels = item.stock_labels || [];
+    if (!labels.length) return '<span class="text-gray-400">&mdash;</span>';
+
+    return labels.map(l => {
+      const tone = STOCK_TONES[l.tone] || STOCK_TONES.gray;
+      const hint = l.key === 'near_expiry' && item.nearest_expiration
+        ? ` title="Earliest expiry: ${item.nearest_expiration}"`
+        : '';
+      return `<span class="inline-block whitespace-nowrap rounded-full px-2 py-1 text-xs font-semibold ${tone}"${hint}>${l.text}</span>`;
+    }).join(' ');
+  }
 
   function InventoryList(page = 1) {
     currentPage = page;
     localStorage.setItem('inventorycurrentpage', page);
     currentSearch = $('#searchInput').val();
-    currentPosition = $('#positionFilter').val();
-    localStorage.setItem('inventoryFilter', currentPosition);
+    currentStatus = $('#stockStatusFilter').val();
+    localStorage.setItem('inventoryStatusFilter', currentStatus);
 
     $.ajax({
       type: "GET",
       url: "{{ route('InventoryList') }}",
       data: {
         search: currentSearch,
-        position: currentPosition,
+        stock_status: currentStatus,
         page: page
       },
       success: function (response) {
@@ -327,6 +352,7 @@
   <td class="border py-2 px-4">${item.unit}</td>
   <td class="border py-2 px-4">${item.price}</td>
   <td class="border py-2 px-4">${item.total_quantity ?? 0}</td>
+  <td class="border py-2 px-4"><div class="flex flex-wrap justify-center gap-1">${stockBadges(item)}</div></td>
   <td class="border py-2 px-4">${item.description ?? ''}</td>
   <td class="border py-2 px-4 whitespace-nowrap">
     @if(session('active_branch_id') === 'admin')
@@ -349,7 +375,8 @@
 </tr>`;
 
           });
-          $('#newtbody').html(rows);
+          $('#newtbody').html(rows || `
+<tr><td colspan="6" class="border py-6 px-4 text-gray-500">No medicines match this filter.</td></tr>`);
 
           let paginationHTML = '';
           if (response.pagination.prev_page_url) {
@@ -365,9 +392,9 @@
   }
 
   $(document).ready(function () {
-    const savedPosition = localStorage.getItem('inventoryFilter');
-    if (savedPosition !== null) {
-      $('#positionFilter').val(savedPosition);
+    const savedStatus = localStorage.getItem('inventoryStatusFilter');
+    if (savedStatus) {
+      $('#stockStatusFilter').val(savedStatus);
     }
 
     $('#searchInput').on('input', function () {
@@ -375,9 +402,11 @@
       InventoryList(1);
     });
 
-    $('#positionFilter').on('change', function () {
-      localStorage.setItem('inventoryFilter', $(this).val());
+    $('#stockStatusFilter').on('change', function () {
+      localStorage.setItem('inventoryStatusFilter', $(this).val());
       localStorage.setItem('currentPage', 1);
+      // Bumalik sa unang pahina — baka wala nang laman ang kasalukuyang pahina
+      // matapos masala ang listahan.
       InventoryList(1);
     });
 
