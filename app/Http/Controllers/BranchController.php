@@ -13,9 +13,13 @@ class BranchController extends Controller
 {
     $request->validate([
         'opening_time' => 'required|date_format:H:i',
-        'closing_time' => 'required|date_format:H:i',
+        // Kailangang mas huli ang sara sa bukas — kung hindi, walang mabubuong
+        // timeslot ang booking at "no valid clinic hours" ang aabutin ng pasyente.
+        'closing_time' => 'required|date_format:H:i|after:opening_time',
         'open_days' => 'required|array',
         'open_days.*' => 'in:mon,tue,wed,thu,fri,sat,sun'
+    ], [
+        'closing_time.after' => 'The closing time must be later than the opening time.',
     ]);
 
     $store = Store::findOrFail($id);

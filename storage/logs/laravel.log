@@ -2354,3 +2354,4 @@
 #15 C:\\Users\\Desktop\\Downloads\\projects\\Dentaease\\DENTAESE\\_tmp_void2.php(52): App\\Http\\Controllers\\POSController->voidSale(Object(Illuminate\\Http\\Request), 3, 71)
 #16 {main}
 "} 
+[2026-09-10 12:51:35] local.WARNING: Invalid clinic hours while building slots {"store_id":10,"store_name":"TMP Santa Rosa 1","date":"2026-09-15","opening":"00:00","closing":"00:00"} 

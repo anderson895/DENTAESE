@@ -191,12 +191,26 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
             : Carbon::parse($value)->format('H:i');
     };
 
-    $openingTime = $asTime($docSchedule?->start_time)
-        ?? $asTime($clinicOverride?->opening_time)
-        ?? $asTime($store->opening_time);
-    $closingTime = $asTime($docSchedule?->end_time)
-        ?? $asTime($clinicOverride?->closing_time)
-        ?? $asTime($store->closing_time);
+    // Oras ng klinika sa petsang ito: override kung meron, kung wala ay ang
+    // regular na oras ng branch.
+    $openingTime = $asTime($clinicOverride?->opening_time) ?? $asTime($store->opening_time);
+    $closingTime = $asTime($clinicOverride?->closing_time) ?? $asTime($store->closing_time);
+
+    // Kapag may sariling oras ang dentista sa araw na ito, iyon ang masusunod.
+    // Pinapares sila: kung isa lang ang naitakda, sa oras ng klinika kukunin ang
+    // kabila. Dating hiwalay ang fallback ng start at end, kaya puwedeng
+    // mapagsama ang 21:00 ng dentista at 18:00 ng branch — baligtad na window na
+    // nagbubunga ng "clinic hours are not valid" kahit maayos ang dalawa.
+    $docOpening = $asTime($docSchedule?->start_time);
+    $docClosing = $asTime($docSchedule?->end_time);
+    if ($docOpening || $docClosing) {
+        $candidateOpen  = $docOpening ?? $openingTime;
+        $candidateClose = $docClosing ?? $closingTime;
+        if ($candidateOpen && $candidateClose && $candidateClose > $candidateOpen) {
+            $openingTime = $candidateOpen;
+            $closingTime = $candidateClose;
+        }
+    }
 
     // Walang naitakdang oras ang branch (karaniwan sa bagong gawa). Sabihin ito
     // nang tahasan sa halip na magbalik ng blangkong listahan na parang puno na.
@@ -215,12 +229,22 @@ public function getDentistSlots($branchId, $dentistId, Request $request)
     $closing = $day->copy()->setTimeFromTimeString($closingTime);
 
     if ($closing->lte($opening)) {
+        // Itinatala ang aktuwal na oras — sa pasyente kasi walang saysay ang
+        // numero, pero ito ang unang titingnan kapag inayos na ito ng staff.
+        \Log::warning('Invalid clinic hours while building slots', [
+            'store_id'   => $store->id,
+            'store_name' => $store->name,
+            'date'       => $date,
+            'opening'    => $openingTime,
+            'closing'    => $closingTime,
+        ]);
+
         return response()->json([
             'status' => 'success',
             'slots' => [],
             'booked_slots' => [],
             'reason' => 'invalid_hours',
-            'message' => 'The clinic hours for this date are not valid. Please contact the clinic or choose another date.',
+            'message' => 'This branch has no valid clinic hours set for this date yet. Please choose another branch or contact the clinic.',
         ]);
     }
 
