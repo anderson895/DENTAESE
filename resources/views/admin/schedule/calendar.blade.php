@@ -15,6 +15,16 @@
     .cal-cell.is-closed { background: #fee2e2; }
     .cal-cell.is-doctor-off { background: #fef3c7; }
     .cal-cell.is-doctor-available { background: #d1fae5; }
+    .cal-cell.is-open { background: #d1fae5; }
+    /* Manatiling mababakas ang kulay ng estado kahit na-hover. */
+    .cal-cell.is-closed:hover { background: #fecaca; }
+    .cal-cell.is-doctor-off:hover { background: #fde68a; }
+    .cal-cell.is-doctor-available:hover,
+    .cal-cell.is-open:hover { background: #a7f3d0; }
+    .cal-cell.is-other-month.is-closed,
+    .cal-cell.is-other-month.is-doctor-off,
+    .cal-cell.is-other-month.is-doctor-available,
+    .cal-cell.is-other-month.is-open { opacity: 0.45; }
     .cal-day-num { font-weight: 600; font-size: 12px; color: #374151; }
     .cal-pill { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 999px; margin-top: 4px; }
     .cal-pill-open { background: #dcfce7; color: #166534; }
@@ -68,10 +78,15 @@
         </div>
     </div>
 
-    <div class="flex items-center gap-3 text-xs mb-2">
+    <div class="flex flex-wrap items-center gap-3 text-xs mb-2">
         <span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 bg-red-200 rounded"></span> Clinic closed</span>
-        <span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 bg-yellow-200 rounded"></span> Dentist off</span>
-        <span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 bg-green-200 rounded"></span> Dentist available</span>
+        <span class="inline-flex items-center gap-1" x-show="mode === 'doctor' && dentistId"><span class="inline-block w-3 h-3 bg-yellow-200 rounded"></span> Dentist off</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 bg-green-200 rounded"></span>
+            <span x-text="mode === 'doctor' && dentistId ? 'Dentist available' : 'Clinic open'"></span>
+        </span>
+        <span class="inline-flex items-center gap-1 text-gray-500" x-show="!storeId">
+            <span class="inline-block w-3 h-3 bg-white border rounded"></span> Select a branch to see open and closed days
+        </span>
     </div>
 
     <!-- Calendar grid -->
@@ -85,10 +100,12 @@
                  :class="{
                      'is-other-month': !cell.inMonth,
                      'is-today': cell.isToday,
-                     'is-closed': cell.clinicClosed,
-                     'is-doctor-off': cell.doctorOff,
-                     'is-doctor-available': cell.doctorAvailable,
+                     'is-closed': cell.state === 'closed',
+                     'is-doctor-off': cell.state === 'doctor-off',
+                     'is-doctor-available': cell.state === 'doctor-available',
+                     'is-open': cell.state === 'open',
                  }"
+                 :title="cell.stateLabel"
                  @click="openCell(cell)">
                 <div class="flex justify-between items-start">
                     <span class="cal-day-num" x-text="cell.day"></span>
@@ -258,6 +275,39 @@ function scheduleCalendar() {
             this.buildCells();
         },
 
+        // UTC ang inilalabas ng toISOString(), kaya sa Manila (UTC+8) ay nauuna
+        // nang isang araw ang petsa ng cell — nasa maling araw tuloy ang mga
+        // override at doctor schedule, at maling petsa ang nase-save kapag
+        // pinindot ang cell. Lokal na bahagi ng petsa ang ginagamit dito.
+        toLocalIso(d) {
+            return [
+                d.getFullYear(),
+                String(d.getMonth() + 1).padStart(2, '0'),
+                String(d.getDate()).padStart(2, '0'),
+            ].join('-');
+        },
+
+        // Isang kulay lang bawat araw, kaya may malinaw na pagkakasunod-sunod:
+        // sarado ang klinika > day-off ang dentista > available. Tugma ito sa
+        // basa ng booking — kapag walang naitakdang doctor schedule, available
+        // pa rin ang dentista sa oras ng branch.
+        resolveState(clinicClosed, doctorOff, doctorAvailable) {
+            if (clinicClosed) return ['closed', 'Clinic closed'];
+
+            if (this.mode === 'doctor' && this.dentistId) {
+                if (doctorOff) return ['doctor-off', 'Dentist off'];
+                if (!this.storeId) return ['', ''];
+                return ['doctor-available', doctorAvailable
+                    ? 'Dentist available (scheduled)'
+                    : 'Dentist available (regular branch hours)'];
+            }
+
+            // Kailangan ng branch bago masabing bukas — walang oras na masusuri
+            // kapag "All Branches" ang napili.
+            if (!this.storeId) return ['', ''];
+            return ['open', 'Clinic open'];
+        },
+
         buildCells() {
             const dayShort = ['sun','mon','tue','wed','thu','fri','sat'];
             const today = new Date(); today.setHours(0,0,0,0);
@@ -272,7 +322,7 @@ function scheduleCalendar() {
             for (let i = 0; i < 42; i++) {
                 const d = new Date(start);
                 d.setDate(start.getDate() + i);
-                const iso = d.toISOString().slice(0, 10);
+                const iso = this.toLocalIso(d);
                 const inMonth = d.getMonth() === this.cursor.getMonth();
                 const weeklyOpen = !this.store || (this.store.open_days || []).includes(dayShort[d.getDay()]);
                 const override = this.clinicOverrides.find(o => o.schedule_date === iso);
@@ -281,6 +331,8 @@ function scheduleCalendar() {
                 const clinicClosed = override ? !override.is_open : (this.storeId && !weeklyOpen);
                 const doctorOff = docs.some(x => x.status === 'off');
                 const doctorAvailable = docs.some(x => x.status === 'available');
+
+                const [state, stateLabel] = this.resolveState(!!clinicClosed, doctorOff, doctorAvailable);
 
                 cells.push({
                     key: iso,
@@ -294,6 +346,8 @@ function scheduleCalendar() {
                     doctors: docs,
                     doctorOff,
                     doctorAvailable,
+                    state,
+                    stateLabel,
                 });
             }
             this.cells = cells;

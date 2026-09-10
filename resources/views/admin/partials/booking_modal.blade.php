@@ -308,7 +308,10 @@ $(document).on('change', '#appointment_date', function () {
             });
             $('#appointment_time').html(options);
         } else {
-            $('#appointment_time').html('<option value="">No slots available</option>');
+            // Ipakita ang dahilan mula sa server (sarado, day-off, punuan, walang
+            // nakatakdang oras) para alam agad ng staff kung bakit walang slot.
+            const why = response.message || 'No slots available';
+            $('#appointment_time').html(`<option value="">${why}</option>`);
         }
     });
 });

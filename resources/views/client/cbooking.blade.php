@@ -459,8 +459,8 @@ function formatTimeToAMPM(time24) {
     return `${hour}:${minute.toString().padStart(2, '0')} ${ampm}`;
 }
 
-$('#appointment_date').on('change', function () {
-    const date = $(this).val();
+function loadTimeSlots() {
+    const date = $('#appointment_date').val();
     const storeId = $('#store_id').val();
     const dentistId = $('#dentist_id').val();
 
@@ -481,9 +481,16 @@ $('#appointment_date').on('change', function () {
             const booked = resp.booked_slots || [];
             const allTimes = [...new Set([...resp.slots, ...booked])].sort();
 
-            // Populate dropdown — hide past times if selected date is today
+            // Populate dropdown — hide past times if selected date is today.
+            // Lokal na petsa ang ginagamit, hindi toISOString(): UTC ang inilalabas
+            // niyon kaya mali ang paghahambing tuwing madaling-araw sa Manila.
             const now = new Date();
-            const isToday = date === now.toISOString().split('T')[0];
+            const localToday = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, '0'),
+                String(now.getDate()).padStart(2, '0'),
+            ].join('-');
+            const isToday = date === localToday;
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
             let selectableCount = 0;
@@ -549,8 +556,14 @@ $('#appointment_date').on('change', function () {
             $('#bookedSlots').html('<p>No booked slots</p>');
         }
     });
-});
+}
 
+// Dating sa petsa lang naka-bind ang pagkuha ng slots, kaya kapag petsa ang
+// unang pinindot bago ang dentista ay naiiwan sa "-- Select Date First --" ang
+// dropdown — walang nagre-refresh matapos piliin ang dentista. Nakikinig na
+// ngayon sa pareho para kahit anong sunod-sunod, tama pa rin ang lalabas.
+$('#appointment_date').on('change', loadTimeSlots);
+$('#dentist_id').on('change', loadTimeSlots);
 
 $('#appointment_time').on('change', checkStep2NextButton);
 
