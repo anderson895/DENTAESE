@@ -97,8 +97,11 @@ class ScheduleController extends Controller
             'schedule_date' => 'required|date',
             'is_open'       => 'required|boolean',
             'opening_time'  => 'nullable|date_format:H:i',
-            'closing_time'  => 'nullable|date_format:H:i',
+            // Gaya ng doctor schedule, dapat mas huli ang sara sa bukas.
+            'closing_time'  => 'nullable|date_format:H:i|after:opening_time',
             'reason'        => 'nullable|string|max:255',
+        ], [
+            'closing_time.after' => 'The closing time must be later than the opening time.',
         ]);
 
         $override = StoreScheduleOverride::updateOrCreate(

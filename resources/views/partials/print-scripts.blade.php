@@ -11,12 +11,75 @@
     window.printReceipt(elementId, title)
         Shortcut para sa lahat ng resibo — default na 4x6 ang papel.
 
+    Lahat ng printout ay may footer na "Printed: <petsa/oras>" at "By: <user>".
+    Karaniwan ay galing ito sa partials/print-header, pero kung walang header
+    ang isang seksyon ay idinadagdag ito rito — para walang printout na
+    lumalabas nang walang tala kung kailan at sino ang nagprint.
+
     Nagpiprint ito sa loob ng nakatagong iframe: hindi na sinisira ang kasalukuyang
     pahina (dating ginagawa ng document.body.innerHTML = ...) kaya wala nang reload
     pagkatapos, at hindi rin ito hinaharang ng popup blocker.
 --}}
+@php
+    $printFooterUser = auth()->check()
+        ? trim((auth()->user()->name ?? '').' '.(auth()->user()->lastname ?? ''))
+        : '';
+@endphp
 <script>
 (function () {
+    var PRINT_USER = @json($printFooterUser);
+
+    // Oras ng makina sa sandaling nagprint — mas tumpak kaysa sa oras ng
+    // pag-render ng pahina, na maaaring ilang oras nang luma.
+    function printedStamp() {
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var d = new Date();
+        var hours = d.getHours();
+        var suffix = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+        return months[d.getMonth()] + ' ' + pad(d.getDate()) + ', ' + d.getFullYear() +
+               ' ' + pad(hours) + ':' + pad(d.getMinutes()) + ' ' + suffix;
+    }
+
+    // Idinadagdag lang kapag walang dalang footer ang seksyon (hal. hindi
+    // kasama ang partials/print-header) para hindi ito madoble. Kung mayroon
+    // na, ina-update na lang ang oras — oras ng pag-render kasi ang nakasulat
+    // doon, hindi oras ng pagprint.
+    function ensurePrintFooter(doc, sheet) {
+        var existing = sheet.querySelectorAll('.clinic-print-footer');
+        if (existing.length) {
+            existing.forEach(function (node) {
+                var stamp = node.querySelector('[data-printed-at]');
+                if (stamp) stamp.textContent = 'Printed: ' + printedStamp();
+            });
+            return;
+        }
+
+        var footer = doc.createElement('div');
+        footer.className = 'clinic-print-footer';
+        footer.setAttribute('style',
+            'position:fixed; left:10mm; right:10mm; bottom:6mm; padding:4px 0 0;' +
+            'border-top:1px solid #999; display:flex; justify-content:space-between;' +
+            "align-items:center; font-family:'Times New Roman', Georgia, serif;" +
+            'font-size:8pt; color:#444;');
+
+        var printedAt = doc.createElement('div');
+        printedAt.textContent = 'Printed: ' + printedStamp();
+        footer.appendChild(printedAt);
+
+        if (PRINT_USER) {
+            var printedBy = doc.createElement('div');
+            printedBy.textContent = 'By: ' + PRINT_USER;
+            footer.appendChild(printedBy);
+        }
+
+        sheet.appendChild(footer);
+    }
+
     function copyStylesInto(doc) {
         // Isinasama ang lahat ng stylesheet ng parent page (kasama ang <style>
         // na ginagawa ng Tailwind CDN) para pareho ang itsura sa iframe.
@@ -105,6 +168,7 @@
         var sheet = doc.createElement('div');
         sheet.className = 'print-sheet';
         sheet.appendChild(doc.importNode(clone, true));
+        ensurePrintFooter(doc, sheet);
         doc.body.appendChild(sheet);
         doc.body.classList.add('tw-ready');
 

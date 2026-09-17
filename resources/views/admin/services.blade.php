@@ -41,8 +41,8 @@
   <div class="bg-white rounded-lg shadow p-6 w-full max-w-lg">
     <h3 class="text-xl font-bold mb-4 text-blue-700">Add Service</h3>
     <form id="addUserForm" class="space-y-3">
-      <input type="text" name="name" placeholder="Name" required class="w-full border p-2 rounded">
-      <textarea name="description" placeholder="Description" required rows="3" class="w-full border p-2 rounded"></textarea>
+      <input type="text" name="name" placeholder="Name" required maxlength="50" class="w-full border p-2 rounded">
+      <textarea name="description" placeholder="Description" required rows="3" maxlength="255" class="w-full border p-2 rounded"></textarea>
       <input type="number" name="time" placeholder="Approx. Time (mins)" required class="w-full border p-2 rounded">
       <input type="number" name="price" placeholder="Approx. Price" class="w-full border p-2 rounded" hidden>
       <select name="type" id="type" class="w-full border p-2 rounded">
@@ -66,7 +66,7 @@
     <form id="updateServiceForm" enctype="multipart/form-data">
       @csrf
       <input type="hidden" name="id" id="service_id">
-      <input type="text" name="name" id="service_name" placeholder="Name" class="w-full border p-2 rounded mb-2">
+      <input type="text" name="name" id="service_name" placeholder="Name" maxlength="50" class="w-full border p-2 rounded mb-2">
       <select id="service_type" name="type" class="w-full border p-2 rounded mb-2">
         <option value="General Dentistry">General Dentistry</option>
         <option value="Orthodontics">Orthodontics</option>
@@ -74,7 +74,7 @@
       </select>
       <input type="number" name="approx_time" id="service_time" placeholder="Approx. Time" class="w-full border p-2 rounded mb-2">
       <input type="number" name="approx_price" id="service_price" placeholder="Approx. Price" class="w-full border p-2 rounded mb-2">
-      <textarea name="description" id="service_description" placeholder="Description" class="w-full border p-2 rounded mb-4"></textarea>
+      <textarea name="description" id="service_description" placeholder="Description" maxlength="255" class="w-full border p-2 rounded mb-4"></textarea>
       <label>Service Image:</label>
       <input type="file" name="image" id="service_image_input" accept="image/*" class="mb-2">
       <div id="imagePreviewWrapper" class="mb-4 hidden">

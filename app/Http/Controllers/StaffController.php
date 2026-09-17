@@ -105,31 +105,31 @@ public function ViewStaff(Request $request)
             $isUpdated = false;
      
             if ($request->filled('email') && $request->email !== $user->email) {
-                $rules['email'] = ['required', 'email'];
+                $rules['email'] = ['required', 'email', 'max:50'];
                 $data['email'] = $request->email;
                 $isUpdated = true;
             }
         
             if ($request->filled('name') && $request->name !== $user->name) {
-                $rules['name'] = ['required', 'string', 'max:255'];
+                $rules['name'] = ['required', 'string', 'max:50'];
                 $data['name'] = $request->name;
                 $isUpdated = true;
             }
-        
+
             if ($request->filled('lastname') && $request->lastname !== $user->lastname) {
-                $rules['lastname'] = ['required', 'string', 'max:255'];
+                $rules['lastname'] = ['required', 'string', 'max:50'];
                 $data['lastname'] = $request->lastname;
                 $isUpdated = true;
             }
-        
+
             if ($request->filled('middlename') && $request->middlename !== $user->middlename) {
-                $rules['middlename'] = ['nullable', 'string', 'max:255'];
+                $rules['middlename'] = ['nullable', 'string', 'max:50'];
                 $data['middlename'] = $request->middlename;
                 $isUpdated = true;
             }
-        
+
             if ($request->filled('suffix') && $request->suffix !== $user->suffix) {
-                $rules['suffix'] = ['nullable', 'string', 'max:50'];
+                $rules['suffix'] = ['nullable', 'string', 'max:10'];
                 $data['suffix'] = $request->suffix;
                 $isUpdated = true;
             }
@@ -150,7 +150,7 @@ public function ViewStaff(Request $request)
                 $rules['user'] = [
                     'required',
                     'string',
-                    'max:255',
+                    'max:50',
                     Rule::unique('users')->ignore($user->id),
                 ];
                 $data['user'] = $request->user;

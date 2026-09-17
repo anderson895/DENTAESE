@@ -164,7 +164,7 @@
                             </div>
                             <div>
                                 <label class="text-xs">Reason / Note</label>
-                                <input type="text" x-model="form.reason" placeholder="e.g. Holiday, Special hours" class="border rounded p-2 w-full">
+                                <input type="text" x-model="form.reason" maxlength="50" placeholder="e.g. Holiday, Special hours" class="border rounded p-2 w-full">
                             </div>
                             <div class="flex justify-between pt-2">
                                 <button class="px-3 py-2 bg-red-100 text-red-700 rounded" x-show="form.id" @click="deleteOverride()">Remove override</button>
@@ -202,7 +202,7 @@
                             </div>
                             <div>
                                 <label class="text-xs">Notes</label>
-                                <input type="text" x-model="form.notes" class="border rounded p-2 w-full">
+                                <input type="text" x-model="form.notes" maxlength="50" class="border rounded p-2 w-full">
                             </div>
                             <div class="flex justify-between pt-2">
                                 <button class="px-3 py-2 bg-red-100 text-red-700 rounded" x-show="form.id" @click="deleteDoctor()">Remove</button>

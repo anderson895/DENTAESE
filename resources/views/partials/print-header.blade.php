@@ -60,12 +60,15 @@
 @endif
 
 {{-- Naka-fixed ang footer kaya inuulit ito ng browser sa bawat pahina kapag nagprint.
-     Dito lang nakalagay ang petsa/oras at kung sino ang nagprint — wala na sa header. --}}
+     Dito lang nakalagay ang petsa/oras at kung sino ang nagprint — wala na sa header.
+
+     Oras ng pag-render ang unang nakalagay dito; pinapalitan ito ng printSection()
+     ng totoong oras ng pagprint, dahil maaaring ilang oras nang bukas ang pahina. --}}
 <div class="clinic-print-footer"
      style="position:fixed; left:10mm; right:10mm; bottom:6mm; padding:4px 0 0; border-top:1px solid #999;
             display:flex; justify-content:space-between; align-items:center;
             font-family: 'Times New Roman', Georgia, serif; font-size:8pt; color:#444;">
-    <div>Printed: {{ now()->format('M d, Y h:i A') }}</div>
+    <div data-printed-at>Printed: {{ now()->format('M d, Y h:i A') }}</div>
     @auth
         <div>By: {{ trim((auth()->user()->name ?? '').' '.(auth()->user()->lastname ?? '')) }}</div>
     @endauth

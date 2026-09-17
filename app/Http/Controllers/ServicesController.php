@@ -52,11 +52,11 @@ class ServicesController extends Controller
         ];
 
         $validated = validator($mapped, [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:50',
             'approx_time' => 'required|integer', // in minutes
             'approx_price' => 'nullable|numeric', // price is optional / hidden in the UI
-            'description' => 'nullable|string',
-            'type' => 'nullable|string',
+            'description' => 'nullable|string|max:255',
+            'type' => 'nullable|string|max:50',
         ])->validate();
 
     // approx_price column is NOT NULL in the DB; price was removed from the UI,

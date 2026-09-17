@@ -18,18 +18,24 @@
     <!-- Input area hidden in print and for receptionists (read-only) -->
     @if(!$rxIsReceptionist)
     <div class="mb-4 no-print">
+        {{-- Dropdown sa halip na malayang pagta-type: ang gamot ay dapat galing
+             sa talaan ng imbentaryo, kaya wala nang maling baybay o gamot na
+             hindi naman umiiral. --}}
         <div class="flex gap-2 mb-2">
-            <div class="relative w-full">
-                <input type="text" id="medicine-search" placeholder="Search medicine..." 
-                    class="border p-2 rounded w-full" autocomplete="off">
-                <div id="medicine-suggestions" class="absolute z-10 bg-white border rounded w-full max-h-48 overflow-y-auto hidden shadow-lg"></div>
-                <input type="hidden" id="selected-medicine-id">
+            <div class="w-full">
+                <label class="text-xs font-semibold text-gray-600">Medicine</label>
+                <select id="selected-medicine-id" class="border p-2 rounded w-full bg-white">
+                    <option value="">-- Select Medicine --</option>
+                    @foreach($medicines as $medicine)
+                        <option value="{{ $medicine->id }}">{{ $medicine->name }} ({{ $medicine->unit }})</option>
+                    @endforeach
+                </select>
             </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
             <div>
                 <label class="text-xs font-semibold text-gray-600">Quantity</label>
-                <input type="text" id="medicine-qty" placeholder="e.g. 10 tablets" class="border p-2 rounded w-full">
+                <input type="text" id="medicine-qty" maxlength="50" placeholder="e.g. 10 tablets" class="border p-2 rounded w-full">
             </div>
             <div>
                 <label class="text-xs font-semibold text-gray-600">Frequency</label>
@@ -47,11 +53,11 @@
             </div>
             <div>
                 <label class="text-xs font-semibold text-gray-600">Time</label>
-                <input type="text" id="medicine-time" placeholder="e.g. morning and evening" class="border p-2 rounded w-full">
+                <input type="text" id="medicine-time" maxlength="50" placeholder="e.g. morning and evening" class="border p-2 rounded w-full">
             </div>
             <div>
                 <label class="text-xs font-semibold text-gray-600">Duration</label>
-                <input type="text" id="medicine-duration" placeholder="e.g. for 2 weeks" class="border p-2 rounded w-full">
+                <input type="text" id="medicine-duration" maxlength="50" placeholder="e.g. for 2 weeks" class="border p-2 rounded w-full">
             </div>
         </div>
         <button type="button" id="add-medicine" class="bg-blue-600 text-white px-4 py-2 rounded w-full md:w-auto">+ Add Medicine</button>
@@ -152,39 +158,8 @@ function rxSyncToCurrentMedication(rxDiv, med, qty, freq, time, duration) {
     .catch(() => console.warn('Failed to sync prescribed medicine to Current Medication.'));
 }
 
-// Searchable medicine input
-const searchInput = document.getElementById('medicine-search');
-const suggestionsDiv = document.getElementById('medicine-suggestions');
+// Dropdown ng gamot — ang halaga nito ay id mula sa talaan ng imbentaryo.
 const selectedMedId = document.getElementById('selected-medicine-id');
-
-if (searchInput && suggestionsDiv) {
-searchInput.addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
-    if (query.length < 1) { suggestionsDiv.classList.add('hidden'); return; }
-    
-    const matches = medicines.filter(m => m.name.toLowerCase().includes(query));
-    if (matches.length === 0) { suggestionsDiv.classList.add('hidden'); return; }
-    
-    suggestionsDiv.innerHTML = matches.map(m => 
-        `<div class="px-3 py-2 hover:bg-blue-50 cursor-pointer" data-id="${m.id}" data-name="${m.name}" data-unit="${m.unit}">${m.name} (${m.unit})</div>`
-    ).join('');
-    suggestionsDiv.classList.remove('hidden');
-});
-
-suggestionsDiv.addEventListener('click', function(e) {
-    const item = e.target.closest('[data-id]');
-    if (!item) return;
-    searchInput.value = item.dataset.name + ' (' + item.dataset.unit + ')';
-    selectedMedId.value = item.dataset.id;
-    suggestionsDiv.classList.add('hidden');
-});
-
-document.addEventListener('click', function(e) {
-    if (!suggestionsDiv.contains(e.target) && e.target !== searchInput) {
-        suggestionsDiv.classList.add('hidden');
-    }
-});
-} // end if (searchInput && suggestionsDiv)
 
 // Add medicine
 const addMedicineBtn = document.getElementById('add-medicine');
@@ -198,12 +173,15 @@ addMedicineBtn.addEventListener('click', function() {
     const rxList = document.getElementById('rx-list');
 
     if (!medId) {
-        alert('Please search and select a medicine');
+        selectedMedId.focus();
+        if (window.Swal) Swal.fire('No medicine selected', 'Please choose a medicine from the list.', 'warning');
+        else alert('Please choose a medicine from the list.');
         return;
     }
 
     const med = medicines.find(m => m.id == medId);
-    
+    if (!med) return;
+
     // Build prescription line: e.g. "Ascorbic Acid (MG), 10 tablets, 2x a day, morning and evening, for 2 weeks"
     let details = [];
     if (qty) details.push(qty);
@@ -227,7 +205,6 @@ addMedicineBtn.addEventListener('click', function() {
     rxSyncToCurrentMedication(div, med, qty, freq, time, duration);
 
     // Clear inputs
-    searchInput.value = '';
     selectedMedId.value = '';
     document.getElementById('medicine-qty').value = '';
     document.getElementById('medicine-freq').value = '';

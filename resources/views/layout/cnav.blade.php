@@ -199,5 +199,8 @@
 
   {{-- Shared na print helper (window.printSection) para sa lahat ng printout --}}
   @include('partials.print-scripts')
+
+  {{-- Bantay sa mga numeric na input (.js-digits-only, .js-mobile-number) --}}
+  <script src="{{ asset('js/input-guards.js') }}"></script>
 </body>
 </html>

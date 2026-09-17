@@ -28,8 +28,11 @@
     <form id="otpForm" class="flex-col gap-5 hidden" style="display:none;">
         <div>
             <label class="text-gray-700 text-sm font-medium">Enter the 6-digit code sent to your email</label>
-            <input type="text" name="otp" id="otpInput" maxlength="6" inputmode="numeric"
-                class="mt-1 w-full border border-sky-300 rounded-md p-2 tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
+            <input type="text" name="otp" id="otpInput" maxlength="6" minlength="6" inputmode="numeric"
+                required pattern="[0-9]{6}" placeholder="######"
+                title="Enter all 6 digits of the code."
+                class="js-digits-only mt-1 w-full border border-sky-300 rounded-md p-2 tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
+            <p id="otpError" class="hidden text-red-600 text-sm mt-1"></p>
         </div>
         <div class="flex justify-between items-center mt-4">
             <button type="button" id="resendOtp" class="text-sm text-blue-500 hover:text-blue-700 underline">Resend OTP</button>
@@ -46,11 +49,7 @@
             <div class="relative">
                 <input type="password" name="password" id="newPasswordInput"
                     class="mt-1 w-full border border-sky-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
-                <button type="button" onclick="togglePasswordField('newPasswordInput', this)"
-                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
-                    aria-label="Show password">
-                    @include('partials.eye-icon')
-                </button>
+                @include('partials.password-toggle', ['for' => 'newPasswordInput'])
             </div>
         </div>
         <div class="mt-3">
@@ -58,11 +57,7 @@
             <div class="relative">
                 <input type="password" name="confirm_password" id="confirmPasswordInput"
                     class="mt-1 w-full border border-sky-300 rounded-md p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white">
-                <button type="button" onclick="togglePasswordField('confirmPasswordInput', this)"
-                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
-                    aria-label="Show password">
-                    @include('partials.eye-icon')
-                </button>
+                @include('partials.password-toggle', ['for' => 'confirmPasswordInput'])
             </div>
         </div>
         <div class="flex justify-end mt-4">
@@ -81,17 +76,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Show/hide password gamit ang eye icon
-function togglePasswordField(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const isHidden = input.type === 'password';
-    input.type = isHidden ? 'text' : 'password';
-    btn.querySelector('.eye-open')?.classList.toggle('hidden', isHidden);
-    btn.querySelector('.eye-closed')?.classList.toggle('hidden', !isHidden);
-    btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-}
-
+{{-- Nasa partials/password-toggle ang togglePasswordField() --}}
 $(document).ready(function () {
     const token = '{{ csrf_token() }}';
 
@@ -132,8 +117,23 @@ $(document).ready(function () {
 
     $('#otpForm').submit(function (e) {
         e.preventDefault();
+
+        // Walang laktawan: kailangang kumpleto ang anim na digit bago pa man
+        // umabot sa server.
+        const otp = $('#otpInput').val().trim();
+        const otpError = $('#otpError');
+        if (!/^\d{6}$/.test(otp)) {
+            otpError
+                .text(otp.length ? `Please enter all 6 digits — ${6 - otp.length} missing.` : 'Please enter the 6-digit code sent to you.')
+                .removeClass('hidden');
+            $('#otpInput').addClass('border-red-500').focus();
+            return;
+        }
+        otpError.addClass('hidden');
+        $('#otpInput').removeClass('border-red-500');
+
         loader('Verifying...');
-        $.post('{{ route('password.verifyOtp') }}', { otp: $('#otpInput').val(), _token: token })
+        $.post('{{ route('password.verifyOtp') }}', { otp: otp, _token: token })
             .done(function (res) {
                 Swal.close();
                 $('#otpForm').hide();

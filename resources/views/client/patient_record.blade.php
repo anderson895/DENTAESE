@@ -24,6 +24,19 @@
     ];
 
     $checkedConditions = old('medical_conditions', $patientinfo->medical_conditions ?? []) ?: [];
+
+    // Dropdown na ang relihiyon para hindi na nagkakaiba-iba ang baybay ng
+    // iisang sagot ("Roman Catholic" / "roman catholic" / "RC"). Ang "Other"
+    // ang nagbubukas ng maliit na text field sa tabi nito.
+    $religions = [
+        'Roman Catholic', 'Iglesia ni Cristo', 'Born Again Christian',
+        'Evangelical', 'Baptist', 'Methodist', 'Seventh-day Adventist',
+        "Jehovah's Witness", 'Aglipayan', 'Islam', 'Buddhism', 'Hinduism',
+        'Protestant', 'None',
+    ];
+
+    $currentReligion  = old('religion', $patientinfo->religion ?? '');
+    $religionIsListed = $currentReligion === '' || in_array($currentReligion, $religions, true);
 @endphp
 
 <style>
@@ -244,15 +257,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Last Name</label>
-                <input type="text" name="last_name" class="pda-input" value="{{ old('last_name', $patientinfo->last_name ?? $u?->lastname) }}">
+                <input type="text" name="last_name" class="pda-input" maxlength="50" value="{{ old('last_name', $patientinfo->last_name ?? $u?->lastname) }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">First Name</label>
-                <input type="text" name="first_name" class="pda-input" value="{{ old('first_name', $patientinfo->first_name ?? $u?->name) }}">
+                <input type="text" name="first_name" class="pda-input" maxlength="50" value="{{ old('first_name', $patientinfo->first_name ?? $u?->name) }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Middle Name</label>
-                <input type="text" name="middle_name" class="pda-input" value="{{ old('middle_name', $patientinfo->middle_name ?? $u?->middlename) }}">
+                <input type="text" name="middle_name" class="pda-input" maxlength="50" value="{{ old('middle_name', $patientinfo->middle_name ?? $u?->middlename) }}">
             </div>
         </div>
 
@@ -275,51 +288,67 @@
             </div>
             <div>
                 <label class="text-xs text-gray-500">Nickname</label>
-                <input type="text" name="nickname" class="pda-input" value="{{ old('nickname', $patientinfo->nickname ?? '') }}">
+                <input type="text" name="nickname" class="pda-input" maxlength="50" value="{{ old('nickname', $patientinfo->nickname ?? '') }}">
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Religion</label>
-                <input type="text" name="religion" class="pda-input" value="{{ old('religion', $patientinfo->religion ?? '') }}">
+                <select name="religion" id="religion-select" class="pda-input">
+                    <option value="">-- Select Religion --</option>
+                    @foreach($religions as $religion)
+                        <option value="{{ $religion }}" {{ $currentReligion === $religion ? 'selected' : '' }}>{{ $religion }}</option>
+                    @endforeach
+                    <option value="Other" {{ $religionIsListed ? '' : 'selected' }}>Other</option>
+                </select>
+                <input type="text" name="religion_other" id="religion-other" maxlength="50"
+                       class="pda-input mt-2 {{ $religionIsListed ? 'hidden' : '' }}"
+                       placeholder="Please specify"
+                       value="{{ $religionIsListed ? '' : $currentReligion }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Nationality</label>
-                <input type="text" name="nationality" class="pda-input" value="{{ old('nationality', $patientinfo->nationality ?? '') }}">
+                <input type="text" name="nationality" class="pda-input" maxlength="50" value="{{ old('nationality', $patientinfo->nationality ?? '') }}">
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Home Address</label>
-                <input type="text" name="home_address" class="pda-input" value="{{ old('home_address', $patientinfo->home_address ?? $u?->current_address) }}">
+                <input type="text" name="home_address" class="pda-input" maxlength="255" value="{{ old('home_address', $patientinfo->home_address ?? $u?->current_address) }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Home No.</label>
-                <input type="text" name="home_no" class="pda-input" value="{{ old('home_no', $patientinfo->home_no ?? '') }}">
+                <input type="text" name="home_no" class="pda-input js-digits-only" inputmode="numeric"
+                       maxlength="15" pattern="[0-9]*" title="Numbers only"
+                       value="{{ old('home_no', $patientinfo->home_no ?? '') }}">
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Occupation</label>
-                <input type="text" name="occupation" class="pda-input" value="{{ old('occupation', $patientinfo->occupation ?? '') }}">
+                <input type="text" name="occupation" class="pda-input" maxlength="50" value="{{ old('occupation', $patientinfo->occupation ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Office No.</label>
-                <input type="text" name="office_no" class="pda-input" value="{{ old('office_no', $patientinfo->office_no ?? '') }}">
+                <input type="text" name="office_no" class="pda-input js-digits-only" inputmode="numeric"
+                       maxlength="15" pattern="[0-9]*" title="Numbers only"
+                       value="{{ old('office_no', $patientinfo->office_no ?? '') }}">
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Dental Insurance</label>
-                <input type="text" name="dental_insurance" class="pda-input" value="{{ old('dental_insurance', $patientinfo->dental_insurance ?? '') }}">
+                <input type="text" name="dental_insurance" class="pda-input" maxlength="50" value="{{ old('dental_insurance', $patientinfo->dental_insurance ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Fax No.</label>
-                <input type="text" name="fax_no" class="pda-input" value="{{ old('fax_no', $patientinfo->fax_no ?? '') }}">
+                <input type="text" name="fax_no" class="pda-input js-digits-only" inputmode="numeric"
+                       maxlength="15" pattern="[0-9]*" title="Numbers only"
+                       value="{{ old('fax_no', $patientinfo->fax_no ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Effective Date</label>
@@ -330,11 +359,14 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Cell/Mobile No.</label>
-                <input type="text" name="contact_number" class="pda-input" value="{{ old('contact_number', $patientinfo->contact_number ?? $u?->contact_number) }}">
+                <input type="text" name="contact_number" class="pda-input js-mobile-number" inputmode="numeric"
+                       maxlength="11" pattern="09[0-9]{9}" placeholder="09*********"
+                       title="Must be 11 digits and start with 09 (e.g. 09171234567)"
+                       value="{{ old('contact_number', $patientinfo->contact_number ?? $u?->contact_number) }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Email Address</label>
-                <input type="email" name="email" class="pda-input" value="{{ old('email', $patientinfo->email ?? $u?->email) }}">
+                <input type="email" name="email" class="pda-input" maxlength="50" value="{{ old('email', $patientinfo->email ?? $u?->email) }}">
             </div>
         </div>
 
@@ -344,11 +376,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-gray-500">Parent / Guardian's Name</label>
-                    <input type="text" name="parent_guardian_name" class="pda-input" value="{{ old('parent_guardian_name', $patientinfo->parent_guardian_name ?? '') }}">
+                    <input type="text" name="parent_guardian_name" class="pda-input" maxlength="50" value="{{ old('parent_guardian_name', $patientinfo->parent_guardian_name ?? '') }}">
                 </div>
                 <div>
                     <label class="text-xs text-gray-500">Occupation</label>
-                    <input type="text" name="parent_guardian_occupation" class="pda-input" value="{{ old('parent_guardian_occupation', $patientinfo->parent_guardian_occupation ?? '') }}">
+                    <input type="text" name="parent_guardian_occupation" class="pda-input" maxlength="50" value="{{ old('parent_guardian_occupation', $patientinfo->parent_guardian_occupation ?? '') }}">
                 </div>
             </div>
         </div>
@@ -356,11 +388,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
             <div>
                 <label class="text-xs text-gray-500">Whom may we thank for referring you?</label>
-                <input type="text" name="referred_by" class="pda-input" value="{{ old('referred_by', $patientinfo->referred_by ?? '') }}">
+                <input type="text" name="referred_by" class="pda-input" maxlength="50" value="{{ old('referred_by', $patientinfo->referred_by ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">What is your reason for dental consultation?</label>
-                <input type="text" name="reason_for_consultation" class="pda-input" value="{{ old('reason_for_consultation', $patientinfo->reason_for_consultation ?? '') }}">
+                <input type="text" name="reason_for_consultation" class="pda-input" maxlength="255" value="{{ old('reason_for_consultation', $patientinfo->reason_for_consultation ?? '') }}">
             </div>
         </div>
 
@@ -369,11 +401,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Previous Dentist: Dr.</label>
-                <input type="text" name="previous_dentist" class="pda-input" value="{{ old('previous_dentist', $patientinfo->previous_dentist ?? '') }}">
+                <input type="text" name="previous_dentist" class="pda-input" maxlength="50" value="{{ old('previous_dentist', $patientinfo->previous_dentist ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Last Dental Visit</label>
-                <input type="text" name="last_dental_visit" class="pda-input" value="{{ old('last_dental_visit', $patientinfo->last_dental_visit ?? '') }}">
+                <input type="text" name="last_dental_visit" class="pda-input" maxlength="50" value="{{ old('last_dental_visit', $patientinfo->last_dental_visit ?? '') }}">
             </div>
         </div>
 
@@ -382,19 +414,21 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-gray-500">Name of Physician: Dr.</label>
-                <input type="text" name="physician_name" class="pda-input" value="{{ old('physician_name', $patientinfo->physician_name ?? '') }}">
+                <input type="text" name="physician_name" class="pda-input" maxlength="50" value="{{ old('physician_name', $patientinfo->physician_name ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Specialty (if applicable)</label>
-                <input type="text" name="physician_specialty" class="pda-input" value="{{ old('physician_specialty', $patientinfo->physician_specialty ?? '') }}">
+                <input type="text" name="physician_specialty" class="pda-input" maxlength="50" value="{{ old('physician_specialty', $patientinfo->physician_specialty ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Office Address</label>
-                <input type="text" name="physician_office_address" class="pda-input" value="{{ old('physician_office_address', $patientinfo->physician_office_address ?? '') }}">
+                <input type="text" name="physician_office_address" class="pda-input" maxlength="255" value="{{ old('physician_office_address', $patientinfo->physician_office_address ?? '') }}">
             </div>
             <div>
                 <label class="text-xs text-gray-500">Office Number</label>
-                <input type="text" name="physician_contact" class="pda-input" value="{{ old('physician_contact', $patientinfo->physician_contact ?? '') }}">
+                <input type="text" name="physician_contact" class="pda-input js-digits-only" inputmode="numeric"
+                       maxlength="15" pattern="[0-9]*" title="Numbers only"
+                       value="{{ old('physician_contact', $patientinfo->physician_contact ?? '') }}">
             </div>
         </div>
 
@@ -424,7 +458,7 @@
                     @if($row['detailKey'])
                         <div class="pda-detail">
                             <label>{{ $row['detailLabel'] }}</label>
-                            <input type="text" name="{{ $row['detailKey'] }}" value="{{ old($row['detailKey'], $patientinfo->{$row['detailKey']} ?? '') }}">
+                            <input type="text" name="{{ $row['detailKey'] }}" maxlength="255" value="{{ old($row['detailKey'], $patientinfo->{$row['detailKey']} ?? '') }}">
                         </div>
                     @endif
                 </div>
@@ -447,7 +481,7 @@
                     <label class="flex items-center gap-2"><input type="checkbox" name="allergic_latex" value="1" {{ old('allergic_latex', $patientinfo->allergic_latex ?? false) ? 'checked' : '' }}> Latex</label>
                     <label class="flex items-center gap-2 col-span-2 md:col-span-1">
                         <span>Others:</span>
-                        <input type="text" name="allergic_others" class="pda-input flex-1 text-xs py-1" value="{{ old('allergic_others', $patientinfo->allergic_others ?? '') }}">
+                        <input type="text" name="allergic_others" class="pda-input flex-1 text-xs py-1" maxlength="50" value="{{ old('allergic_others', $patientinfo->allergic_others ?? '') }}">
                     </label>
                 </div>
             </div>
@@ -497,7 +531,7 @@
             <div class="px-3 py-2 border-b border-gray-100">
                 <div class="flex items-center gap-3">
                     <span class="pda-yn-label whitespace-nowrap">11. Blood Type</span>
-                    <input type="text" name="blood_type" class="pda-input pda-input-narrow" value="{{ old('blood_type', $patientinfo->blood_type ?? '') }}">
+                    <input type="text" name="blood_type" class="pda-input pda-input-narrow" maxlength="10" value="{{ old('blood_type', $patientinfo->blood_type ?? '') }}">
                 </div>
             </div>
 
@@ -505,7 +539,7 @@
             <div class="px-3 py-2 border-b border-gray-100">
                 <div class="flex items-center gap-3">
                     <span class="pda-yn-label whitespace-nowrap">12. Blood Pressure</span>
-                    <input type="text" name="blood_pressure" class="pda-input pda-input-narrow" value="{{ old('blood_pressure', $patientinfo->blood_pressure ?? '') }}">
+                    <input type="text" name="blood_pressure" class="pda-input pda-input-narrow" maxlength="20" value="{{ old('blood_pressure', $patientinfo->blood_pressure ?? '') }}">
                 </div>
             </div>
 
@@ -554,6 +588,18 @@
             });
             form.addEventListener('submit', function (e) { e.preventDefault(); });
             return; // huwag na i-attach ang save handler
+        }
+
+        // Ipinapakita lang ang "Please specify" kapag Other ang piniling relihiyon.
+        const religionSelect = document.getElementById('religion-select');
+        const religionOther  = document.getElementById('religion-other');
+        if (religionSelect && religionOther) {
+            religionSelect.addEventListener('change', function () {
+                const isOther = religionSelect.value === 'Other';
+                religionOther.classList.toggle('hidden', !isOther);
+                if (isOther) religionOther.focus();
+                else religionOther.value = '';
+            });
         }
 
         // Auto-update Age display from birthdate

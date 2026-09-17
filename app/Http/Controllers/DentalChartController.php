@@ -81,49 +81,73 @@ class DentalChartController extends Controller
             ], 403);
         }
 
+        // 50 ang hangganan ng mga maiikling field (revision 09/11/26); ang mga
+        // talagang mahahaba tulad ng address at dahilan ng konsulta ay 255.
+        // "Numbers only" naman ang mga numero ng telepono — pati sa server.
+        $numericPhone = ['nullable', 'string', 'max:15', 'regex:/^\d+$/'];
+
         $data = $request->validate([
             'user_id' => 'required',
 
             // Demographics
-            'last_name' => 'nullable|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'nickname' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:50',
+            'first_name' => 'nullable|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
+            'nickname' => 'nullable|string|max:50',
             'birthdate' => 'nullable|date',
             'sex' => 'nullable|in:M,F',
-            'religion' => 'nullable|string|max:255',
-            'nationality' => 'nullable|string|max:255',
-            'occupation' => 'nullable|string|max:255',
-            'home_address' => 'nullable|string|max:500',
-            'home_no' => 'nullable|string|max:50',
-            'office_address' => 'nullable|string|max:500',
-            'office_no' => 'nullable|string|max:50',
-            'fax_no' => 'nullable|string|max:50',
-            'dental_insurance' => 'nullable|string|max:255',
+            'religion' => 'nullable|string|max:50',
+            'religion_other' => 'nullable|string|max:50|required_if:religion,Other',
+            'nationality' => 'nullable|string|max:50',
+            'occupation' => 'nullable|string|max:50',
+            'home_address' => 'nullable|string|max:255',
+            'home_no' => $numericPhone,
+            'office_address' => 'nullable|string|max:255',
+            'office_no' => $numericPhone,
+            'fax_no' => $numericPhone,
+            'dental_insurance' => 'nullable|string|max:50',
             'effective_date' => 'nullable|date',
-            'contact_number' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'parent_guardian_name' => 'nullable|string|max:255',
-            'parent_guardian_occupation' => 'nullable|string|max:255',
+            'contact_number' => ['nullable', 'string', 'regex:/^09\d{9}$/'],
+            'email' => 'nullable|email|max:50',
+            'parent_guardian_name' => 'nullable|string|max:50',
+            'parent_guardian_occupation' => 'nullable|string|max:50',
 
             // Dental & Medical history
-            'referred_by' => 'nullable|string|max:255',
-            'reason_for_consultation' => 'nullable|string|max:500',
-            'previous_dentist' => 'nullable|string|max:255',
-            'last_dental_visit' => 'nullable|string|max:255',
-            'physician_name' => 'nullable|string|max:255',
-            'physician_specialty' => 'nullable|string|max:255',
-            'physician_contact' => 'nullable|string|max:50',
+            'referred_by' => 'nullable|string|max:50',
+            'reason_for_consultation' => 'nullable|string|max:255',
+            'previous_dentist' => 'nullable|string|max:50',
+            'last_dental_visit' => 'nullable|string|max:50',
+            'physician_name' => 'nullable|string|max:50',
+            'physician_specialty' => 'nullable|string|max:50',
+            'physician_contact' => $numericPhone,
             'blood_type' => 'nullable|string|max:10',
             'blood_pressure' => 'nullable|string|max:20',
-            'allergic_others' => 'nullable|string|max:255',
+            'allergic_others' => 'nullable|string|max:50',
+
+            // NOTE: physician_office_address at ang mga *_details na field ay
+            // wala pang column sa patient_records, kaya hindi pa naitatala ang
+            // mga ito kahit may kahon na sa form. Hiwalay na usapin iyon.
 
             // Arrays
             'medical_conditions' => 'nullable|array',
-            'medical_conditions.*' => 'string',
+            'medical_conditions.*' => 'string|max:50',
             'health_conditions' => 'nullable|array',
-            'health_conditions.*' => 'string',
+            'health_conditions.*' => 'string|max:50',
+        ], [
+            'home_no.regex'          => 'Home No. must contain numbers only.',
+            'office_no.regex'        => 'Office No. must contain numbers only.',
+            'fax_no.regex'           => 'Fax No. must contain numbers only.',
+            'physician_contact.regex' => "The physician's office number must contain numbers only.",
+            'contact_number.regex'   => 'Cell/Mobile No. must be 11 digits and start with 09 (e.g. 09171234567).',
+            'religion_other.required_if' => 'Please specify your religion.',
         ]);
+
+        // Ang dropdown ang nagtatakda ng relihiyon; "Other" lang ang may
+        // kasamang malayang teksto, kaya iyon ang itinatago sa isang column.
+        if (($data['religion'] ?? null) === 'Other') {
+            $data['religion'] = $data['religion_other'];
+        }
+        unset($data['religion_other']);
 
         // Yes/No radios — accept 1 or 0 strings
         $radioFields = [

@@ -85,15 +85,15 @@
       <div class="grid sm:grid-cols-2 gap-3">
         <div>
           <label class="font-semibold">Last Name</label>
-          <input type="text" name="last_name" required class="w-full border p-2 rounded" />
+          <input type="text" name="last_name" required maxlength="50" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">First Name</label>
-          <input type="text" name="name" required class="w-full border p-2 rounded" />
+          <input type="text" name="name" required maxlength="50" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">Middle Name</label>
-          <input type="text" name="middle_name" class="w-full border p-2 rounded" />
+          <input type="text" name="middle_name" maxlength="50" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">Suffix</label>
@@ -109,7 +109,7 @@
         </div>
         <div>
           <label class="font-semibold">Username</label>
-          <input type="text" name="user" required class="w-full border p-2 rounded" />
+          <input type="text" name="user" required maxlength="50" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">Position</label>

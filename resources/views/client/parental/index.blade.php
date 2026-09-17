@@ -95,19 +95,19 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                     <label class="text-xs text-gray-600">First Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="name" value="{{ old('name') }}" class="border rounded p-2 w-full" required>
+                    <input type="text" name="name" value="{{ old('name') }}" class="border rounded p-2 w-full" maxlength="50" required>
                 </div>
                 <div>
                     <label class="text-xs text-gray-600">Middle Name</label>
-                    <input type="text" name="middlename" value="{{ old('middlename') }}" class="border rounded p-2 w-full">
+                    <input type="text" name="middlename" value="{{ old('middlename') }}" class="border rounded p-2 w-full" maxlength="50">
                 </div>
                 <div>
                     <label class="text-xs text-gray-600">Last Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="lastname" value="{{ old('lastname') }}" class="border rounded p-2 w-full" required>
+                    <input type="text" name="lastname" value="{{ old('lastname') }}" class="border rounded p-2 w-full" maxlength="50" required>
                 </div>
                 <div>
                     <label class="text-xs text-gray-600">Suffix</label>
-                    <input type="text" name="suffix" value="{{ old('suffix') }}" class="border rounded p-2 w-full" placeholder="e.g. Jr., III">
+                    <input type="text" name="suffix" value="{{ old('suffix') }}" class="border rounded p-2 w-full" maxlength="10" placeholder="e.g. Jr., III">
                 </div>
                 <div>
                     <label class="text-xs text-gray-600">Birth Date <span class="text-red-500">*</span></label>
@@ -124,7 +124,11 @@
                 </div>
                 <div class="md:col-span-2">
                     <label class="text-xs text-gray-600">Contact Number</label>
-                    <input type="text" name="contact_number" value="{{ old('contact_number') }}" class="border rounded p-2 w-full" placeholder="Leave blank to use your own contact number">
+                    <input type="text" name="contact_number" value="{{ old('contact_number') }}"
+                           class="js-mobile-number border rounded p-2 w-full" inputmode="numeric"
+                           maxlength="11" pattern="09[0-9]{9}"
+                           title="Must be 11 digits and start with 09 (e.g. 09171234567)"
+                           placeholder="Leave blank to use your own contact number">
                 </div>
             </div>
             <button @disabled($atLimit) class="w-full px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">Add Dependent</button>
