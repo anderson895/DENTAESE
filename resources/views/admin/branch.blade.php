@@ -30,8 +30,8 @@
   <div class="bg-white rounded-lg shadow p-6 w-full max-w-lg">
     <h3 class="text-xl font-bold mb-4 text-blue-700">Add Branch</h3>
     <form id="addBranchForm" class="space-y-3">
-      <input type="text" name="Branch" placeholder="Branch Name" required class="w-full border p-2 rounded">
-      <textarea name="Address" placeholder="Address" required rows="3" class="w-full border p-2 rounded"></textarea>
+      <input type="text" name="Branch" placeholder="Branch Name" required maxlength="50" class="w-full border p-2 rounded">
+      <textarea name="Address" placeholder="Address" required rows="3" maxlength="255" class="w-full border p-2 rounded"></textarea>
 
       <div class="flex justify-end gap-2 pt-4">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>

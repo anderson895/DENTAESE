@@ -44,6 +44,11 @@ class BranchController extends Controller
 
     public function AddBranch(Request $request){
 
+        $request->validate([
+            'branch'  => 'required|string|max:50',
+            'address' => 'required|string|max:255',
+        ]);
+
         $branch = $request->input('branch');
         $address = $request->input('address');
         try {

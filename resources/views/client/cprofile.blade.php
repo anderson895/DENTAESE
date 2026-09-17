@@ -244,26 +244,27 @@
             <form id="updateProfile" class="grid grid-cols-1 md:grid-cols-2 gap-4" action="">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="text" name="email" id="email" value="{{ Auth::user()->email }}"
+                    <input type="email" name="email" id="email" value="{{ Auth::user()->email }}" maxlength="50"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
                     <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                    <input type="number" name="contact" id="contact" value="{{ Auth::user()->contact_number }}"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <input type="text" name="contact" id="contact" value="{{ Auth::user()->contact_number }}"
+                        inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" placeholder="09*********"
+                        title="Must be 11 digits and start with 09 (e.g. 09171234567)"
+                        class="js-mobile-number w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
                     <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <input type="text" name="user" id="user" value="{{ Auth::user()->user }}"
+                    <input type="text" name="user" id="user" value="{{ Auth::user()->user }}" maxlength="50"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                     <div class="relative">
                         <input type="password" name="password" id="password" placeholder="Leave blank to keep current password"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                        <button type="button" onclick="toggleProfilePass()"
-                            class="absolute inset-y-0 right-0 px-3 flex items-center text-primary text-xs font-medium">Show</button>
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                        @include('partials.password-toggle', ['for' => 'password'])
                     </div>
                 </div>
                 <input type="hidden" name="oldpassword" id="oldpassword" value="{{ Auth::user()->password }}">
@@ -298,14 +299,6 @@
 
 
 {{-- ===================== SCRIPTS ===================== --}}
-<script>
-function toggleProfilePass() {
-    const input = document.getElementById('password');
-    const btn = event.currentTarget;
-    if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
-    else { input.type = 'password'; btn.textContent = 'Show'; }
-}
-</script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>

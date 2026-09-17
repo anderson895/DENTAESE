@@ -7,6 +7,7 @@ use App\Models\PatientRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\SendOtp;
+use App\Services\PhAddress;
 use App\Services\SmsGateway;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
@@ -167,7 +168,9 @@ class AuthUi extends Controller
 
     public function forgotPasswordVerifyOtp(Request $request)
     {
-        $request->validate(['otp' => 'required']);
+        $request->validate(['otp' => 'required|digits:6'], [
+            'otp.digits' => 'Please enter all 6 digits of the OTP.',
+        ]);
 
         $expiresAt = Session::get('reset_otp_expires_at');
 
@@ -178,7 +181,7 @@ class AuthUi extends Controller
             ], 400);
         }
 
-        if ($request->otp != Session::get('reset_otp')) {
+        if (!hash_equals((string) Session::get('reset_otp'), (string) $request->otp)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Invalid OTP.',
@@ -303,6 +306,52 @@ class AuthUi extends Controller
     //      use it as fallback if request body is missing it.
     // ===============================
     /**
+     * Isang pinagmumulan lang ang mga panuntunan sa signup — pareho ang
+     * sinusundan ng per-step na tseke, ng sendOtp at ng finalSignup, kaya
+     * hindi na makakalusot ang pinalitang halaga sa huling hakbang.
+     *
+     * 50 ang hangganan ng mga maiikling field ayon sa revision 09/11/26.
+     */
+    private static function personalInfoRules(): array
+    {
+        return [
+            'name'                    => 'required|string|max:50',
+            'middlename'              => 'nullable|string|max:50',
+            'lastname'                => 'required|string|max:50',
+            'suffix'                  => 'nullable|string|max:10',
+            'birth_date'              => 'required|date|before:today',
+            'birthplace_municipality' => 'required|string|max:50',
+            'birthplace_province'     => 'required|string|max:50',
+            'address_street'          => 'required|string|max:50',
+            'address_house_number'    => 'nullable|string|max:50',
+            'address_other_details'   => 'nullable|string|max:50',
+        ];
+    }
+
+    private static function accountRules(): array
+    {
+        return [
+            'email'          => 'required|email|max:50|unique:users,email|unique:newusers,email',
+            'contact_number' => ['required', 'string', 'regex:/^09\d{9}$/'],
+            'user'           => 'required|string|max:50|unique:users,user|unique:newusers,user',
+            'password'       => 'required|string|min:6',
+        ];
+    }
+
+    private static function signupMessages(): array
+    {
+        return array_merge(PhAddress::messages(), [
+            'birth_date.before'        => 'Birthdate must be in the past.',
+            'confirm_password.same'    => 'Passwords do not match.',
+            'email.unique'             => 'This email is already registered.',
+            'user.unique'              => 'This username is already taken.',
+            'password.min'             => 'Password must be at least 6 characters.',
+            'contact_number.regex'     => 'Contact number must be 11 digits and start with 09 (e.g. 09171234567).',
+            'face_descriptor.required' => 'Please capture your face before continuing.',
+        ]);
+    }
+
+    /**
      * Per-step validation for the signup wizard.
      * Returns 422 with field-level errors if validation fails, 200 otherwise.
      */
@@ -311,28 +360,10 @@ class AuthUi extends Controller
         $step = (int) $request->input('step', 0);
 
         $rulesByStep = [
-            1 => [
-                'name'                    => 'required|string',
-                'middlename'              => 'nullable|string',
-                'lastname'                => 'required|string',
-                'suffix'                  => 'nullable|string|max:10',
-                'birth_date'              => 'required|date|before:today',
-                'birthplace_municipality' => 'required|string',
-                'birthplace_province'     => 'required|string',
-                'address_street'          => 'required|string',
-                'address_barangay'        => 'required|string',
-                'address_municipality'    => 'required|string',
-                'address_province'        => 'required|string',
-                'address_house_number'    => 'nullable|string',
-                'address_other_details'   => 'nullable|string',
-            ],
-            2 => [
-                'email'            => 'required|email|unique:users,email|unique:newusers,email',
-                'contact_number'   => 'required|string',
-                'user'             => 'required|string|unique:users,user|unique:newusers,user',
-                'password'         => 'required|string|min:6',
+            1 => array_merge(self::personalInfoRules(), PhAddress::rules($request)),
+            2 => array_merge(self::accountRules(), [
                 'confirm_password' => 'required|same:password',
-            ],
+            ]),
             3 => [
                 'face_descriptor' => 'required|string',
             ],
@@ -342,44 +373,23 @@ class AuthUi extends Controller
             return response()->json(['message' => 'Invalid step.'], 422);
         }
 
-        $messages = [
-            'birth_date.before'       => 'Birthdate must be in the past.',
-            'confirm_password.same'   => 'Passwords do not match.',
-            'email.unique'            => 'This email is already registered.',
-            'user.unique'             => 'This username is already taken.',
-            'password.min'            => 'Password must be at least 6 characters.',
-            'face_descriptor.required'=> 'Please capture your face before continuing.',
-        ];
-
-        $request->validate($rulesByStep[$step], $messages);
+        $request->validate($rulesByStep[$step], self::signupMessages());
 
         return response()->json(['status' => 'ok']);
     }
 
     public function sendOtp(Request $request)
     {
-        $request->validate([
-            'name'            => 'required',
-            'middlename'      => 'nullable|string',
-            'lastname'        => 'required|string',
-            'suffix'          => 'nullable|string|max:10',
-            'birth_date'      => 'required|date',
-            'birthplace_municipality' => 'required|string',
-            'birthplace_province'     => 'required|string',
-            'address_street'          => 'required|string',
-            'address_barangay'        => 'required|string',
-            'address_municipality'    => 'required|string',
-            'address_province'        => 'required|string',
-            'address_house_number'    => 'nullable|string',
-            'address_other_details'   => 'nullable|string',
-            'email'           => 'required|email|unique:users,email|unique:newusers,email',
-            'password'        => 'required',
-            'contact_number'  => 'required',
-            'account_type'    => 'required',
-            'user'            => 'required|unique:users,user|unique:newusers,user',
-            'verification_id' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'face_descriptor' => 'required|string',
-        ]);
+        $request->validate(array_merge(
+            self::personalInfoRules(),
+            self::accountRules(),
+            PhAddress::rules($request),
+            [
+                'account_type'    => 'required',
+                'verification_id' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'face_descriptor' => 'required|string',
+            ]
+        ), self::signupMessages());
 
         $otp      = rand(100000, 999999);
         $filename = null;
@@ -420,7 +430,14 @@ class AuthUi extends Controller
     // ===============================
     public function verifyOtp(Request $request)
     {
-        if ($request->otp != Session::get('signup_otp')) {
+        // digits:6 — hindi tinatanggap ang kulang na OTP kahit lampasan ang
+        // panig-kliyenteng tseke. Strict (===) din ang paghahambing para
+        // hindi makalusot ang mga halagang "katumbas" lang sa loose compare.
+        $request->validate(['otp' => 'required|digits:6'], [
+            'otp.digits' => 'Please enter all 6 digits of the OTP.',
+        ]);
+
+        if (!hash_equals((string) Session::get('signup_otp'), (string) $request->otp)) {
             return response()->json(['message' => 'Invalid OTP.'], 400);
         }
 
@@ -438,27 +455,15 @@ class AuthUi extends Controller
     // ===============================
     public function finalSignup(Request $request)
     {
-        $request->validate([
-            'name'            => 'required|string',
-            'middlename'      => 'nullable|string',
-            'lastname'        => 'required|string',
-            'suffix'          => 'nullable|string|max:10',
-            'birth_date'      => 'required|date',
-            'birthplace_municipality' => 'required|string',
-            'birthplace_province'     => 'required|string',
-            'address_house_number'    => 'nullable|string',
-            'address_street'          => 'required|string',
-            'address_barangay'        => 'required|string',
-            'address_municipality'    => 'required|string',
-            'address_province'        => 'required|string',
-            'address_other_details'   => 'nullable|string',
-            'email'           => 'required|email|unique:users,email',
-            'contact_number'  => 'nullable|string',
-            'user'            => 'required|string|unique:users,user',
-            'password'        => 'required|string|min:6',
-            'account_type'    => 'required|string',
-            'face_descriptor' => 'required|string',
-        ]);
+        $request->validate(array_merge(
+            self::personalInfoRules(),
+            self::accountRules(),
+            PhAddress::rules($request),
+            [
+                'account_type'    => 'required|string',
+                'face_descriptor' => 'required|string',
+            ]
+        ), self::signupMessages());
 
         // Build combined fields for backward compatibility
         $birthplace = $request->birthplace_municipality . ', ' . $request->birthplace_province;

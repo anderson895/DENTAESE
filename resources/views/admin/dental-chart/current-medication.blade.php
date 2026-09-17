@@ -108,7 +108,10 @@
 
             <div class="mb-3">
                 <label class="block font-semibold text-sm mb-1">Medicine Name <span class="text-red-500">*</span></label>
-                <input type="text" id="medication-name" list="medication-name-options"
+                {{-- Datalist (hindi select): may mga pasyenteng may dalang gamot
+                     na wala sa imbentaryo ng klinika, pero may mungkahi pa rin
+                     para hindi mali ang baybay ng mga karaniwan. --}}
+                <input type="text" id="medication-name" list="medication-name-options" maxlength="50"
                        class="w-full border rounded p-2" placeholder="e.g. Amoxicillin (MG)" required>
                 <datalist id="medication-name-options">
                     @foreach($medicines as $m)
@@ -120,7 +123,7 @@
             <div class="grid grid-cols-2 gap-3 mb-3">
                 <div>
                     <label class="block font-semibold text-sm mb-1">Dosage</label>
-                    <input type="text" id="medication-dosage" class="w-full border rounded p-2" placeholder="e.g. 500mg">
+                    <input type="text" id="medication-dosage" maxlength="50" class="w-full border rounded p-2" placeholder="e.g. 500mg">
                 </div>
                 <div>
                     <label class="block font-semibold text-sm mb-1">Frequency</label>

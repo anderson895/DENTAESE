@@ -66,7 +66,7 @@
     
         <div>
           <label class="font-semibold">Name</label>
-          <input type="text" name="name" required class="w-full border p-2 rounded" />
+          <input type="text" name="name" required maxlength="50" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">Price</label>
@@ -74,7 +74,7 @@
         </div>
         <div>
           <label class="font-semibold">Description</label>
-          <input type="text" name="description" class="w-full border p-2 rounded" />
+          <input type="text" name="description" maxlength="255" class="w-full border p-2 rounded" />
         </div>
        
         <div>
@@ -118,7 +118,7 @@
       <div class="grid sm:grid-cols-2 gap-3">
         <div>
           <label class="font-semibold">Name</label>
-          <input type="text" name="edit_name" id="edit_name" required class="w-full border p-2 rounded" />
+          <input type="text" name="edit_name" id="edit_name" required maxlength="50" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">Price</label>
@@ -126,7 +126,7 @@
         </div>
         <div>
           <label class="font-semibold">Description</label>
-          <input type="text" name="edit_description" id="edit_description" class="w-full border p-2 rounded" />
+          <input type="text" name="edit_description" id="edit_description" maxlength="255" class="w-full border p-2 rounded" />
         </div>
         <div>
           <label class="font-semibold">Unit</label>

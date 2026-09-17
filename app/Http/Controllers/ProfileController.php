@@ -46,7 +46,7 @@ class ProfileController extends Controller
        $isUpdated = false;
 
        if ($request->filled('email') &&  $request->email !== $user->email) {
-            $rules['email'] = 'email';
+            $rules['email'] = 'email|max:50';
             $data['email'] = $request->email;
             $isUpdated = true;
        }
@@ -60,9 +60,9 @@ class ProfileController extends Controller
         $rules['user'] = [
             'required',
             'string',
-            'max:255',
-            Rule::unique('users')->ignore(auth()->id()),  
-            
+            'max:50',
+            Rule::unique('users')->ignore(auth()->id()),
+
         ];
         $data['user'] = $request->user;
         $isUpdated = true;

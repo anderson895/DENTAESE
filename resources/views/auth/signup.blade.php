@@ -28,15 +28,15 @@
         <input type="hidden" name="account_type" value="patient">
         <div>
             <label>First Name</label>
-            <input type="text" name="name" class="w-full border p-2 rounded" required>
+            <input type="text" name="name" class="w-full border p-2 rounded" required maxlength="50">
         </div>
         <div>
             <label>Middle Name</label>
-            <input type="text" name="middlename" class="w-full border p-2 rounded">
+            <input type="text" name="middlename" class="w-full border p-2 rounded" maxlength="50">
         </div>
         <div>
             <label>Last Name</label>
-            <input type="text" name="lastname" class="w-full border p-2 rounded" required>
+            <input type="text" name="lastname" class="w-full border p-2 rounded" required maxlength="50">
         </div>
         <div>
             <label>Suffix</label>
@@ -51,41 +51,16 @@
         </div>
         <div>
             <label>Birthplace - Municipality</label>
-            <input type="text" name="birthplace_municipality" class="w-full border p-2 rounded" required placeholder="Municipality">
+            <input type="text" name="birthplace_municipality" class="w-full border p-2 rounded" required maxlength="50" placeholder="Municipality">
         </div>
         <div>
             <label>Birthplace - Province</label>
-            <input type="text" name="birthplace_province" class="w-full border p-2 rounded" required placeholder="Province">
+            <input type="text" name="birthplace_province" class="w-full border p-2 rounded" required maxlength="50" placeholder="Province">
         </div>
     </div>
 
     <h3 class="mt-4 font-semibold text-gray-700">Current Address</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-        <div>
-            <label>House Number</label>
-            <input type="text" name="address_house_number" class="w-full border p-2 rounded" placeholder="House Number">
-        </div>
-        <div>
-            <label>Street</label>
-            <input type="text" name="address_street" class="w-full border p-2 rounded" required placeholder="Street">
-        </div>
-        <div>
-            <label>Barangay</label>
-            <input type="text" name="address_barangay" class="w-full border p-2 rounded" required placeholder="Barangay">
-        </div>
-        <div>
-            <label>Municipality</label>
-            <input type="text" name="address_municipality" class="w-full border p-2 rounded" required placeholder="Municipality">
-        </div>
-        <div>
-            <label>Province</label>
-            <input type="text" name="address_province" class="w-full border p-2 rounded" required placeholder="Province">
-        </div>
-        <div>
-            <label>Other Details</label>
-            <input type="text" name="address_other_details" class="w-full border p-2 rounded" placeholder="Apartment, Unit, Landmark, etc.">
-        </div>
-    </div>
+    @include('partials.address-fields')
 </div>
 
 <!-- ================= STEP 2 ================= -->
@@ -96,28 +71,34 @@
         </div>
         <div>
             <label>Email</label>
-            <input type="email" name="email" class="w-full border p-2 rounded" required>
+            <input type="email" name="email" class="w-full border p-2 rounded" required maxlength="50">
         </div>
         <div>
             <label>Contact Number</label>
-            <input type="number" name="contact_number" class="w-full border p-2 rounded" required>
+            {{-- type="text" sa halip na "number": ang number input ay walang
+                 maxlength at may spinner na nakakapagpasok ng mahabang digit. --}}
+            <input type="text" name="contact_number" class="w-full border p-2 rounded js-mobile-number"
+                   required inputmode="numeric" maxlength="11" pattern="09[0-9]{9}"
+                   placeholder="09*********"
+                   title="Must be 11 digits and start with 09 (e.g. 09171234567)">
+            <p class="text-xs text-gray-500 mt-1">11 digits, must start with 09.</p>
         </div>
         <div>
             <label>Username</label>
-            <input type="text" name="user" class="w-full border p-2 rounded" required>
+            <input type="text" name="user" class="w-full border p-2 rounded" required maxlength="50">
         </div>
         <div>
             <label>Password</label>
             <div class="relative">
-                <input type="password" id="password" name="password" class="w-full border p-2 rounded pr-16" required>
-                <button type="button" onclick="togglePass('password', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 text-sm">Show</button>
+                <input type="password" id="password" name="password" class="w-full border p-2 rounded pr-10" required>
+                @include('partials.password-toggle', ['for' => 'password'])
             </div>
         </div>
         <div>
             <label>Confirm Password</label>
             <div class="relative">
-                <input type="password" id="confirm_password" name="confirm_password" class="w-full border p-2 rounded pr-16" required>
-                <button type="button" onclick="togglePass('confirm_password', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 text-sm">Show</button>
+                <input type="password" id="confirm_password" name="confirm_password" class="w-full border p-2 rounded pr-10" required>
+                @include('partials.password-toggle', ['for' => 'confirm_password'])
             </div>
         </div>
     </div>
@@ -161,16 +142,41 @@
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none">
     </div>
     <input type="hidden" id="otp" name="otp">
+    <p id="otp-error" class="hidden text-center text-red-600 text-sm mt-2"></p>
 </div>
 
 <script>
 (function() {
     const digits = document.querySelectorAll('#otp-boxes .otp-digit');
     const hidden = document.getElementById('otp');
+    const errorEl = document.getElementById('otp-error');
 
     function syncHidden() {
         hidden.value = Array.from(digits).map(d => d.value).join('');
     }
+
+    function clearOtpError() {
+        errorEl.classList.add('hidden');
+        digits.forEach(d => d.classList.remove('border-red-500'));
+    }
+
+    // Hindi pwedeng may laktawan: tinuturo nito ang unang walang laman na kahon
+    // sa halip na basta tanggihan ang buong OTP.
+    window.otpIsComplete = function () {
+        clearOtpError();
+
+        const firstEmpty = Array.from(digits).findIndex(d => !d.value);
+        if (firstEmpty === -1) return true;
+
+        const blanks = Array.from(digits).filter(d => !d.value);
+        blanks.forEach(d => d.classList.add('border-red-500'));
+        errorEl.textContent = blanks.length === digits.length
+            ? 'Please enter the 6-digit OTP sent to you.'
+            : 'Please fill in all 6 digits — ' + blanks.length + ' still empty.';
+        errorEl.classList.remove('hidden');
+        digits[firstEmpty].focus();
+        return false;
+    };
 
     digits.forEach((input, idx) => {
         input.addEventListener('input', (e) => {
@@ -180,6 +186,7 @@
                 digits[idx + 1].focus();
             }
             syncHidden();
+            clearOtpError();
         });
 
         input.addEventListener('keydown', (e) => {
@@ -199,6 +206,7 @@
                 if (digits[i]) digits[i].value = char;
             });
             syncHidden();
+            clearOtpError();
             const nextEmpty = Array.from(digits).findIndex(d => !d.value);
             (nextEmpty === -1 ? digits[digits.length - 1] : digits[nextEmpty]).focus();
         });
@@ -265,6 +273,10 @@
 {{-- No defer: must be available synchronously --}}
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
 
+{{-- PSGC data + cascading dropdowns ng Current Address (window.initAddressCascade) --}}
+<script src="{{ asset('js/ph-address.js') }}"></script>
+<script src="{{ asset('js/address-select.js') }}"></script>
+
 <style>
     #video, #overlayCanvas { display: block; width: 320px; height: 240px; }
     #overlayCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
@@ -273,12 +285,6 @@
 
 {{-- ================= STEP NAVIGATION ================= --}}
 <script>
-function togglePass(id, btn) {
-    const input = document.getElementById(id);
-    if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
-    else { input.type = 'password'; btn.textContent = 'Show'; }
-}
-
 let currentStep    = 1;
 const totalSteps   = 4;
 let faceRegistered = false;
@@ -357,6 +363,11 @@ function validateStepOnServer(step) {
 const SIGNUP_STORAGE_KEY = 'signup_form_data';
 const EXCLUDED_FIELDS = ['password', 'confirm_password', 'otp', 'face_descriptor', 'verification_id', '_token'];
 
+// Magkakaugnay ang tatlong ito: walang laman ang mga option ng municipality
+// hangga't walang province, kaya hindi kaya ng pangkalahatang restore loop.
+const ADDRESS_CASCADE_FIELDS = ['address_province', 'address_municipality', 'address_barangay'];
+let addressCascade = null;
+
 function saveSignupInputs() {
     const data = {};
     $('#signupForm').find('input, select, textarea').each(function () {
@@ -372,13 +383,20 @@ function restoreSignupInputs() {
     let data;
     try { data = JSON.parse(localStorage.getItem(SIGNUP_STORAGE_KEY) || '{}'); } catch (e) { return; }
     Object.entries(data).forEach(([name, value]) => {
-        if (EXCLUDED_FIELDS.includes(name)) return;
+        if (EXCLUDED_FIELDS.includes(name) || ADDRESS_CASCADE_FIELDS.includes(name)) return;
         const input = $('#signupForm').find(`[name="${name}"]`).first();
         if (input.length && value !== null && value !== undefined) input.val(value);
     });
+
+    // Sunod-sunod ang pagbalik ng address: province muna bago mapuno ang
+    // municipality, saka barangay.
+    if (addressCascade) {
+        addressCascade.setValue(data.address_province, data.address_municipality, data.address_barangay);
+    }
 }
 
 $(document).ready(function () {
+    addressCascade = window.initAddressCascade(document.getElementById('step-1'));
     restoreSignupInputs();
     $(document).on('input change', '#signupForm input, #signupForm select, #signupForm textarea', saveSignupInputs);
 });
@@ -485,8 +503,9 @@ $(document).ready(function () {
     // SUBMIT: verify OTP → finalSignup (face_descriptor already in form)
     $('#signupForm').on('submit', function (e) {
         e.preventDefault();
+        // Tinuturo nito kung aling kahon ang walang laman — walang laktawan.
+        if (!window.otpIsComplete()) return;
         const otp = $('#otp').val();
-        if (otp.length !== 6) { Swal.fire('Invalid OTP', 'Enter 6-digit OTP', 'warning'); return; }
 
         Swal.fire({ title: 'Verifying OTP...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 

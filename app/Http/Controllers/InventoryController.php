@@ -273,10 +273,10 @@ class InventoryController extends Controller
 public function store(Request $request)
 {
     $request->validate([
-        'name' => 'required|string',
-        'unit' => 'required|string',
+        'name' => 'required|string|max:50',
+        'unit' => 'required|string|max:50',
         'price' => 'required|numeric',
-        'description' => 'nullable|string',
+        'description' => 'nullable|string|max:255',
         'batch_quantity' => 'nullable|integer|min:1',
         'batch_expiration_date' => 'nullable|date',
     ]);
@@ -305,10 +305,10 @@ public function store(Request $request)
 public function update(Request $request, medicines $medicine)
 {
     $request->validate([
-        'name'        => 'required|string',
-        'unit'        => 'required|string',
+        'name'        => 'required|string|max:50',
+        'unit'        => 'required|string|max:50',
         'price'       => 'required|numeric',
-        'description' => 'nullable|string',
+        'description' => 'nullable|string|max:255',
     ]);
 
     $medicine->update($request->only(['name', 'unit', 'price', 'description']));

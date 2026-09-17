@@ -45,13 +45,15 @@ class ParentalControlController extends Controller
         }
 
         $data = $request->validate([
-            'name'           => 'required|string|max:100',
-            'middlename'     => 'nullable|string|max:100',
-            'lastname'       => 'required|string|max:100',
-            'suffix'         => 'nullable|string|max:20',
+            'name'           => 'required|string|max:50',
+            'middlename'     => 'nullable|string|max:50',
+            'lastname'       => 'required|string|max:50',
+            'suffix'         => 'nullable|string|max:10',
             'birth_date'     => 'required|date|before_or_equal:today',
             'relationship'   => 'required|string|max:50',
-            'contact_number' => 'nullable|string|max:20',
+            'contact_number' => ['nullable', 'string', 'regex:/^09\d{9}$/'],
+        ], [
+            'contact_number.regex' => 'Contact number must be 11 digits and start with 09 (e.g. 09171234567).',
         ]);
 
         DB::transaction(function () use ($parent, $data) {

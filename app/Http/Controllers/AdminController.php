@@ -345,12 +345,18 @@ $combinedChange = $pctChange($combinedArr);
         return view('admin.partials.newuser-approval', compact('user','users')); 
     }
     public function Adduser(Request $request){
-        // $name = $request->input('name');
-        // $last_name = $request->input('last_name');
-        // $middle_name = $request->input('middle_name');
-        // $suffix = $request->input('suffix');
-         $user = $request->input('user');
-        // $position = $request->input('position');
+        $request->validate([
+            'name'        => 'required|string|max:50',
+            'last_name'   => 'required|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
+            'suffix'      => 'nullable|string|max:10',
+            'user'        => 'required|string|max:50|unique:users,user',
+            'position'    => 'required|in:admin,Dentist,Receptionist',
+        ], [
+            'user.unique' => 'This username is already taken.',
+        ]);
+
+        $user = $request->input('user');
         $password = $user . 'Dentaease';
         try {
             $user = new User();

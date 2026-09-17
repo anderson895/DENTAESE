@@ -142,5 +142,8 @@
     <footer class="text-center text-sm text-gray-500 pb-4">
         © {{ date('Y') }} Santiago-Amancio Dental Clinic. All rights reserved.
     </footer>
+
+    {{-- Bantay sa mga numeric na input (.js-digits-only, .js-mobile-number) --}}
+    <script src="{{ asset('js/input-guards.js') }}"></script>
 </body>
 </html>
