@@ -10,7 +10,7 @@ class ServicesController extends Controller
     //
     public function Serviceslist(Request $request){
 
-        $perPage = 5;
+        $perPage = 10;
 
         $search = $request->input('search');
         $filters = $request->input('filter');

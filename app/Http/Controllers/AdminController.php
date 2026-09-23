@@ -306,7 +306,7 @@ $combinedChange = $pctChange($combinedArr);
     }
     public function Newuserlist(Request $request)
     {
-        $perPage = 5;
+        $perPage = 10;
         $search = $request->input('search');
 
 

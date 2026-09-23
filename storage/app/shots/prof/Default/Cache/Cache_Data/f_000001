@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="8GxHLvmdY9GnbpK4VNDK4rVMAGHVPygajDaDcI53">
+    <title>Login</title>
+
+    <!-- Speed up CDN connections -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Anti-flicker: critical styles applied before Tailwind CDN generates CSS -->
+    <style>
+        .hidden { display: none; }
+        [x-cloak] { display: none !important; }
+        body { visibility: hidden; }
+        body.tw-ready { visibility: visible; }
+    </style>
+
+    <!-- Tailwind & Alpine -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- Reveal the page once Tailwind has generated its styles (prevents FOUC flicker) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    document.body.classList.add('tw-ready');
+                });
+            });
+        });
+        // Fallback: never leave the page hidden kahit ma-delay ang CDN
+        setTimeout(function () {
+            if (document.body) document.body.classList.add('tw-ready');
+        }, 1500);
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Ginagawang asul ang itim na logo mark para tumugma sa brand */
+        .logo-blue {
+            filter: invert(43%) sepia(99%) saturate(5121%) hue-rotate(200deg) brightness(95%) contrast(90%);
+        }
+        /* Puting bersyon ng logo para sa ibabaw ng banner */
+        .logo-white { filter: brightness(0) invert(1); }
+
+        /* Itinatago ang sariling "reveal password" na mata ng Edge/IE — ito ang
+           dahilan kung bakit dalawa ang mata sa mga password field. Sa amin
+           lang na eye icon nakadepende ang show/hide. */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+
+        @keyframes auth-rise {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .auth-rise { animation: auth-rise .5s ease-out both; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .auth-rise { animation: none; }
+        }
+
+        /* Mas malapad ang panel ng banner (47vw) kaysa sa mismong litrato
+           (~71vh dahil portrait ito) — kupas na puti ang sobra. Kung sa gitna
+           lang ng natitirang hati isesentro ang form, mukha itong nakahilig sa
+           kanan dahil kabilang na sa "puti" ang sobrang iyon. Ibinabawas natin
+           ang sobra sa kanang padding para tumapat sa nakikitang gitna. */
+        @media (min-width: 1024px) {
+            .auth-form-pane { padding-right: calc(3rem + max(0px, 47vw - 71vh)); }
+        }
+    </style>
+</head>
+<body class="flex min-h-screen flex-col bg-white">
+
+    <div class="flex flex-1 flex-col lg:flex-row">
+
+        
+        
+        
+        <aside class="relative isolate h-56 shrink-0 overflow-hidden bg-blue-900 sm:h-64 lg:h-auto lg:w-[47%] lg:bg-white">
+            <img
+                src="http://127.0.0.1:8123/images/banner.jpg"
+                alt="Santiago-Amancio Dental Clinic building"
+                class="absolute inset-y-0 left-0 h-full w-full object-cover object-center lg:w-auto lg:max-w-none">
+
+            
+            <svg class="absolute inset-x-0 bottom-0 z-0 h-1/4 w-full sm:h-1/3 lg:h-[58%]"
+                 viewBox="0 0 600 320" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                    
+                    <linearGradient id="authSwoosh" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#8ab6ec"/>
+                        <stop offset="100%" stop-color="#1e4fa8"/>
+                    </linearGradient>
+                </defs>
+                
+                <path d="M0,60 C130,196 330,262 600,306 L600,320 L0,320 Z" fill="url(#authSwoosh)"/>
+            </svg>
+
+            
+            <div class="pointer-events-none absolute inset-y-0 right-0 z-[5] hidden w-1/2 bg-gradient-to-r from-transparent via-white/80 to-white lg:block"></div>
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-10 bg-gradient-to-b from-transparent to-white lg:hidden"></div>
+
+            
+            <div class="relative z-10 p-5 sm:p-6">
+                <img src="http://127.0.0.1:8123/images/logo.png" alt="" class="absolute left-5 top-5 h-9 w-9 drop-shadow logo-white sm:h-11 sm:w-11">
+                <a href="http://127.0.0.1:8123"
+                   class="mx-auto flex w-fit items-center gap-1.5 rounded-full bg-[#1e4fa8] px-4 py-2 text-xs font-semibold text-white shadow-lg ring-1 ring-inset ring-white/25 transition hover:bg-[#17407f]">
+                    <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+
+            
+            <div class="absolute inset-x-0 bottom-0 z-10 hidden p-5 sm:p-8 lg:block lg:p-10">
+                <p class="text-base font-normal leading-snug text-white drop-shadow sm:text-xl lg:text-2xl">
+                    Caring for your smile.<br>
+                    Building your confidence.
+                </p>
+                <div class="mt-4 h-px w-56 bg-white/30"></div>
+
+                <div class="mt-3 flex items-center gap-2.5">
+                    <img src="http://127.0.0.1:8123/images/logo.png" alt="" class="h-8 w-8 shrink-0 opacity-90 logo-white">
+                    <p class="text-[10px] font-semibold uppercase leading-snug tracking-wide text-sky-50 sm:text-[11px]">
+                        Expert care, healthy smiles,<br>better lives.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        
+        <main class="auth-form-pane flex flex-1 items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
+            <div class="auth-rise w-full max-w-md lg:max-w-lg">
+                
+    
+    
+    <div>
+        <div class="flex items-center justify-center gap-1">
+            <img src="http://127.0.0.1:8123/images/logo.png" alt="" class="h-20 w-20 shrink-0 logo-blue sm:h-24 sm:w-24">
+            <div class="leading-[0.95]">
+                <p class="text-xl font-bold tracking-tight text-[#1e4fa8] sm:text-2xl">SANTIAGO - AMANCIO</p>
+                <h1 class="text-3xl font-extrabold tracking-tight text-[#1e4fa8] sm:text-4xl">DENTAL CLINIC</h1>
+            </div>
+        </div>
+
+        <p class="text-center text-[10px] font-bold tracking-tight text-[#1e4fa8] sm:text-[11px]">
+            DR. MARIETA SANTIAGO AMANCIO &middot; DR. ABELARDO SANTIAGO
+        </p>
+
+        <div class="mt-1.5 flex items-center justify-center gap-2">
+            <span class="h-px w-12 bg-[#9dc0e8]"></span>
+            <span class="text-[9px] font-bold tracking-[0.2em] text-[#1e4fa8] sm:text-[10px]">DENTISTS</span>
+            <span class="h-px w-12 bg-[#9dc0e8]"></span>
+        </div>
+    </div>
+
+    
+    <div class="mt-8 text-center">
+        <h2 class="text-2xl font-bold text-blue-900">Welcome Back!</h2>
+        <p class="mt-1 text-sm text-gray-500">Please sign in to your account.</p>
+    </div>
+
+    
+    <form id="loginForm" method="post" class="mt-6 space-y-4">
+        <input type="hidden" name="_token" value="8GxHLvmdY9GnbpK4VNDK4rVMAGHVPygajDaDcI53" autocomplete="off">
+        <input type="hidden" name="next" value="">
+
+        <div>
+            <label for="usernameInput" class="mb-1.5 block text-sm font-medium text-gray-700">Username</label>
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0"/>
+                    </svg>
+                </span>
+                <input
+                    type="text"
+                    name="user"
+                    id="usernameInput"
+                    placeholder="Enter your username"
+                    autocomplete="username"
+                    required
+                    class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-11 pr-3.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+            </div>
+        </div>
+
+        <div>
+            <label for="passwordInput" class="mb-1.5 block text-sm font-medium text-gray-700">Password</label>
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 10.5h10.5a1.5 1.5 0 0 0 1.5-1.5v-7.5a1.5 1.5 0 0 0-1.5-1.5H6.75a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5Z"/>
+                    </svg>
+                </span>
+                <input
+                    type="password"
+                    name="password"
+                    id="passwordInput"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                    class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-11 pr-11 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+
+                
+                <button
+                    type="button"
+                    onclick="togglePassword(this)"
+                    class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition hover:text-sky-600"
+                    aria-label="Show password"
+                >
+                    <svg class="eye-open w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178Z" />
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+</svg>
+
+
+<svg class="eye-closed w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 2.036 11.68a1.012 1.012 0 0 0 0 .639C3.423 16.49 7.36 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639a10.534 10.534 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243" />
+</svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between text-sm">
+            <label class="inline-flex cursor-pointer items-center gap-2 text-gray-600">
+                <input type="checkbox" name="remember" id="rememberInput"
+                       class="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                Remember me
+            </label>
+            <a href="http://127.0.0.1:8123/forgot-password" class="font-medium text-sky-600 transition hover:text-sky-700 hover:underline">
+                Forgot Password?
+            </a>
+        </div>
+
+        <button
+            type="submit"
+            id="loginSubmit"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
+            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25"/>
+            </svg>
+            Sign In
+        </button>
+    </form>
+
+    <div class="mt-6 space-y-2 text-center text-sm text-gray-600">
+        <p>
+            Login using
+            <a href="http://127.0.0.1:8123/faceui" class="font-medium text-sky-600 underline transition hover:text-sky-700">Face Recognition</a>
+            or
+            <a href="http://127.0.0.1:8123/qr" class="font-medium text-sky-600 underline transition hover:text-sky-700">QR</a>
+        </p>
+        <p>
+            Don&rsquo;t have an account?
+            <a href="http://127.0.0.1:8123/signupui" class="font-medium text-sky-600 underline transition hover:text-sky-700">Sign up</a>
+        </p>
+    </div>
+
+    <p class="mt-6 border-t border-gray-200 pt-4 text-center text-xs leading-relaxed text-gray-500">
+        By signing in, you acknowledge that you have read and agree to our
+        <a href="http://127.0.0.1:8123/terms" class="text-sky-600 underline transition hover:text-sky-700">Terms and Conditions</a>.
+    </p>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function togglePassword(btn) {
+      const input = document.getElementById('passwordInput');
+      const isHidden = input.type === 'password';
+
+      input.type = isHidden ? 'text' : 'password';
+      btn.querySelector('.eye-open')?.classList.toggle('hidden', isHidden);
+      btn.querySelector('.eye-closed')?.classList.toggle('hidden', !isHidden);
+      btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    }
+$(document).ready(function () {
+    $('#loginForm').submit(function (event) {
+        event.preventDefault();
+
+        var formData = {
+            user: $('input[name="user"]').val(),
+            password: $('input[name="password"]').val(),
+            remember: $('#rememberInput').is(':checked') ? 1 : 0,
+            next: $('input[name="next"]').val(),
+            _token: '8GxHLvmdY9GnbpK4VNDK4rVMAGHVPygajDaDcI53'
+        };
+
+        // 🔒 Iwas sa dobleng submit habang naghihintay ng sagot
+        $('#loginSubmit').prop('disabled', true);
+
+        // 🔄 Show loader habang nagpo-process
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            type: 'POST',
+            url: 'http://127.0.0.1:8123/loginform',
+            data: formData,
+            success: function (response) {
+                Swal.close(); // ❌ close loader
+
+                if (response.status === "success") {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = response.redirect;
+                    });
+                } else {
+                    $('#loginSubmit').prop('disabled', false);
+                    Swal.fire('Error', response.message, 'error');
+                }
+            },
+            error: function (xhr) {
+                Swal.close(); // ❌ close loader
+                $('#loginSubmit').prop('disabled', false);
+                console.log(xhr.responseText);
+
+                Swal.fire(
+                    'Error',
+                    'Something went wrong. Please try again.',
+                    'error'
+                );
+            }
+        });
+    });
+});
+</script>
+
+            </div>
+        </main>
+    </div>
+
+    
+    
+    <footer class="bg-[#1e4fa8] text-white">
+        <div class="flex flex-col items-center justify-between gap-1 px-5 py-2.5 text-[11px] text-blue-50 sm:flex-row sm:px-8 sm:text-xs">
+            <p class="flex items-center gap-1.5">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4.5 6v5.25c0 4.28 3.2 8.28 7.5 9.25 4.3-.97 7.5-4.97 7.5-9.25V6L12 3Z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.5 12 1.9 1.9 3.4-3.6"/>
+                </svg>
+                Your data is secure with us.
+            </p>
+            <p>&copy; 2026 Santiago-Amancio Dental Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    
+    <script src="http://127.0.0.1:8123/js/input-guards.js"></script>
+</body>
+</html>

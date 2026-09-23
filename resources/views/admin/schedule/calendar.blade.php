@@ -40,7 +40,7 @@
     <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
         <div>
             <h1 class="text-2xl font-bold">Schedule Calendar</h1>
-            <p class="text-xs text-gray-500">Manage clinic open days and per-doctor availability per date.</p>
+            <p class="text-xs text-gray-500">Manage clinic open days and per-dentist availability per date.</p>
         </div>
         <div class="flex items-center gap-2">
             <button @click="changeMonth(-1)" class="px-3 py-1 bg-gray-200 rounded">&laquo; Prev</button>
@@ -55,7 +55,7 @@
             <label class="text-xs font-semibold text-gray-600">Mode</label>
             <select x-model="mode" @change="loadEvents()" class="w-full border rounded p-2">
                 <option value="clinic">Clinic Open Days</option>
-                <option value="doctor">Doctor Schedule</option>
+                <option value="doctor">Dentist Schedule</option>
             </select>
         </div>
         <div>
