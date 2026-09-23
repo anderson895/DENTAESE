@@ -15,7 +15,7 @@ class StaffController extends Controller
     //
 public function ViewStaff(Request $request)
 {
-    $perPage = 5;
+    $perPage = 10;
     $search = $request->input('search');
     $position = $request->input('position');
     $archive = $request->input('archive'); // Added for active/archived filter

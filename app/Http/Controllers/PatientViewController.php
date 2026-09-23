@@ -12,7 +12,7 @@ class PatientViewController extends Controller
     //
   public function ViewPatient(Request $request)
 {
-    $perPage = 5;
+    $perPage = 10;
     $search = $request->input('search');
     $print = $request->input('print');
     $status = $request->input('status', 'active'); 

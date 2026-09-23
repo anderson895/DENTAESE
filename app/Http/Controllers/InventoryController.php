@@ -159,7 +159,7 @@ class InventoryController extends Controller
 
      public function InventoryList(Request $request){
 
-        $perPage = 5;
+        $perPage = 10;
 
         $search = $request->input('search');
         $statusFilter = $request->input('stock_status');

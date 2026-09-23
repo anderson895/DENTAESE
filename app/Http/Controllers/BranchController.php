@@ -74,7 +74,7 @@ class BranchController extends Controller
 
       public function Branchlist(Request $request)
     {
-        $perPage = 5;
+        $perPage = 10;
         $search = $request->input('search');
         $branch = $request->input('branch');
 
