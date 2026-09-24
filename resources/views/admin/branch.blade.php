@@ -247,7 +247,13 @@
         });
       },
       error: function (xhr) {
-        Swal.fire('Error', 'Something went wrong!', 'error');
+        // Ipakita ang totoong dahilan mula sa server (hal. validation error)
+        // sa halip na pangkalahatang "Something went wrong!".
+        const errors = xhr.responseJSON?.errors;
+        const msg = errors
+          ? Object.values(errors).flat()[0]
+          : (xhr.responseJSON?.message || 'Something went wrong!');
+        Swal.fire('Error', msg, 'error');
       }
     });
   });
