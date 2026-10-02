@@ -141,7 +141,9 @@ let flatpickrInstance;
 // Kapag hindi active branch ang napili, hindi pwede ang walk-in/emergency —
 // pero clickable pa rin ang buttons para maipaliwanag kung bakit (hindi silent).
 let walkinAllowed = true;
-const activeBranchId = '{{ $branch->id }}';
+// Null ang $branch sa Admin View ("admin" ang active_branch_id) — walang
+// active branch doon, kaya walang branch na papayagan ng walk-in/emergency.
+const activeBranchId = '{{ $branch->id ?? '' }}';
 
 function updateWalkinPolicy(storeId) {
     // Walang branch pa = hayaan ang required-field validation ang humarang;

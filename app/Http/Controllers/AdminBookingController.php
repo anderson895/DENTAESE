@@ -38,8 +38,15 @@ public function showBookings(Request $request)
     $services = Service::all();
     $clients = User::where('account_type', 'patient')->orderBy('name')->get();
 
-    $query = Appointment::with('user')
-        ->where('store_id', session('active_branch_id'));
+    $branchId = session('active_branch_id');
+
+    // Sa Admin View ay "admin" ang active_branch_id, hindi id ng branch. Dito
+    // dumarating ang "View All" ng Pending banner sa dashboard, na sumasaklaw
+    // sa lahat ng branch — kaya lahat din ng branch ang ipinapakita rito.
+    $isAdminView = $branchId === 'admin';
+
+    $query = Appointment::with(['user', 'store'])
+        ->when(! $isAdminView, fn ($q) => $q->where('store_id', $branchId));
 
     // Status filter - default to active statuses if no filter.
     // Tumatanggap ng listahang pinaghihiwalay ng kuwit (hal. "approved,arrived")
@@ -90,8 +97,10 @@ public function showBookings(Request $request)
 
     // dentist list for receptionist and admin
     $dentists = [];
-    if ($user->position === 'Receptionist' || $user->position === 'admin') {
-        $store = Store::find(session('active_branch_id'));
+    if ($isAdminView) {
+        $dentists = User::where('position', 'Dentist')->orderBy('name')->get(['id', 'name']);
+    } elseif ($user->position === 'Receptionist' || $user->position === 'admin') {
+        $store = Store::find($branchId);
         if ($store) {
             $dentists = $store->staff()
                 ->wherePivot('position', 'dentist')
@@ -115,7 +124,7 @@ $appointments->transform(function ($appointment) {
 });
 
 
-    return view('admin.booking', compact('appointments', 'dentists','services', 'stores','clients'));
+    return view('admin.booking', compact('appointments', 'dentists','services', 'stores','clients', 'isAdminView'));
 }
 
 
@@ -346,16 +355,6 @@ public function settle(Request $request, $id)
 
 
 
-public function fetch()
-{
-    $appointments = Appointment::with('user')
-        ->where('store_id', session('active_branch_id'))
-        ->where('dentist_id', auth()->id())
-        ->whereIn('status', ['pending', 'approved','arrived'])
-        ->get();
-
-    return view('admin.partials.appointments-table', compact('appointments'));
-}
 public function cancelBooking($id)
 {
     $appointment = Appointment::findOrFail($id);

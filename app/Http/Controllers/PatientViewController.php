@@ -19,10 +19,7 @@ class PatientViewController extends Controller
 
     // Start query
     $query = User::where('account_type', 'patient')
-        ->where(function($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('user', 'like', "%{$search}%");
-        });
+        ->searchName($search);
 
     // Filter based on status
     if ($status === 'archived') {

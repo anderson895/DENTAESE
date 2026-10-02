@@ -12,6 +12,10 @@ use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
 {
+    // Tapos na ang lumipas na petsa — hindi na ito binabago o binubura, kaya
+    // hindi na rin ito mapipindot sa calendar.
+    private const PAST_DATE_MESSAGE = 'Past dates can no longer be changed.';
+
     /**
      * Calendar UI page (admin) for clinic open days + doctor schedules.
      */
@@ -94,13 +98,14 @@ class ScheduleController extends Controller
     {
         $data = $request->validate([
             'store_id'      => 'required|exists:stores,id',
-            'schedule_date' => 'required|date',
+            'schedule_date' => 'required|date|after_or_equal:today',
             'is_open'       => 'required|boolean',
             'opening_time'  => 'nullable|date_format:H:i',
             // Gaya ng doctor schedule, dapat mas huli ang sara sa bukas.
             'closing_time'  => 'nullable|date_format:H:i|after:opening_time',
             'reason'        => 'nullable|string|max:255',
         ], [
+            'schedule_date.after_or_equal' => self::PAST_DATE_MESSAGE,
             'closing_time.after' => 'The closing time must be later than the opening time.',
         ]);
 
@@ -134,6 +139,10 @@ class ScheduleController extends Controller
 
     public function deleteClinicOverride(StoreScheduleOverride $override)
     {
+        if ($override->schedule_date->lt(today())) {
+            return response()->json(['message' => self::PAST_DATE_MESSAGE], 422);
+        }
+
         $storeId = $override->store_id;
         $date    = Carbon::parse($override->schedule_date)->format('M d, Y');
         $store   = Store::find($storeId);
@@ -158,11 +167,13 @@ class ScheduleController extends Controller
         $data = $request->validate([
             'dentist_id'    => 'required|exists:users,id',
             'store_id'      => 'nullable|exists:stores,id',
-            'schedule_date' => 'required|date',
+            'schedule_date' => 'required|date|after_or_equal:today',
             'start_time'    => 'nullable|date_format:H:i',
             'end_time'      => 'nullable|date_format:H:i|after:start_time',
             'status'        => 'required|in:available,off',
             'notes'         => 'nullable|string|max:255',
+        ], [
+            'schedule_date.after_or_equal' => self::PAST_DATE_MESSAGE,
         ]);
 
         $schedule = DoctorSchedule::updateOrCreate(
@@ -197,6 +208,10 @@ class ScheduleController extends Controller
 
     public function deleteDoctorSchedule(DoctorSchedule $schedule)
     {
+        if ($schedule->schedule_date->lt(today())) {
+            return response()->json(['message' => self::PAST_DATE_MESSAGE], 422);
+        }
+
         $dentist = User::find($schedule->dentist_id);
         $name    = $dentist ? trim($dentist->name . ' ' . $dentist->lastname) : 'A dentist';
         $date    = Carbon::parse($schedule->schedule_date)->format('M d, Y');
