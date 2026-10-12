@@ -18,6 +18,9 @@ class PhAddress
     /** @var array<string, array<string, string[]>>|null */
     private static ?array $data = null;
 
+    /** @var array<string, string[]>|null */
+    private static ?array $birthplace = null;
+
     /**
      * @return array<string, array<string, string[]>>
      */
@@ -98,14 +101,54 @@ class PhAddress
     }
 
     /**
+     * Birthplace — buong Pilipinas, Province => [City/Municipality].
+     * Hiwalay sa address data dahil kahit saan sa bansa maaaring ipinanganak
+     * ang pasyente (resources/data/ph-birthplace.json, parehong build script).
+     *
+     * @return array<string, string[]>
+     */
+    public static function birthplaces(): array
+    {
+        if (self::$birthplace === null) {
+            $path = resource_path('data/ph-birthplace.json');
+            $raw  = is_file($path) ? file_get_contents($path) : '';
+            self::$birthplace = json_decode($raw ?: '{}', true) ?: [];
+        }
+
+        return self::$birthplace;
+    }
+
+    /**
+     * Mga validation rule para sa Birthplace dropdowns ng signup. Ang
+     * city/municipality ay dapat kabilang sa piniling province.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public static function birthplaceRules(Request $request): array
+    {
+        // Hindi string (hal. array na pinilit i-post) = walang province na tutugma.
+        $province = $request->input('birthplace_province');
+        $province = is_string($province) ? $province : null;
+
+        $municipalities = $province !== null ? (self::birthplaces()[$province] ?? []) : [];
+
+        return [
+            'birthplace_province'     => ['required', 'string', Rule::in(array_keys(self::birthplaces()))],
+            'birthplace_municipality' => ['required', 'string', Rule::in($municipalities)],
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function messages(): array
     {
         return [
-            'address_province.in'     => 'Please choose a province from the list.',
-            'address_municipality.in' => 'Please choose a city/municipality that belongs to the selected province.',
-            'address_barangay.in'     => 'Please choose a barangay that belongs to the selected city/municipality.',
+            'address_province.in'        => 'Please choose a province from the list.',
+            'address_municipality.in'    => 'Please choose a city/municipality that belongs to the selected province.',
+            'address_barangay.in'        => 'Please choose a barangay that belongs to the selected city/municipality.',
+            'birthplace_province.in'     => 'Please choose a birthplace province from the list.',
+            'birthplace_municipality.in' => 'Please choose a city/municipality that belongs to the selected birthplace province.',
         ];
     }
 }

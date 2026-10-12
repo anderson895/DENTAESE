@@ -109,3 +109,82 @@ function Write-Generated([string]$relative, [string]$content) {
 #   - JSON para sa server-side validation (App\Services\PhAddress).
 Write-Generated 'public\js\ph-address.js'     ($header + $json + ";`n")
 Write-Generated 'resources\data\ph-address.json' ($json + "`n")
+
+# =====================================================================
+# BIRTHPLACE — buong Pilipinas, Province -> City/Municipality (walang barangay).
+# Kahit saan sa bansa maaaring ipinanganak ang pasyente, kaya hindi ito
+# limitado sa limang lalawigan ng Current Address sa itaas.
+# =====================================================================
+Write-Host "Fetching nationwide provinces + cities/municipalities (birthplace)..."
+$provinceList = Get-Json 'https://psgc.gitlab.io/api/provinces.json'
+$allLgus      = Get-Json 'https://psgc.gitlab.io/api/cities-municipalities.json'
+
+# "Agusan Del Norte" ang baybay sa API; "Agusan del Norte" ang opisyal.
+function Clean-ProvinceName([string]$n) {
+    return (($n -creplace '\bDel\b', 'del') -creplace '\bDe\b', 'de').Trim()
+}
+
+# May ilang pangalan sa PSGC na mali ang laki ng titik ("Pio v. Corpuz",
+# "Gen. s.k. Pendatun", "Sergio osmeña Sr.", "Tagoloan Ii"). Dito lang ito
+# inaayos para hindi magbago ang Current Address data sa itaas.
+function Clean-BirthplaceName([string]$n) {
+    $n = Clean-Name $n
+    $upper = { param($m) $m.Value.ToUpper() }
+    $n = [regex]::Replace($n, '\b[a-z](?=\.)', $upper)          # inisyal: "v." -> "V."
+    $n = [regex]::Replace($n, '(?<=^|\s)[a-z](?=\S{3,})', $upper) # salita: "osmeña" -> "Osmeña" (hindi ang "of")
+    return ($n -creplace '\bIi\b', 'II')                         # Roman numeral
+}
+
+$provinceByCode = @{}
+foreach ($p in $provinceList) { $provinceByCode[$p.code] = (Clean-ProvinceName $p.name) }
+
+# Independent na lungsod na walang provinceCode sa PSGC — inilalagay sa
+# lalawigang kinaroroonan nila para mahanap pa rin sa dropdown.
+$independentCities = @{
+    '099701000' = '150700000'   # City of Isabela  -> Basilan
+    '129804000' = '153800000'   # City of Cotabato -> Maguindanao
+}
+
+$birth    = @{}
+$unplaced = 0
+foreach ($l in $allLgus) {
+    $label = $null
+    if ($l.provinceCode -and $provinceByCode.ContainsKey($l.provinceCode)) {
+        $label = $provinceByCode[$l.provinceCode]
+    } elseif ($independentCities.ContainsKey($l.code)) {
+        $label = $provinceByCode[$independentCities[$l.code]]
+    } elseif ($l.regionCode -eq '130000000') {
+        $label = 'Metro Manila'   # NCR ay region, hindi province
+    }
+
+    if (-not $label) { $unplaced++; Write-Host "  Unplaced LGU: $($l.name)"; continue }
+
+    if (-not $birth.ContainsKey($label)) { $birth[$label] = [System.Collections.ArrayList]::new() }
+    [void]$birth[$label].Add((Clean-BirthplaceName $l.name))
+}
+
+$birthSorted = [ordered]@{}
+foreach ($k in ($birth.Keys | Sort-Object)) {
+    $birthSorted[$k] = @($birth[$k] | Sort-Object -Unique)
+}
+$birthTotal = ($birthSorted.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
+Write-Host ("Birthplace: {0} provinces, {1} cities/municipalities, {2} unplaced" -f $birthSorted.Count, $birthTotal, $unplaced)
+
+$birthJson   = $birthSorted | ConvertTo-Json -Depth 4 -Compress
+$birthHeader = @"
+/**
+ * Philippine birthplace reference data (PSGC) para sa Birthplace dropdowns
+ * ng signup: Province -> City/Municipality. Buong Pilipinas ang saklaw.
+ *
+ * Gawa ito ng resources/data/build-ph-address.ps1 -- patakbuhin muli ito para
+ * i-refresh. Pinagmulan: https://psgc.gitlab.io/api/
+ *
+ * BUO ITONG GENERATED -- huwag i-edit nang manu-mano.
+ */
+window.PH_BIRTHPLACE =
+"@
+
+#   - JS para sa Birthplace dropdowns sa browser.
+#   - JSON para sa server-side validation (App\Services\PhAddress::birthplaceRules).
+Write-Generated 'public\js\ph-birthplace.js'        ($birthHeader + $birthJson + ";`n")
+Write-Generated 'resources\data\ph-birthplace.json' ($birthJson + "`n")

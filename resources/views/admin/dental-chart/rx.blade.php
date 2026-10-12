@@ -1,6 +1,18 @@
 @php
     $rxAuthUser       = auth()->user();
     $rxIsReceptionist = $rxAuthUser && $rxAuthUser->position === 'Receptionist';
+
+    // Pangalan sa pirma: "Marieta S. Amancio, DMD" — inisyal lang ang middle name,
+    // at walang naliligaw na "." o " ," kapag walang middle name o suffix.
+    $rxDentist     = $appointment->dentist;
+    $rxDentistName = $rxDentist
+        ? collect([
+              $rxDentist->name,
+              $rxDentist->middlename ? mb_strtoupper(mb_substr(trim($rxDentist->middlename), 0, 1)) . '.' : null,
+              $rxDentist->lastname,
+              $rxDentist->suffix,
+          ])->filter(fn ($part) => trim((string) $part) !== '')->implode(' ') . ', DMD'
+        : '';
 @endphp
 
 <div class="flex items-center mt-2 mb-4">
@@ -51,13 +63,38 @@
                     <option value="as needed">As needed (PRN)</option>
                 </select>
             </div>
+            {{-- Dropdown na rin ang Time at Duration, gaya ng Frequency, para
+                 pipili na lang ang staff (final defense revision). Ang mga value
+                 ng Duration ay sinusundan ng rxParseDurationToEndDate(). --}}
             <div>
                 <label class="text-xs font-semibold text-gray-600">Time</label>
-                <input type="text" id="medicine-time" maxlength="50" placeholder="e.g. morning and evening" class="border p-2 rounded w-full">
+                <select id="medicine-time" class="border p-2 rounded w-full">
+                    <option value="">-- Select --</option>
+                    <option value="after meals">After meals</option>
+                    <option value="before meals">Before meals</option>
+                    <option value="in the morning">In the morning</option>
+                    <option value="at noon">At noon</option>
+                    <option value="in the evening">In the evening</option>
+                    <option value="at bedtime">At bedtime</option>
+                    <option value="morning and evening">Morning and evening</option>
+                    <option value="morning, noon and evening">Morning, noon and evening</option>
+                    <option value="morning, noon, evening and bedtime">Morning, noon, evening and bedtime</option>
+                </select>
             </div>
             <div>
                 <label class="text-xs font-semibold text-gray-600">Duration</label>
-                <input type="text" id="medicine-duration" maxlength="50" placeholder="e.g. for 2 weeks" class="border p-2 rounded w-full">
+                <select id="medicine-duration" class="border p-2 rounded w-full">
+                    <option value="">-- Select --</option>
+                    <option value="for 1 day">For 1 day</option>
+                    <option value="for 2 days">For 2 days</option>
+                    <option value="for 3 days">For 3 days</option>
+                    <option value="for 5 days">For 5 days</option>
+                    <option value="for 7 days">For 7 days (1 week)</option>
+                    <option value="for 10 days">For 10 days</option>
+                    <option value="for 14 days">For 14 days (2 weeks)</option>
+                    <option value="for 1 month">For 1 month</option>
+                    <option value="until finished">Until finished</option>
+                </select>
             </div>
         </div>
         <button type="button" id="add-medicine" class="bg-blue-600 text-white px-4 py-2 rounded w-full md:w-auto">+ Add Medicine</button>
@@ -93,7 +130,7 @@
 
     <div class="text-right">
         <p>______________________________</p>
-        <p>{{$appointment->dentist->name}} {{$appointment->dentist->middlename}}. {{$appointment->dentist->lastname}} {{$appointment->dentist->suffix ?? ''}} ,DMD</p>
+        <p>{{ $rxDentistName }}</p>
     </div>
 </div>
 
@@ -104,7 +141,15 @@ const RX_CSRF_TOKEN = '{{ csrf_token() }}';
 const RX_PATIENT_ID = {{ $appointment->user_id }};
 const RX_APPOINTMENT_ID = {{ $appointment->id }};
 
-// Parse a free-text duration like "for 2 weeks" into an end date (Y-m-d), or null if unparseable
+// Lokal na petsa (Y-m-d). Hindi toISOString(): UTC iyon, kaya kahapon ang
+// lumalabas kapag bago mag-8 AM dito sa Asia/Manila.
+function rxLocalYmd(d) {
+    return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+}
+
+// Parse a duration like "for 2 weeks" into an end date (Y-m-d), or null if unparseable ("until finished")
 function rxParseDurationToEndDate(duration) {
     const m = (duration || '').toLowerCase().match(/(\d+)\s*(day|week|month)/);
     if (!m) return null;
@@ -113,7 +158,7 @@ function rxParseDurationToEndDate(duration) {
     if (m[2] === 'day') d.setDate(d.getDate() + n);
     if (m[2] === 'week') d.setDate(d.getDate() + n * 7);
     if (m[2] === 'month') d.setMonth(d.getMonth() + n);
-    return d.toISOString().slice(0, 10);
+    return rxLocalYmd(d);
 }
 
 // Auto-record the prescribed medicine to the patient's Current Medication list
@@ -133,7 +178,7 @@ function rxSyncToCurrentMedication(rxDiv, med, qty, freq, time, duration) {
             medicine_name: `${med.name} (${med.unit})`,
             dosage: null,
             frequency: (freq || '').replace(' a day', ' daily') || null,
-            start_date: new Date().toISOString().slice(0, 10),
+            start_date: rxLocalYmd(new Date()),
             end_date: rxParseDurationToEndDate(duration),
             notes: notes || null,
         }),

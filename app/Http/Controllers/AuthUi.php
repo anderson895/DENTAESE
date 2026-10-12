@@ -311,6 +311,8 @@ class AuthUi extends Controller
      * hindi na makakalusot ang pinalitang halaga sa huling hakbang.
      *
      * 50 ang hangganan ng mga maiikling field ayon sa revision 09/11/26.
+     * Ayon sa final defense revision (10/12/26): dapat 2 taong gulang pataas
+     * ang magpaparehistro, at dropdown na ang Birthplace (PhAddress::birthplaceRules).
      */
     private static function personalInfoRules(): array
     {
@@ -319,9 +321,7 @@ class AuthUi extends Controller
             'middlename'              => 'nullable|string|max:50',
             'lastname'                => 'required|string|max:50',
             'suffix'                  => 'nullable|string|max:10',
-            'birth_date'              => 'required|date|before:today',
-            'birthplace_municipality' => 'required|string|max:50',
-            'birthplace_province'     => 'required|string|max:50',
+            'birth_date'              => 'required|date|before_or_equal:' . now()->subYears(2)->toDateString(),
             'address_street'          => 'required|string|max:50',
             'address_house_number'    => 'nullable|string|max:50',
             'address_other_details'   => 'nullable|string|max:50',
@@ -341,13 +341,13 @@ class AuthUi extends Controller
     private static function signupMessages(): array
     {
         return array_merge(PhAddress::messages(), [
-            'birth_date.before'        => 'Birthdate must be in the past.',
-            'confirm_password.same'    => 'Passwords do not match.',
-            'email.unique'             => 'This email is already registered.',
-            'user.unique'              => 'This username is already taken.',
-            'password.min'             => 'Password must be at least 6 characters.',
-            'contact_number.regex'     => 'Contact number must be 11 digits and start with 09 (e.g. 09171234567).',
-            'face_descriptor.required' => 'Please capture your face before continuing.',
+            'birth_date.before_or_equal' => 'You must be at least 2 years old to register.',
+            'confirm_password.same'      => 'Passwords do not match.',
+            'email.unique'               => 'This email is already registered.',
+            'user.unique'                => 'This username is already taken.',
+            'password.min'               => 'Password must be at least 6 characters.',
+            'contact_number.regex'       => 'Contact number must be 11 digits and start with 09 (e.g. 09171234567).',
+            'face_descriptor.required'   => 'Please capture your face before continuing.',
         ]);
     }
 
@@ -360,7 +360,11 @@ class AuthUi extends Controller
         $step = (int) $request->input('step', 0);
 
         $rulesByStep = [
-            1 => array_merge(self::personalInfoRules(), PhAddress::rules($request)),
+            1 => array_merge(
+                self::personalInfoRules(),
+                PhAddress::birthplaceRules($request),
+                PhAddress::rules($request)
+            ),
             2 => array_merge(self::accountRules(), [
                 'confirm_password' => 'required|same:password',
             ]),
@@ -383,6 +387,7 @@ class AuthUi extends Controller
         $request->validate(array_merge(
             self::personalInfoRules(),
             self::accountRules(),
+            PhAddress::birthplaceRules($request),
             PhAddress::rules($request),
             [
                 'account_type'    => 'required',
@@ -458,6 +463,7 @@ class AuthUi extends Controller
         $request->validate(array_merge(
             self::personalInfoRules(),
             self::accountRules(),
+            PhAddress::birthplaceRules($request),
             PhAddress::rules($request),
             [
                 'account_type'    => 'required|string',

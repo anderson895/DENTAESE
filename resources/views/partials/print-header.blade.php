@@ -10,9 +10,16 @@
 
     $logoCandidates = ['images/clinic-logo.png', 'images/logo.png'];
     $logoSrc = null;
+    $logoStyle = 'width:72px; height:72px; object-fit:contain; flex:0 0 auto;';
     foreach ($logoCandidates as $rel) {
         if (file_exists(public_path($rel))) {
             $logoSrc = asset($rel);
+            // Puti ang images/logo.png (para sa asul na navbar) kaya hindi ito
+            // nakikita sa puting papel — kinukulayan ng asul gaya ng .logo-blue
+            // sa layout/auth.blade.php.
+            if ($rel === 'images/logo.png') {
+                $logoStyle .= ' filter: invert(43%) sepia(99%) saturate(5121%) hue-rotate(200deg) brightness(95%) contrast(90%);';
+            }
             break;
         }
     }
@@ -22,7 +29,7 @@
      style="border-bottom:2px solid #0b3b8c; padding:6px 0 10px; margin-bottom:14px; display:flex; align-items:center; gap:14px; font-family: 'Times New Roman', Georgia, serif;">
     @if($logoSrc)
         <img src="{{ $logoSrc }}" alt="Clinic Logo"
-             style="width:72px; height:72px; object-fit:contain; flex:0 0 auto;">
+             style="{{ $logoStyle }}">
     @endif
 
     <div style="flex:1; text-align:center;">
