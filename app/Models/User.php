@@ -34,6 +34,27 @@ class User extends Authenticatable
         return trim("{$lastname}, {$firstname} {$middlename} {$suffix}");
     }
 
+    // Paghahanap sa pangalan: bawat salita ay hinahanap sa first, middle at
+    // last name, suffix at username, at dapat tumama ang lahat ng salita.
+    // Kaya gumagana ang "Amancio", "Marieta Amancio", pati ang mismong
+    // ipinapakitang "Amancio, Marieta" (full_name).
+    public function scopeSearchName($query, ?string $term)
+    {
+        $words = preg_split('/[\s,]+/', trim((string) $term), -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($words as $word) {
+            $query->where(function ($q) use ($word) {
+                $q->where('name', 'like', "%{$word}%")
+                  ->orWhere('middlename', 'like', "%{$word}%")
+                  ->orWhere('lastname', 'like', "%{$word}%")
+                  ->orWhere('suffix', 'like', "%{$word}%")
+                  ->orWhere('user', 'like', "%{$word}%");
+            });
+        }
+
+        return $query;
+    }
+
     protected $fillable = [
         'name',
         'middlename',

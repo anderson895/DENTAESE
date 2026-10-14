@@ -47,15 +47,27 @@
         </div>
         <div>
             <label>Birthdate</label>
-            <input type="date" name="birth_date" class="w-full border p-2 rounded" required>
+            {{-- 2 taong gulang pataas lang ang puwedeng magparehistro (final defense revision).
+                 Ganito rin ang tseke sa server (AuthUi::personalInfoRules). --}}
+            <input type="date" name="birth_date" class="w-full border p-2 rounded" required
+                   max="{{ now()->subYears(2)->toDateString() }}"
+                   data-max-message="You must be at least 2 years old to register.">
         </div>
-        <div>
-            <label>Birthplace - Municipality</label>
-            <input type="text" name="birthplace_municipality" class="w-full border p-2 rounded" required maxlength="50" placeholder="Municipality">
-        </div>
+        {{-- Birthplace: dropdown na rin (Province -> City/Municipality, buong Pilipinas).
+             Province muna dahil doon nakadepende ang listahan ng city/municipality. --}}
         <div>
             <label>Birthplace - Province</label>
-            <input type="text" name="birthplace_province" class="w-full border p-2 rounded" required maxlength="50" placeholder="Province">
+            <select name="birthplace_province" data-birthplace-role="province"
+                    class="w-full border p-2 rounded bg-white" required>
+                <option value="">-- Select Province --</option>
+            </select>
+        </div>
+        <div>
+            <label>Birthplace - City / Municipality</label>
+            <select name="birthplace_municipality" data-birthplace-role="municipality"
+                    class="w-full border p-2 rounded bg-white" required>
+                <option value="">-- Select a province first --</option>
+            </select>
         </div>
     </div>
 
@@ -233,31 +245,40 @@
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg w-fit">
         <h2 class="text-lg font-semibold mb-4 text-gray-800 text-center">Face Registration</h2>
-        <div class="relative">
-            <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
-                <div class="relative inline-block">
-                    <video id="video" width="320" height="240" autoplay playsinline
-                        class="rounded-md block" style="width:320px;height:240px;"></video>
-                    <canvas id="overlayCanvas" width="320" height="240"
-                        class="absolute top-0 left-0 rounded-md pointer-events-none"
-                        style="width:320px;height:240px;"></canvas>
+
+        {{-- Step 1: mga kondisyon (guidelines) bago buksan ang camera --}}
+        @include('partials.face-guidelines', ['button' => 'Open Camera'])
+
+        {{-- Step 2: camera + liveness check --}}
+        <div data-face-step="camera" class="hidden">
+            <div class="relative">
+                <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
+                    <div class="relative inline-block">
+                        <video id="video" width="320" height="240" autoplay playsinline
+                            class="rounded-md block" style="width:320px;height:240px;"></video>
+                        <canvas id="overlayCanvas" width="320" height="240"
+                            class="absolute top-0 left-0 rounded-md pointer-events-none"
+                            style="width:320px;height:240px;"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="mt-4 space-y-2">
-            <div class="text-center text-xs text-gray-500"><p id="debugInfo">FPS: --</p></div>
-            <div class="text-center">
-                <p id="instructionText" class="text-sm font-semibold text-gray-700">
-                    Move your head left and right
-                </p>
-                <p id="progressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
-            </div>
-            <div class="flex justify-center gap-4 text-xs">
-                <div class="flex items-center gap-1">
-                    <span id="leftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Left Turn</span>
+            <div class="mt-4 space-y-2">
+                <div class="text-center text-xs text-gray-500"><p id="debugInfo">FPS: --</p></div>
+                <div class="text-center">
+                    <p id="instructionText" class="text-sm font-semibold text-gray-700">
+                        Move your head left and right
+                    </p>
+                    {{-- Kondisyong hindi pa pasado (FaceGuard) — walang laman kapag ayos na --}}
+                    <p data-face-condition class="text-xs font-semibold text-amber-600 mt-1 min-h-[1rem] max-w-[320px] mx-auto"></p>
+                    <p id="progressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
                 </div>
-                <div class="flex items-center gap-1">
-                    <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Right Turn</span>
+                <div class="flex justify-center gap-4 text-xs">
+                    <div class="flex items-center gap-1">
+                        <span id="leftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Left Turn</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span id="rightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span><span>Right Turn</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -272,10 +293,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {{-- No defer: must be available synchronously --}}
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+{{-- Mga kondisyon ng face capture: isang mukha, nasa bilog, sapat ang liwanag --}}
+<script src="{{ asset('js/face-guard.js') }}?v={{ filemtime(public_path('js/face-guard.js')) }}"></script>
 
-{{-- PSGC data + cascading dropdowns ng Current Address (window.initAddressCascade) --}}
+{{-- PSGC data + cascading dropdowns ng Current Address (window.initAddressCascade)
+     at ng Birthplace (window.initBirthplaceCascade). May ?v= para hindi
+     gamitin ng browser ang lumang naka-cache na kopya kapag binago ang file. --}}
 <script src="{{ asset('js/ph-address.js') }}"></script>
-<script src="{{ asset('js/address-select.js') }}"></script>
+<script src="{{ asset('js/ph-birthplace.js') }}?v={{ filemtime(public_path('js/ph-birthplace.js')) }}"></script>
+<script src="{{ asset('js/address-select.js') }}?v={{ filemtime(public_path('js/address-select.js')) }}"></script>
 
 <style>
     #video, #overlayCanvas { display: block; width: 320px; height: 240px; }
@@ -330,7 +356,11 @@ function clientValidateRequiredFields(stepEl) {
     inputs.each(function () {
         if (!this.checkValidity()) {
             const name = this.name;
-            const message = this.validationMessage || 'This field is required.';
+            // Sariling mensahe kapag lumampas sa max (hal. Birthdate na wala pang 2 taon)
+            // sa halip na ang pangkalahatang "Value must be ... or earlier" ng browser.
+            const message = (this.validity.rangeOverflow && this.dataset.maxMessage)
+                || this.validationMessage
+                || 'This field is required.';
             if (name) {
                 errors[name] = errors[name] || [message];
             }
@@ -368,6 +398,10 @@ const EXCLUDED_FIELDS = ['password', 'confirm_password', 'otp', 'face_descriptor
 const ADDRESS_CASCADE_FIELDS = ['address_province', 'address_municipality', 'address_barangay'];
 let addressCascade = null;
 
+// Ganoon din ang Birthplace: province muna bago mapuno ang city/municipality.
+const BIRTHPLACE_CASCADE_FIELDS = ['birthplace_province', 'birthplace_municipality'];
+let birthplaceCascade = null;
+
 function saveSignupInputs() {
     const data = {};
     $('#signupForm').find('input, select, textarea').each(function () {
@@ -383,7 +417,9 @@ function restoreSignupInputs() {
     let data;
     try { data = JSON.parse(localStorage.getItem(SIGNUP_STORAGE_KEY) || '{}'); } catch (e) { return; }
     Object.entries(data).forEach(([name, value]) => {
-        if (EXCLUDED_FIELDS.includes(name) || ADDRESS_CASCADE_FIELDS.includes(name)) return;
+        if (EXCLUDED_FIELDS.includes(name)
+            || ADDRESS_CASCADE_FIELDS.includes(name)
+            || BIRTHPLACE_CASCADE_FIELDS.includes(name)) return;
         const input = $('#signupForm').find(`[name="${name}"]`).first();
         if (input.length && value !== null && value !== undefined) input.val(value);
     });
@@ -393,10 +429,14 @@ function restoreSignupInputs() {
     if (addressCascade) {
         addressCascade.setValue(data.address_province, data.address_municipality, data.address_barangay);
     }
+    if (birthplaceCascade) {
+        birthplaceCascade.setValue(data.birthplace_province, data.birthplace_municipality);
+    }
 }
 
 $(document).ready(function () {
-    addressCascade = window.initAddressCascade(document.getElementById('step-1'));
+    addressCascade    = window.initAddressCascade(document.getElementById('step-1'));
+    birthplaceCascade = window.initBirthplaceCascade(document.getElementById('step-1'));
     restoreSignupInputs();
     $(document).on('input change', '#signupForm input, #signupForm select, #signupForm textarea', saveSignupInputs);
 });
@@ -560,6 +600,7 @@ const openBtn  = document.getElementById('capturemodal');
 const modal    = document.getElementById('modal');
 const closeBtn = document.getElementById('closemodal');
 const video    = document.getElementById('video');
+const faceCondition = modal.querySelector('[data-face-condition]');
 let stream     = null;
 
 async function loadModels() {
@@ -582,7 +623,8 @@ function updateProgress() {
     if (headMovementRight) p += 50;
     currentProgress = Math.min(100, Math.round(p));
 
-    document.querySelector('#video').parentElement.style.setProperty('--progress', currentProgress + '%');
+    // Nasa lolo ng <video> ang may gradient na border (ang --progress), hindi sa magulang.
+    video.parentElement.parentElement.style.setProperty('--progress', currentProgress + '%');
     document.getElementById('progressText').textContent = `Progress: ${currentProgress}%`;
 
     if (!headMovementLeft && !headMovementRight) {
@@ -612,20 +654,6 @@ function detectHeadMovement(landmarks) {
     if (ratio > 0.62 && !headMovementRight) { headMovementRight = true; updateProgress(); }
 }
 
-function drawBoundingBox(detection, canvas) {
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!detection) return;
-    const sx = canvas.width / video.videoWidth, sy = canvas.height / video.videoHeight;
-    const b  = detection.detection.box;
-    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3;
-    ctx.strokeRect(b.x*sx, b.y*sy, b.width*sx, b.height*sy);
-    ctx.fillStyle = 'rgba(16,185,129,0.9)';
-    ctx.fillRect(b.x*sx, b.y*sy - 25, 60, 23);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial';
-    ctx.fillText('FACE', b.x*sx + 8, b.y*sy - 7);
-}
-
 async function detectFaceLoop() {
     if (!isDetecting) return;
     const overlay = document.getElementById('overlayCanvas');
@@ -635,18 +663,13 @@ async function detectFaceLoop() {
     document.getElementById('debugInfo').textContent = `FPS: ${fps}`;
 
     if (video && !video.paused && !video.ended && video.readyState === video.HAVE_ENOUGH_DATA) {
-        if (overlay.width !== video.videoWidth)  overlay.width  = video.videoWidth;
-        if (overlay.height !== video.videoHeight) overlay.height = video.videoHeight;
         try {
-            const det = await faceapi
-                .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
-                .withFaceLandmarks();
-            if (det) {
-                drawBoundingBox(det, overlay);
-                detectHeadMovement(det.landmarks);
-            } else {
-                overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
-            }
+            // Hindi uusad ang head-turn check hangga't hindi pasado ang mga
+            // kondisyon (isang mukha, nasa bilog, sapat ang liwanag).
+            const result = await FaceGuard.check(video);
+            FaceGuard.drawGuide(overlay, video, result);
+            FaceGuard.showCondition(faceCondition, result);
+            if (result.ok) detectHeadMovement(result.detection.landmarks);
         } catch (err) { console.error('Detection error:', err); }
     }
     animationFrameId = requestAnimationFrame(detectFaceLoop);
@@ -669,12 +692,21 @@ function resetTracking() {
     document.getElementById('debugInfo').textContent       = 'FPS: --';
     document.getElementById('leftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
     document.getElementById('rightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
-    document.querySelector('#video').parentElement.style.setProperty('--progress', '0%');
+    video.parentElement.parentElement.style.setProperty('--progress', '0%');
+    FaceGuard.clear(document.getElementById('overlayCanvas'), faceCondition);
 }
 
-openBtn.addEventListener('click', async () => {
+// Guidelines muna (mga kondisyon), saka lang bubuksan ang camera.
+openBtn.addEventListener('click', () => {
     modal.classList.remove('hidden');
     resetTracking();
+    FaceGuard.showStep(modal, 'guidelines');
+});
+
+modal.querySelector('[data-face-start]').addEventListener('click', startCamera);
+
+async function startCamera() {
+    FaceGuard.showStep(modal, 'camera');
     try {
         stream = await navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
@@ -688,7 +720,7 @@ openBtn.addEventListener('click', async () => {
         Swal.fire('Error', 'Unable to access webcam.', 'error');
         modal.classList.add('hidden');
     }
-});
+}
 
 closeBtn.addEventListener('click', () => {
     stopDetection(); modal.classList.add('hidden'); stopCamera(); resetTracking();
@@ -704,13 +736,11 @@ async function captureFaceLocally() {
     Swal.fire({ title: 'Capturing face...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const detection = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        // Dapat eksaktong isang mukha — hindi mairerehistro ang mukha ng iba.
+        const shot = await FaceGuard.capture(video);
 
-        if (!detection) {
-            Swal.fire('No Face Detected', 'Please try again.', 'error');
+        if (!shot.ok) {
+            Swal.fire('Face Not Captured', shot.message + ' Please try again.', 'error');
             captureTriggered = false;
             resetTracking();
             startDetection();
@@ -718,7 +748,7 @@ async function captureFaceLocally() {
         }
 
         // Store as JSON string in the hidden field
-        const descriptorJSON = JSON.stringify(Array.from(detection.descriptor));
+        const descriptorJSON = JSON.stringify(Array.from(shot.descriptor));
         document.getElementById('face_descriptor').value = descriptorJSON;
 
         faceRegistered = true;

@@ -24,10 +24,7 @@ public function ViewStaff(Request $request)
     
     $query = User::withTrashed()
         ->where('account_type', 'admin')
-        ->where(function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('user', 'like', "%{$search}%");
-        });
+        ->searchName($search);
 
 
     if ($position) {

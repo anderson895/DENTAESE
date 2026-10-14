@@ -104,36 +104,44 @@
                 <div class="bg-white p-6 rounded-xl shadow-lg w-fit">
                     <h3 class="text-lg font-semibold mb-4 text-gray-800 text-center">Face Recognition</h3>
 
-                    <div class="relative">
-                        <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
-                            <div class="relative inline-block">
-                                <video id="faceVideo" width="320" height="240" autoplay playsinline
-                                    class="rounded-md block" style="width: 320px; height: 240px;"></video>
-                                <canvas id="overlayCanvas" width="320" height="240"
-                                    class="absolute top-0 left-0 rounded-md pointer-events-none"
-                                    style="width: 320px; height: 240px;"></canvas>
-                            </div>
-                        </div>
-                    </div>
+                    {{-- Step 1: mga kondisyon (guidelines) bago buksan ang camera --}}
+                    @include('partials.face-guidelines', ['button' => 'Start Face Scan'])
 
-                    <div class="mt-4 space-y-2">
-                        <div class="text-center text-xs text-gray-500">
-                            <p id="faceDebugInfo">FPS: --</p>
-                        </div>
-                        <div class="text-center">
-                            <p id="faceInstructionText" class="text-sm font-semibold text-gray-700">
-                                Move your head left and right
-                            </p>
-                            <p id="faceProgressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
-                        </div>
-                        <div class="flex justify-center gap-4 text-xs">
-                            <div class="flex items-center gap-1">
-                                <span id="faceLeftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                                <span>Left Turn</span>
+                    {{-- Step 2: camera + liveness check --}}
+                    <div data-face-step="camera" class="hidden">
+                        <div class="relative">
+                            <div class="relative inline-block" style="padding: 8px; background: linear-gradient(to right, #10b981 var(--progress, 0%), #e5e7eb var(--progress, 0%)); border-radius: 0.5rem;">
+                                <div class="relative inline-block">
+                                    <video id="faceVideo" width="320" height="240" autoplay playsinline
+                                        class="rounded-md block" style="width: 320px; height: 240px;"></video>
+                                    <canvas id="overlayCanvas" width="320" height="240"
+                                        class="absolute top-0 left-0 rounded-md pointer-events-none"
+                                        style="width: 320px; height: 240px;"></canvas>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <span id="faceRightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
-                                <span>Right Turn</span>
+                        </div>
+
+                        <div class="mt-4 space-y-2">
+                            <div class="text-center text-xs text-gray-500">
+                                <p id="faceDebugInfo">FPS: --</p>
+                            </div>
+                            <div class="text-center">
+                                <p id="faceInstructionText" class="text-sm font-semibold text-gray-700">
+                                    Move your head left and right
+                                </p>
+                                {{-- Kondisyong hindi pa pasado (FaceGuard) — walang laman kapag ayos na --}}
+                                <p data-face-condition class="text-xs font-semibold text-amber-600 mt-1 min-h-[1rem] max-w-[320px] mx-auto"></p>
+                                <p id="faceProgressText" class="text-xs text-gray-500 mt-1">Progress: 0%</p>
+                            </div>
+                            <div class="flex justify-center gap-4 text-xs">
+                                <div class="flex items-center gap-1">
+                                    <span id="faceLeftIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                    <span>Left Turn</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span id="faceRightIndicator" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                    <span>Right Turn</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -174,6 +182,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+{{-- Mga kondisyon ng face scan: isang mukha, nasa bilog, sapat ang liwanag --}}
+<script src="{{ asset('js/face-guard.js') }}?v={{ filemtime(public_path('js/face-guard.js')) }}"></script>
 
 {{-- ================= TAB SWITCH ================= --}}
 <script>
@@ -275,7 +285,8 @@ function updateFaceProgress() {
     if (faceHeadMovementRight) progress += 50;
     faceCurrentProgress = Math.min(100, Math.round(progress));
 
-    document.querySelector('#faceVideo').parentElement.style.setProperty('--progress', faceCurrentProgress + '%');
+    // Nasa lolo ng <video> ang may gradient na border (ang --progress), hindi sa magulang.
+    document.querySelector('#faceVideo').parentElement.parentElement.style.setProperty('--progress', faceCurrentProgress + '%');
     document.getElementById('faceProgressText').textContent = `Progress: ${faceCurrentProgress}%`;
 
     if (!faceHeadMovementLeft && !faceHeadMovementRight) {
@@ -316,27 +327,6 @@ function detectFaceHeadMovement(landmarks) {
     }
 }
 
-function drawFaceBoundingBox(detection, canvas) {
-    const video  = document.getElementById('faceVideo');
-    const ctx    = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!detection) return;
-
-    const scaleX = canvas.width  / video.videoWidth;
-    const scaleY = canvas.height / video.videoHeight;
-    const box    = detection.detection.box;
-
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(box.x * scaleX, box.y * scaleY, box.width * scaleX, box.height * scaleY);
-
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
-    ctx.fillRect(box.x * scaleX, box.y * scaleY - 25, 60, 23);
-    ctx.fillStyle = '#ffffff';
-    ctx.font      = 'bold 14px Arial';
-    ctx.fillText('FACE', box.x * scaleX + 8, box.y * scaleY - 7);
-}
-
 // ─────────────────────────────────────────────
 // Main detection loop
 // ─────────────────────────────────────────────
@@ -354,26 +344,23 @@ async function detectFaceLoop() {
     document.getElementById('faceDebugInfo').textContent = `FPS: ${faceFps}`;
 
     if (video && !video.paused && !video.ended && video.readyState === video.HAVE_ENOUGH_DATA) {
-        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-        }
         try {
-            const detection = await faceapi
-                .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
-                .withFaceLandmarks();
-
-            if (detection) {
-                drawFaceBoundingBox(detection, canvas);
-                detectFaceHeadMovement(detection.landmarks);
-            } else {
-                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            }
+            // Hindi uusad ang head-turn check hangga't hindi pasado ang mga
+            // kondisyon (isang mukha, nasa bilog, sapat ang liwanag).
+            const result = await FaceGuard.check(video);
+            FaceGuard.drawGuide(canvas, video, result);
+            FaceGuard.showCondition(faceConditionEl(), result);
+            if (result.ok) detectFaceHeadMovement(result.detection.landmarks);
         } catch (err) {
             console.error('Detection error:', err);
         }
     }
 
     faceAnimationFrameId = requestAnimationFrame(detectFaceLoop);
+}
+
+function faceConditionEl() {
+    return document.querySelector('#faceModal [data-face-condition]');
 }
 
 function startFaceDetection() { isFaceDetecting = true;  detectFaceLoop(); }
@@ -390,15 +377,22 @@ function resetFaceTracking() {
     document.getElementById('faceDebugInfo').textContent       = 'FPS: --';
     document.getElementById('faceLeftIndicator').className     = 'w-3 h-3 rounded-full bg-gray-300';
     document.getElementById('faceRightIndicator').className    = 'w-3 h-3 rounded-full bg-gray-300';
-    document.querySelector('#faceVideo').parentElement.style.setProperty('--progress', '0%');
+    document.querySelector('#faceVideo').parentElement.parentElement.style.setProperty('--progress', '0%');
+    FaceGuard.clear(document.getElementById('overlayCanvas'), faceConditionEl());
 }
 
 // ─────────────────────────────────────────────
-// Open / Close modal
+// Open / Close modal — guidelines muna (mga kondisyon), saka ang camera
 // ─────────────────────────────────────────────
-async function openFaceModal() {
-    document.getElementById('faceModal').classList.remove('hidden');
+function openFaceModal() {
+    const modal = document.getElementById('faceModal');
+    modal.classList.remove('hidden');
     resetFaceTracking();
+    FaceGuard.showStep(modal, 'guidelines');
+}
+
+async function startFaceCamera() {
+    FaceGuard.showStep(document.getElementById('faceModal'), 'camera');
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -443,22 +437,20 @@ async function submitFaceRecognition() {
     try {
         const video = document.getElementById('faceVideo');
 
-        // Extract 128-value face descriptor
-        const detection = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
-            .withFaceLandmarks()
-            .withFaceDescriptor(); // ← descriptor, not image
+        // Extract 128-value face descriptor — dapat eksaktong isang mukha
+        // para hindi maitala ang pagbisita ng maling pasyente.
+        const shot = await FaceGuard.capture(video);
 
-        if (!detection) {
+        if (!shot.ok) {
             document.getElementById('faceLoadingSpinner').classList.add('hidden');
-            Swal.fire('No Face Detected', 'Please position your face and try again.', 'warning');
+            Swal.fire('Face Not Captured', shot.message + ' Please try again.', 'warning');
             resetFaceTracking();
             startFaceDetection();
             return;
         }
 
         // Float32Array → plain Array → JSON string
-        const descriptorJSON = JSON.stringify(Array.from(detection.descriptor));
+        const descriptorJSON = JSON.stringify(Array.from(shot.descriptor));
 
         $.ajax({
             type: 'POST',
@@ -517,6 +509,7 @@ async function submitFaceRecognition() {
 // Preload models on page load
 $(document).ready(function () {
     loadFaceModels();
+    document.querySelector('#faceModal [data-face-start]').addEventListener('click', startFaceCamera);
 });
 </script>
 @endsection

@@ -9,7 +9,7 @@
         background: #fff; border: 1px solid #e5e7eb; min-height: 110px; padding: 6px;
         cursor: pointer; transition: background-color 120ms ease; position: relative;
     }
-    .cal-cell:hover { background: #f3f4f6; }
+    .cal-cell:not(.is-past):hover { background: #f3f4f6; }
     .cal-cell.is-other-month { background: #f9fafb; color: #9ca3af; }
     .cal-cell.is-today { border-color: #2563eb; box-shadow: inset 0 0 0 1px #2563eb; }
     .cal-cell.is-closed { background: #fee2e2; }
@@ -17,10 +17,12 @@
     .cal-cell.is-doctor-available { background: #d1fae5; }
     .cal-cell.is-open { background: #d1fae5; }
     /* Manatiling mababakas ang kulay ng estado kahit na-hover. */
-    .cal-cell.is-closed:hover { background: #fecaca; }
-    .cal-cell.is-doctor-off:hover { background: #fde68a; }
-    .cal-cell.is-doctor-available:hover,
-    .cal-cell.is-open:hover { background: #a7f3d0; }
+    .cal-cell.is-closed:not(.is-past):hover { background: #fecaca; }
+    .cal-cell.is-doctor-off:not(.is-past):hover { background: #fde68a; }
+    .cal-cell.is-doctor-available:not(.is-past):hover,
+    .cal-cell.is-open:not(.is-past):hover { background: #a7f3d0; }
+    /* Lumipas na ang petsa: nababasa pa ang naitala, pero hindi na mapipindot. */
+    .cal-cell.is-past { cursor: not-allowed; opacity: 0.55; }
     .cal-cell.is-other-month.is-closed,
     .cal-cell.is-other-month.is-doctor-off,
     .cal-cell.is-other-month.is-doctor-available,
@@ -100,12 +102,13 @@
                  :class="{
                      'is-other-month': !cell.inMonth,
                      'is-today': cell.isToday,
+                     'is-past': cell.isPast,
                      'is-closed': cell.state === 'closed',
                      'is-doctor-off': cell.state === 'doctor-off',
                      'is-doctor-available': cell.state === 'doctor-available',
                      'is-open': cell.state === 'open',
                  }"
-                 :title="cell.stateLabel"
+                 :title="cell.isPast ? 'Past date — can no longer be changed' : cell.stateLabel"
                  @click="openCell(cell)">
                 <div class="flex justify-between items-start">
                     <span class="cal-day-num" x-text="cell.day"></span>
@@ -310,7 +313,10 @@ function scheduleCalendar() {
 
         buildCells() {
             const dayShort = ['sun','mon','tue','wed','thu','fri','sat'];
-            const today = new Date(); today.setHours(0,0,0,0);
+            // Petsa (YYYY-MM-DD) ang inihahambing, hindi getTime(): may oras ng
+            // pagbukas ng page ang this.cursor kaya hindi kailanman nagtutugma ang
+            // getTime() ng cell at ng hatinggabi — hindi tuloy lumilitaw ang is-today.
+            const todayIso = this.toLocalIso(new Date());
             const first = new Date(this.cursor);
             first.setDate(1);
             const startWeekday = first.getDay();
@@ -340,7 +346,8 @@ function scheduleCalendar() {
                     iso,
                     weeklyOpen,
                     inMonth,
-                    isToday: d.getTime() === today.getTime(),
+                    isToday: iso === todayIso,
+                    isPast: iso < todayIso,
                     clinicOverride: override,
                     clinicClosed: !!clinicClosed,
                     doctors: docs,
@@ -354,6 +361,9 @@ function scheduleCalendar() {
         },
 
         openCell(cell) {
+            // Hindi na binabago ang lumipas na petsa (hinaharang din sa server).
+            if (cell.isPast) return;
+
             this.modalDate = cell.iso;
             if (this.mode === 'clinic') {
                 this.modalTitle = 'Clinic open / closed override';

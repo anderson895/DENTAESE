@@ -72,8 +72,13 @@
 
 <div class="flex justify-between items-center mb-4">
     <h2 class="text-2xl font-bold">Appointment Booking</h2>
+    @if ($isAdminView)
+    {{-- Pang-branch ang pag-book (walk-in/emergency ay para sa active branch
+         lang) at ang history logs, kaya kailangan munang pumili ng branch. --}}
+    <p class="text-sm text-gray-500">Showing all branches. Select a branch to add appointments or view history logs.</p>
+    @else
     <div class="flex flex-row gap-4">
-    <a href="{{ route('admin.booking.history') }}" 
+    <a href="{{ route('admin.booking.history') }}"
        class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">
         View History Logs
     </a>
@@ -82,7 +87,8 @@
     + Add Appointment
 </button>
     </div>
-   
+    @endif
+
 </div>
 
 
@@ -147,6 +153,9 @@
         <thead class="bg-gray-100 text-left">
             <tr>
                 <th class="px-4 py-2 border">User</th>
+                @if ($isAdminView)
+                <th class="px-4 py-2 border">Branch</th>
+                @endif
                 <th class="px-4 py-2 border">Service</th>
                 <th class="px-4 py-2 border">Modify Service</th>
                 <th class="px-4 py-2 border">Date</th>
@@ -193,7 +202,8 @@
 @include('admin.partials.usermodal')
 
 
-<div id="bookingModal" 
+@unless ($isAdminView)
+<div id="bookingModal"
      class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl p-6 relative mx-4 my-8">
         
@@ -213,6 +223,7 @@
         </div>
     </div>
 </div>
+@endunless
 
 
 </div> <!-- End padding wrapper -->
@@ -352,17 +363,17 @@ $(document).on('click', '.approve-btn', function () {
                 change_time: isChangeTime ? 1 : 0,
             },
             success: function (res) {
+                // Reload imbes na i-fetch ang partial: ang dating fetch ay
+                // sariling appointment lang ng dentista ang ibinabalik, kaya
+                // nawawala ang listahan ng receptionist at admin. Sinusunod ng
+                // reload ang kasalukuyang filter, role at branch.
                 Swal.fire({
                     icon: 'success',
                     title: isChangeTime ? 'Time Changed!' : 'Approved!',
                     text: isChangeTime
                         ? 'Appointment time has been successfully updated.'
                         : 'Appointment has been approved.'
-                });
-
-                $.get('{{ route('appointments.fetch') }}', function (html) {
-                    $('#appointments-table-body').html(html);
-                });
+                }).then(() => location.reload());
             },
             error: function (xhr) {
                 Swal.fire({
@@ -401,11 +412,7 @@ $(document).on('click', '.cancel-btn', function () {
                         icon: 'success',
                         title: 'Cancelled!',
                         text: 'Appointment has been cancelled.'
-                    });
-
-                    $.get('{{ route('appointments.fetch') }}', function (html) {
-                        $('#appointments-table-body').html(html);
-                    });
+                    }).then(() => location.reload());
                 },
                 error: function (xhr) {
                     Swal.fire({

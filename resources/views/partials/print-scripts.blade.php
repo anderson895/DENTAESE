@@ -19,6 +19,12 @@
     Nagpiprint ito sa loob ng nakatagong iframe: hindi na sinisira ang kasalukuyang
     pahina (dating ginagawa ng document.body.innerHTML = ...) kaya wala nang reload
     pagkatapos, at hindi rin ito hinaharang ng popup blocker.
+
+    TABLET / PHONE: hindi iniimprenta ng Chrome sa Android (at Safari sa iPad) ang
+    iframe — buong tab ang napi-print (Chromium issue 41323115), kaya kasama ang
+    sidebar at nahahati sa dalawang pahina ang printout. Sa mga device na iyon, sa
+    mismong pahina tayo nagpi-print: kinokopya ang seksyon sa #app-print-root at may
+    print-only na CSS na nagtatago sa lahat ng iba pa (printInPage).
 --}}
 @php
     $printFooterUser = auth()->check()
@@ -122,7 +128,123 @@
         });
     }
 
+    // Mga panuntunan para sa laman ng printout — iisa para sa iframe at sa
+    // in-page na pagprint para pareho ang labas. Ang `scope` ay prefix ng
+    // bawat selector: '' sa iframe (sariling document iyon), '#app-print-root '
+    // sa in-page (para hindi tamaan ang ibang bahagi ng pahina).
+    function contentRules(scope, padding) {
+        function sel(list) {
+            return list.split(',').map(function (s) { return scope + s.trim(); }).join(', ');
+        }
+
+        return sel('.print-sheet') + ' { padding: ' + padding + '; -webkit-box-decoration-break: clone; box-decoration-break: clone; }' +
+            sel('.no-print, .print\\:hidden') + ' { display: none !important; }' +
+            // Ang mga print-only na bloke ay dapat makita sa printout.
+            sel('.hidden.print\\:block') + ' { display: block !important; }' +
+            sel('thead') + ' { display: table-header-group; }' +
+            sel('tr, img, svg') + ' { page-break-inside: avoid; break-inside: avoid; }' +
+            sel('h1, h2, h3, h4, .pda-section-title, .print-keep-next') + ' { page-break-after: avoid; break-after: avoid-page; }' +
+            sel('.print-keep-together') + ' { page-break-inside: avoid; break-inside: avoid; }' +
+            sel('*') + ' { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }';
+    }
+
+    // Android, iPhone at iPad: buong tab ang napi-print kapag galing sa iframe.
+    function needsInPagePrint() {
+        var ua = navigator.userAgent || '';
+        if (/Android|iPhone|iPad|iPod/i.test(ua)) return true;
+        // iPadOS 13+ ay nagpapakilalang Mac.
+        if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+        // Android tablet na naka-"Desktop site" (walang "Android" sa UA) pero
+        // touch pa rin ang pangunahing input.
+        return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+    }
+
+    // Nasa totoong pahina ang kopya sa in-page na pagprint, kaya inaalis ang
+    // makakagulo roon: script, name ng form controls (para hindi maagaw ng
+    // kopyang radio ang "checked" ng orihinal) at mga Alpine/Livewire attribute.
+    // Hindi inaalis ang id — ginagamit ito ng print CSS ng ilang pahina
+    // (hal. #patient-form), at nauuna naman sa DOM ang orihinal.
+    function sanitizeClone(root) {
+        root.querySelectorAll('script').forEach(function (node) { node.remove(); });
+
+        root.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+            el.removeAttribute('name');
+            el.removeAttribute('form');
+        });
+
+        [root].concat(Array.prototype.slice.call(root.querySelectorAll('*'))).forEach(function (el) {
+            Array.prototype.slice.call(el.attributes).forEach(function (attr) {
+                var n = attr.name;
+                if (n.indexOf('x-') === 0 || n.indexOf('wire:') === 0 || n.charAt(0) === '@' || n.charAt(0) === ':') {
+                    el.removeAttribute(n);
+                }
+            });
+        });
+    }
+
+    var titleBeforePrint = null;
+
+    function removeInPagePrint() {
+        var oldRoot  = document.getElementById('app-print-root');
+        var oldStyle = document.getElementById('app-print-style');
+        if (oldRoot) oldRoot.remove();
+        if (oldStyle) oldStyle.remove();
+    }
+
+    function printInPage(source, paper, scale, padding, options) {
+        var style = document.createElement('style');
+        style.id = 'app-print-style';
+        style.textContent =
+            '@page { size: ' + paper + '; margin: 0; }' +
+            '@media screen { #app-print-root { display: none !important; } }' +
+            '@media print {' +
+                // Walang nakapirming taas o overflow — kung mayroon, nagdadagdag
+                // ang mobile print engine ng blankong pahina.
+                'html, body { height: auto !important; min-height: 0 !important; overflow: visible !important;' +
+                    ' margin: 0 !important; padding: 0 !important; background: #fff !important; visibility: visible !important; }' +
+                'body { zoom: ' + scale + '%; }' +
+                'body > *:not(#app-print-root) { display: none !important; }' +
+                '#app-print-root { display: block !important; font-family: system-ui, sans-serif; }' +
+                contentRules('#app-print-root ', padding) +
+                (options.css || '') +
+            '}';
+        document.head.appendChild(style);
+
+        var clone = source.cloneNode(true);
+        syncFormValues(source, clone);
+        sanitizeClone(clone);
+
+        var sheet = document.createElement('div');
+        sheet.className = 'print-sheet';
+        sheet.appendChild(clone);
+        ensurePrintFooter(document, sheet);
+
+        var root = document.createElement('div');
+        root.id = 'app-print-root';
+        root.setAttribute('x-ignore', '');      // huwag galawin ng Alpine
+        root.setAttribute('aria-hidden', 'true');
+        root.appendChild(sheet);
+        document.body.appendChild(root);
+
+        // Pamagat ng print job / PDF habang nagpi-print; ibinabalik pagkatapos.
+        // Isang beses lang itinatabi ang orihinal kahit sunod-sunod ang print.
+        if (titleBeforePrint === null) titleBeforePrint = document.title;
+        if (options.title) document.title = options.title;
+        window.addEventListener('afterprint', function () {
+            if (titleBeforePrint !== null) document.title = titleBeforePrint;
+            titleBeforePrint = null;
+        }, { once: true });
+
+        // Sadyang iniiwan ang #app-print-root hanggang sa susunod na print:
+        // muling nire-render ng Android ang preview kapag pinalitan ang papel o
+        // printer. Nakatago naman ito sa screen.
+        window.print();
+    }
+
     window.printSection = function (elementId, options) {
+        // Alisin muna ang lumang kopya para ang orihinal na seksyon ang mahanap.
+        removeInPagePrint();
+
         var source = document.getElementById(elementId);
         if (!source) return;
 
@@ -130,6 +252,11 @@
         var paper   = options.paper   || 'Letter';
         var scale   = options.scale   || 80;
         var padding = options.padding || '12mm 12mm 18mm';
+
+        if (needsInPagePrint()) {
+            printInPage(source, paper, scale, padding, options);
+            return;
+        }
 
         var oldFrame = document.getElementById('app-print-frame');
         if (oldFrame) oldFrame.remove();
@@ -150,15 +277,7 @@
             '@page { size: ' + paper + '; margin: 0; }' +
             'html, body { margin:0 !important; background:#fff !important; visibility:visible !important; }' +
             'body { zoom: ' + scale + '%; font-family: system-ui, sans-serif; }' +
-            '.print-sheet { padding: ' + padding + '; -webkit-box-decoration-break: clone; box-decoration-break: clone; }' +
-            '.no-print, .print\\:hidden { display: none !important; }' +
-            // Ang mga print-only na bloke ay dapat makita sa loob ng iframe.
-            '.hidden.print\\:block { display: block !important; }' +
-            'thead { display: table-header-group; }' +
-            'tr, img, svg { page-break-inside: avoid; break-inside: avoid; }' +
-            'h1,h2,h3,h4,.pda-section-title,.print-keep-next { page-break-after: avoid; break-after: avoid-page; }' +
-            '.print-keep-together { page-break-inside: avoid; break-inside: avoid; }' +
-            '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
+            contentRules('', padding) +
             (options.css || '');
         doc.head.appendChild(style);
 

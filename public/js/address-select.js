@@ -7,6 +7,12 @@
  *
  *   const addr = window.initAddressCascade(document.getElementById('step-1'));
  *   addr.setValue('Bulacan', 'Marilao', 'Patubig');   // hal. pag-restore
+ *
+ * Birthplace (Province -> City/Municipality, buong Pilipinas) — kailangan ang
+ * public/js/ph-birthplace.js (window.PH_BIRTHPLACE) at data-birthplace-role:
+ *
+ *   const bp = window.initBirthplaceCascade(document.getElementById('step-1'));
+ *   bp.setValue('Bulacan', 'Marilao');
  */
 (function () {
     function fillOptions(select, items, placeholder) {
@@ -85,6 +91,45 @@
         };
 
         api.setValue(initial.province, initial.municipality, initial.barangay);
+
+        return api;
+    };
+
+    // Dalawang antas lang ang Birthplace (walang barangay) at iba ang data
+    // nito — buong bansa, hindi lang ang mga lalawigan ng Current Address.
+    window.initBirthplaceCascade = function (root) {
+        root = root || document;
+
+        var data    = window.PH_BIRTHPLACE || {};
+        var provSel = root.querySelector('[data-birthplace-role="province"]');
+        var muniSel = root.querySelector('[data-birthplace-role="municipality"]');
+
+        if (!provSel || !muniSel) return null;
+
+        function refreshMunicipalities() {
+            var items = data[provSel.value] || [];
+            fillOptions(muniSel, items, items.length
+                ? '-- Select City / Municipality --'
+                : '-- Select a province first --');
+        }
+
+        var initial = {
+            province:     provSel.getAttribute('data-selected') || '',
+            municipality: muniSel.getAttribute('data-selected') || '',
+        };
+
+        fillOptions(provSel, Object.keys(data), '-- Select Province --');
+        provSel.addEventListener('change', refreshMunicipalities);
+
+        var api = {
+            setValue: function (province, municipality) {
+                provSel.value = province || '';
+                refreshMunicipalities();
+                muniSel.value = municipality || '';
+            },
+        };
+
+        api.setValue(initial.province, initial.municipality);
 
         return api;
     };

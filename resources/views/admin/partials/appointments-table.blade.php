@@ -6,6 +6,9 @@
         {{ $appointment->user->lastname }}, {{ $appointment->user->name ?? 'N/A' }}  {{ $appointment->user->middlename }}.  {{ $appointment->user->suffix ?? '' }}
     </button>
 </td>
+@if ($isAdminView ?? false)
+<td>{{ $appointment->store->name ?? '—' }}</td>
+@endif
 <td class="service-names">
     {{ implode(', ', $appointment->service_list ?? []) }}
 </td>
